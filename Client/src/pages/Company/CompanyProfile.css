@@ -1,0 +1,877 @@
+/* =========================================================
+   COMPANY PROFILE
+========================================================= */
+
+.company-profile {
+    width: 100%;
+    padding: 5px 0 40px;
+    box-sizing: border-box;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.profile-header {
+    margin-bottom: 25px;
+
+    padding: 28px 30px;
+
+    background: linear-gradient(
+        135deg,
+        #ffffff,
+        #f8f9ff
+    );
+
+    border: 1px solid #edf0f6;
+
+    border-radius: 20px;
+
+    box-shadow:
+        0 8px 28px rgba(15, 23, 42, 0.06);
+}
+
+
+.profile-header-left {
+    display: flex;
+
+    align-items: center;
+
+    gap: 18px;
+}
+
+
+.company-profile-icon {
+    width: 58px;
+    height: 58px;
+
+    min-width: 58px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 16px;
+
+    background: #eef2ff;
+
+    color: #667eea;
+
+    font-size: 24px;
+}
+
+
+.profile-eyebrow {
+    display: block;
+
+    margin-bottom: 5px;
+
+    color: #667eea;
+
+    font-size: 10px;
+
+    font-weight: 800;
+
+    letter-spacing: 1.2px;
+}
+
+
+.profile-header h1 {
+    margin: 0;
+
+    color: #111827;
+
+    font-size: 30px;
+
+    font-weight: 800;
+
+    letter-spacing: -0.5px;
+}
+
+
+.profile-header p {
+    margin: 7px 0 0;
+
+    color: #64748b;
+
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   MAIN LAYOUT
+========================================================= */
+
+.profile-layout {
+    display: grid;
+
+    grid-template-columns:
+        280px minmax(0, 1fr);
+
+    gap: 24px;
+
+    align-items: start;
+}
+
+
+/* =========================================================
+   PROFILE SUMMARY
+========================================================= */
+
+.profile-summary {
+    padding: 25px;
+
+    background: #ffffff;
+
+    border: 1px solid #edf0f5;
+
+    border-radius: 18px;
+
+    box-shadow:
+        0 7px 25px rgba(15, 23, 42, 0.06);
+
+    text-align: center;
+}
+
+
+.summary-avatar {
+    width: 72px;
+    height: 72px;
+
+    margin: 0 auto 15px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 20px;
+
+    background: #eef2ff;
+
+    color: #667eea;
+
+    font-size: 29px;
+}
+
+
+.profile-summary h2 {
+    margin: 0;
+
+    color: #1e293b;
+
+    font-size: 17px;
+
+    font-weight: 800;
+
+    word-break: break-word;
+}
+
+
+.profile-summary > p {
+    margin: 6px 0 0;
+
+    color: #94a3b8;
+
+    font-size: 11px;
+
+    word-break: break-word;
+}
+
+
+.summary-divider {
+    height: 1px;
+
+    margin: 22px 0;
+
+    background: #edf0f4;
+}
+
+
+.summary-item {
+    display: flex;
+
+    align-items: flex-start;
+
+    gap: 10px;
+
+    margin-bottom: 15px;
+
+    text-align: left;
+}
+
+
+.summary-item:last-child {
+    margin-bottom: 0;
+}
+
+
+.summary-item svg {
+    margin-top: 2px;
+
+    min-width: 13px;
+
+    color: #667eea;
+
+    font-size: 12px;
+}
+
+
+.summary-item span {
+    color: #64748b;
+
+    font-size: 11px;
+
+    line-height: 1.5;
+
+    word-break: break-word;
+}
+
+
+/* =========================================================
+   FORM
+========================================================= */
+
+.company-profile-form {
+    width: 100%;
+
+    box-sizing: border-box;
+
+    background: #ffffff;
+
+    border: 1px solid #edf0f5;
+
+    border-radius: 18px;
+
+    box-shadow:
+        0 7px 25px rgba(15, 23, 42, 0.06);
+
+    overflow: hidden;
+}
+
+
+.form-section {
+    padding: 30px;
+}
+
+
+.form-section-header {
+    margin-bottom: 25px;
+
+    padding-bottom: 20px;
+
+    border-bottom: 1px solid #edf0f4;
+}
+
+
+.form-section-header h2 {
+    margin: 0;
+
+    color: #1e293b;
+
+    font-size: 18px;
+
+    font-weight: 800;
+}
+
+
+.form-section-header p {
+    margin: 6px 0 0;
+
+    color: #94a3b8;
+
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   FORM GROUP
+========================================================= */
+
+.form-group {
+    margin-bottom: 20px;
+}
+
+
+.form-group:last-child {
+    margin-bottom: 0;
+}
+
+
+.form-group label {
+    display: block;
+
+    margin-bottom: 8px;
+
+    color: #334155;
+
+    font-size: 12px;
+
+    font-weight: 700;
+}
+
+
+.form-group small {
+    display: block;
+
+    margin-top: 6px;
+
+    color: #94a3b8;
+
+    font-size: 10px;
+
+    line-height: 1.5;
+}
+
+
+/* =========================================================
+   INPUT
+========================================================= */
+
+.input-wrapper {
+    position: relative;
+
+    display: flex;
+
+    align-items: center;
+}
+
+
+.input-wrapper svg {
+    position: absolute;
+
+    left: 14px;
+
+    color: #94a3b8;
+
+    font-size: 13px;
+
+    pointer-events: none;
+}
+
+
+.input-wrapper input {
+    width: 100%;
+
+    box-sizing: border-box;
+
+    height: 46px;
+
+    padding: 0 14px 0 40px;
+
+    border: 1px solid #dbe1e8;
+
+    border-radius: 10px;
+
+    background: #ffffff;
+
+    color: #1e293b;
+
+    font-family: inherit;
+
+    font-size: 12px;
+
+    outline: none;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
+}
+
+
+.input-wrapper input::placeholder {
+    color: #b0b8c4;
+}
+
+
+.input-wrapper input:focus {
+    border-color: #667eea;
+
+    box-shadow:
+        0 0 0 3px rgba(102, 126, 234, 0.10);
+}
+
+
+.input-wrapper:focus-within svg {
+    color: #667eea;
+}
+
+
+/* =========================================================
+   DISABLED EMAIL
+========================================================= */
+
+.disabled-input input {
+    background: #f8fafc;
+
+    color: #64748b;
+
+    cursor: not-allowed;
+}
+
+
+.disabled-input svg {
+    color: #94a3b8;
+}
+
+
+/* =========================================================
+   TWO COLUMN FORM
+========================================================= */
+
+.form-row {
+    display: grid;
+
+    grid-template-columns: 1fr 1fr;
+
+    gap: 16px;
+}
+
+
+/* =========================================================
+   TEXTAREA
+========================================================= */
+
+.textarea-wrapper {
+    position: relative;
+}
+
+
+.textarea-wrapper svg {
+    position: absolute;
+
+    top: 16px;
+
+    left: 14px;
+
+    color: #94a3b8;
+
+    font-size: 13px;
+
+    pointer-events: none;
+}
+
+
+.textarea-wrapper textarea {
+    width: 100%;
+
+    box-sizing: border-box;
+
+    min-height: 135px;
+
+    padding: 14px 14px 14px 40px;
+
+    border: 1px solid #dbe1e8;
+
+    border-radius: 10px;
+
+    background: #ffffff;
+
+    color: #1e293b;
+
+    font-family: inherit;
+
+    font-size: 12px;
+
+    line-height: 1.6;
+
+    outline: none;
+
+    resize: vertical;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+.textarea-wrapper textarea::placeholder {
+    color: #b0b8c4;
+}
+
+
+.textarea-wrapper textarea:focus {
+    border-color: #667eea;
+
+    box-shadow:
+        0 0 0 3px rgba(102, 126, 234, 0.10);
+}
+
+
+.textarea-wrapper:focus-within svg {
+    color: #667eea;
+}
+
+
+/* =========================================================
+   FORM FOOTER
+========================================================= */
+
+.form-footer {
+    display: flex;
+
+    align-items: center;
+    justify-content: flex-end;
+
+    gap: 15px;
+
+    min-height: 70px;
+
+    padding: 15px 30px;
+
+    box-sizing: border-box;
+
+    background: #fafbfc;
+
+    border-top: 1px solid #edf0f4;
+}
+
+
+/* =========================================================
+   SUCCESS MESSAGE
+========================================================= */
+
+.success-message {
+    display: flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    margin-right: auto;
+
+    color: #16a34a;
+
+    font-size: 11px;
+
+    font-weight: 700;
+}
+
+
+.success-message svg {
+    font-size: 13px;
+}
+
+
+/* =========================================================
+   SAVE BUTTON
+========================================================= */
+
+.save-profile-btn {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    min-width: 145px;
+
+    padding: 11px 18px;
+
+    border: none;
+
+    border-radius: 10px;
+
+    background: #667eea;
+
+    color: #ffffff;
+
+    font-family: inherit;
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 5px 12px rgba(102, 126, 234, 0.20);
+
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+
+.save-profile-btn:hover {
+    background: #5646c9;
+
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 7px 16px rgba(102, 126, 234, 0.25);
+}
+
+
+.save-profile-btn:disabled {
+    opacity: 0.7;
+
+    cursor: not-allowed;
+
+    transform: none;
+}
+
+
+/* =========================================================
+   BUTTON LOADER
+========================================================= */
+
+.button-spinner {
+    width: 13px;
+    height: 13px;
+
+    border: 2px solid rgba(255,255,255,0.4);
+
+    border-top-color: white;
+
+    border-radius: 50%;
+
+    animation:
+        buttonSpin 0.7s linear infinite;
+}
+
+
+@keyframes buttonSpin {
+
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+
+}
+
+
+/* =========================================================
+   PAGE LOADING
+========================================================= */
+
+.company-profile-loading {
+    min-height: 300px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 12px;
+
+    color: #64748b;
+}
+
+
+.company-profile-loading p {
+    margin: 0;
+
+    font-size: 12px;
+}
+
+
+.profile-loader {
+    width: 28px;
+    height: 28px;
+
+    border: 3px solid #e5e7eb;
+
+    border-top-color: #667eea;
+
+    border-radius: 50%;
+
+    animation:
+        profileSpin 0.8s linear infinite;
+}
+
+
+@keyframes profileSpin {
+
+    from {
+        transform: rotate(0deg);
+    }
+
+    to {
+        transform: rotate(360deg);
+    }
+
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 950px) {
+
+    .profile-layout {
+        grid-template-columns: 1fr;
+    }
+
+
+    .profile-summary {
+        display: grid;
+
+        grid-template-columns: auto 1fr;
+
+        column-gap: 15px;
+
+        text-align: left;
+    }
+
+
+    .summary-avatar {
+        grid-row: span 2;
+
+        margin: 0;
+    }
+
+
+    .profile-summary h2 {
+        align-self: end;
+    }
+
+
+    .profile-summary > p {
+        align-self: start;
+
+        margin-top: 4px;
+    }
+
+
+    .summary-divider {
+        grid-column: 1 / -1;
+
+        margin: 18px 0;
+    }
+
+
+    .summary-item {
+        margin-bottom: 0;
+    }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 650px) {
+
+    .company-profile {
+        padding: 0 0 30px;
+    }
+
+
+    .profile-header {
+        padding: 22px;
+
+        border-radius: 16px;
+    }
+
+
+    .profile-header-left {
+        gap: 13px;
+    }
+
+
+    .company-profile-icon {
+        width: 48px;
+        height: 48px;
+
+        min-width: 48px;
+
+        border-radius: 13px;
+
+        font-size: 20px;
+    }
+
+
+    .profile-header h1 {
+        font-size: 24px;
+    }
+
+
+    .profile-header p {
+        font-size: 11px;
+
+        line-height: 1.5;
+    }
+
+
+    .profile-layout {
+        gap: 16px;
+    }
+
+
+    .profile-summary {
+        display: block;
+
+        padding: 20px;
+
+        text-align: center;
+    }
+
+
+    .summary-avatar {
+        margin: 0 auto 12px;
+    }
+
+
+    .profile-summary > p {
+        text-align: center;
+    }
+
+
+    .summary-divider {
+        margin: 18px 0;
+    }
+
+
+    .summary-item {
+        margin-bottom: 12px;
+
+        text-align: left;
+    }
+
+
+    .form-section {
+        padding: 22px;
+    }
+
+
+    .form-row {
+        grid-template-columns: 1fr;
+
+        gap: 0;
+    }
+
+
+    .form-footer {
+        flex-direction: column;
+
+        align-items: stretch;
+
+        padding: 15px 22px;
+    }
+
+
+    .success-message {
+        margin-right: 0;
+
+        justify-content: center;
+    }
+
+
+    .save-profile-btn {
+        width: 100%;
+    }
+
+}

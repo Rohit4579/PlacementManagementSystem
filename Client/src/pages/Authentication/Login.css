@@ -1,0 +1,277 @@
+.auth-container {
+
+    min-height: 100vh;
+
+    display: flex;
+
+    justify-content: center;
+
+    align-items: center;
+
+    padding: 20px;
+
+    background: linear-gradient(
+        135deg,
+        #667eea 0%,
+        #764ba2 100%
+    );
+
+}
+
+
+
+/* Authentication Card */
+
+.auth-box {
+
+    width: 420px;
+
+    padding: 45px 40px;
+
+    background: rgba(255,255,255,0.95);
+
+    border-radius: 25px;
+
+    box-shadow:
+        0 25px 50px rgba(0,0,0,0.25);
+
+    backdrop-filter: blur(10px);
+
+    animation: slideUp 0.5s ease;
+
+}
+
+
+
+@keyframes slideUp {
+
+    from {
+
+        opacity:0;
+
+        transform:translateY(30px);
+
+    }
+
+
+    to {
+
+        opacity:1;
+
+        transform:translateY(0);
+
+    }
+
+}
+
+
+
+/* Heading */
+
+.auth-box h1 {
+
+    text-align:center;
+
+    color:#1f2937;
+
+    font-size:34px;
+
+    font-weight:700;
+
+    margin-bottom:30px;
+
+}
+
+
+
+/* Input Fields */
+
+.auth-box input,
+.auth-box select {
+
+
+    width:100%;
+
+    padding:15px 18px;
+
+    margin-bottom:18px;
+
+    border-radius:12px;
+
+    border:1px solid #d1d5db;
+
+
+    font-size:16px;
+
+    color:#111827;
+
+    background:#ffffff;
+
+
+    transition:0.3s;
+
+}
+
+
+
+.auth-box input::placeholder {
+
+    color:#9ca3af;
+
+}
+
+
+
+.auth-box input:focus,
+.auth-box select:focus {
+
+
+    outline:none;
+
+    border-color:#667eea;
+
+    box-shadow:
+        0 0 0 3px rgba(102,126,234,0.2);
+
+}
+
+
+
+/* Select */
+
+.auth-box select {
+
+    cursor:pointer;
+
+}
+
+
+
+/* Button */
+
+.auth-box button {
+
+
+    width:100%;
+
+    padding:15px;
+
+
+    margin-top:10px;
+
+
+    border:none;
+
+    border-radius:12px;
+
+
+    background:
+    linear-gradient(
+        135deg,
+        #667eea,
+        #764ba2
+    );
+
+
+    color:white;
+
+
+    font-size:18px;
+
+    font-weight:600;
+
+
+    cursor:pointer;
+
+
+    transition:0.3s;
+
+
+}
+
+
+
+.auth-box button:hover {
+
+
+    transform:translateY(-3px);
+
+
+    box-shadow:
+    0 10px 25px rgba(102,126,234,0.4);
+
+
+}
+
+
+
+/* Bottom Text */
+
+.auth-box p {
+
+
+    margin-top:25px;
+
+    text-align:center;
+
+
+    color:#4b5563;
+
+    font-size:15px;
+
+
+}
+
+
+
+.auth-box a {
+
+
+    color:#667eea;
+
+    font-weight:600;
+
+    text-decoration:none;
+
+    margin-left:5px;
+
+
+}
+
+
+
+.auth-box a:hover {
+
+
+    text-decoration:underline;
+
+
+}
+
+
+
+/* Mobile Responsive */
+
+@media(max-width:480px){
+
+
+    .auth-box {
+
+
+        width:100%;
+
+        padding:35px 25px;
+
+
+    }
+
+
+    .auth-box h1 {
+
+
+        font-size:28px;
+
+    }
+
+
+}

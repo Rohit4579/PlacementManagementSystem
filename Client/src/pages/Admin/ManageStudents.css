@@ -1,0 +1,2292 @@
+/* =========================================================
+   MANAGE STUDENTS
+   PROFESSIONAL ADMIN / TPO UI
+========================================================= */
+
+.manage-students-page {
+    width: 100%;
+    min-height: 100%;
+    padding: 28px;
+    box-sizing: border-box;
+
+    background:
+        linear-gradient(
+            180deg,
+            #f8fafc 0%,
+            #f3f6fb 100%
+        );
+
+    color: #172033;
+}
+
+
+/* =========================================================
+   BODY LOCK WHEN MODAL IS OPEN
+========================================================= */
+
+body.student-modal-open {
+    overflow: hidden !important;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.students-page-header {
+    width: 100%;
+
+    display: flex;
+    align-items: flex-end;
+    justify-content: space-between;
+
+    gap: 24px;
+    margin-bottom: 24px;
+}
+
+.students-header-content {
+    min-width: 0;
+}
+
+.page-label {
+    display: inline-block;
+    margin-bottom: 7px;
+
+    color: #4f5fd5;
+
+    font-size: 11px;
+    font-weight: 800;
+
+    letter-spacing: 1.1px;
+    text-transform: uppercase;
+}
+
+.students-page-header h1 {
+    margin: 0;
+
+    color: #172033;
+
+    font-size: clamp(
+        25px,
+        3vw,
+        34px
+    );
+
+    line-height: 1.15;
+    font-weight: 800;
+}
+
+.students-page-header p {
+    margin: 8px 0 0;
+
+    max-width: 700px;
+
+    color: #64748b;
+
+    font-size: 13px;
+    line-height: 1.6;
+}
+
+.student-total {
+    flex-shrink: 0;
+
+    min-width: 130px;
+
+    padding: 15px 18px;
+
+    background: #ffffff;
+
+    border: 1px solid #e5e9f1;
+    border-radius: 14px;
+
+    box-shadow:
+        0 8px 25px
+        rgba(
+            15,
+            23,
+            42,
+            0.05
+        );
+
+    text-align: right;
+}
+
+.student-total span {
+    display: block;
+
+    margin-bottom: 4px;
+
+    color: #7b879b;
+
+    font-size: 10px;
+    font-weight: 800;
+
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+}
+
+.student-total strong {
+    display: block;
+
+    color: #253047;
+
+    font-size: 25px;
+    line-height: 1;
+    font-weight: 800;
+}
+
+
+/* =========================================================
+   STATISTICS
+========================================================= */
+
+.student-stat-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            4,
+            minmax(0, 1fr)
+        );
+
+    gap: 15px;
+
+    margin-bottom: 20px;
+}
+
+.student-stat-card {
+    min-width: 0;
+
+    display: flex;
+    align-items: center;
+
+    gap: 13px;
+
+    padding: 17px;
+
+    background: #ffffff;
+
+    border: 1px solid #e5e9f1;
+    border-radius: 15px;
+
+    box-shadow:
+        0 8px 24px
+        rgba(
+            15,
+            23,
+            42,
+            0.045
+        );
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.student-stat-card:hover {
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 12px 30px
+        rgba(
+            15,
+            23,
+            42,
+            0.08
+        );
+}
+
+.stat-icon {
+    width: 42px;
+    height: 42px;
+
+    flex: 0 0 42px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 12px;
+
+    font-size: 17px;
+}
+
+.stat-icon.blue {
+    background: #eff6ff;
+    color: #2563eb;
+}
+
+.stat-icon.green {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+.stat-icon.purple {
+    background: #f5f3ff;
+    color: #7c3aed;
+}
+
+.stat-icon.orange {
+    background: #fff7ed;
+    color: #ea580c;
+}
+
+.student-stat-card span {
+    display: block;
+
+    margin-bottom: 4px;
+
+    color: #7b879b;
+
+    font-size: 11px;
+    font-weight: 700;
+}
+
+.student-stat-card strong {
+    color: #202a3d;
+
+    font-size: 21px;
+    line-height: 1;
+    font-weight: 800;
+}
+
+
+/* =========================================================
+   TOOLBAR
+========================================================= */
+
+.students-toolbar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 16px;
+
+    margin-bottom: 13px;
+}
+
+.student-search {
+    width: min(
+        520px,
+        100%
+    );
+
+    height: 44px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    padding: 0 13px;
+
+    box-sizing: border-box;
+
+    background: #ffffff;
+
+    border: 1px solid #dfe5ee;
+    border-radius: 11px;
+
+    color: #8995a8;
+
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease;
+}
+
+.student-search:focus-within {
+    border-color: #8791ed;
+
+    box-shadow:
+        0 0 0 3px
+        rgba(
+            89,
+            101,
+            232,
+            0.1
+        );
+}
+
+.student-search svg {
+    flex-shrink: 0;
+    font-size: 14px;
+}
+
+.student-search input {
+    width: 100%;
+    min-width: 0;
+
+    border: none;
+    outline: none;
+
+    background: transparent;
+
+    color: #263248;
+    font-size: 13px;
+}
+
+.student-search input::placeholder {
+    color: #a0a9b8;
+}
+
+.clear-search {
+    width: 28px;
+    height: 28px;
+
+    flex: 0 0 28px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border: none;
+    border-radius: 7px;
+
+    background: #f1f4f8;
+
+    color: #69768a;
+
+    cursor: pointer;
+}
+
+.clear-search:hover {
+    background: #e7ebf2;
+    color: #263248;
+}
+
+.student-result-count {
+    flex-shrink: 0;
+
+    color: #7b879b;
+    font-size: 12px;
+}
+
+.student-result-count strong {
+    color: #27334a;
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.students-table-card {
+    width: 100%;
+
+    background: #ffffff;
+
+    border: 1px solid #e3e8f0;
+    border-radius: 17px;
+
+    overflow: hidden;
+
+    box-shadow:
+        0 10px 30px
+        rgba(
+            15,
+            23,
+            42,
+            0.055
+        );
+}
+
+.students-table-scroll {
+    width: 100%;
+
+    overflow-x: auto;
+}
+
+.students-table {
+    width: 100%;
+
+    min-width: 1060px;
+
+    border-collapse: collapse;
+
+    table-layout: fixed;
+}
+
+.students-table thead {
+    background: #f8fafc;
+}
+
+.students-table th {
+    padding: 14px 16px;
+
+    border-bottom: 1px solid #e5e9f1;
+
+    color: #7b879b;
+
+    font-size: 10px;
+    line-height: 1.2;
+
+    font-weight: 800;
+
+    text-align: left;
+
+    text-transform: uppercase;
+    letter-spacing: 0.55px;
+
+    white-space: nowrap;
+}
+
+.students-table th:nth-child(1) {
+    width: 25%;
+}
+
+.students-table th:nth-child(2) {
+    width: 19%;
+}
+
+.students-table th:nth-child(3) {
+    width: 12%;
+}
+
+.students-table th:nth-child(4) {
+    width: 17%;
+}
+
+.students-table th:nth-child(5) {
+    width: 9%;
+}
+
+.students-table th:nth-child(6) {
+    width: 9%;
+}
+
+.students-table th:nth-child(7) {
+    width: 180px;
+}
+
+.students-table td {
+    min-width: 0;
+
+    padding: 14px 16px;
+
+    border-bottom: 1px solid #edf0f4;
+
+    vertical-align: middle;
+
+    color: #334155;
+
+    font-size: 12px;
+}
+
+.students-table tbody tr {
+    transition:
+        background 0.15s ease;
+}
+
+.students-table tbody tr:hover {
+    background: #fbfcfe;
+}
+
+.students-table tbody tr:last-child td {
+    border-bottom: none;
+}
+
+
+/* =========================================================
+   STUDENT CELL
+========================================================= */
+
+.student-cell {
+    min-width: 0;
+
+    display: flex;
+    align-items: center;
+
+    gap: 11px;
+}
+
+
+/* =========================================================
+   PERFECT CIRCULAR AVATAR
+========================================================= */
+
+.student-avatar {
+    position: relative;
+
+    width: 44px;
+    height: 44px;
+
+    min-width: 44px;
+    min-height: 44px;
+
+    max-width: 44px;
+    max-height: 44px;
+
+    flex: 0 0 44px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+
+    border-radius: 50%;
+
+    background:
+        linear-gradient(
+            135deg,
+            #e9ecff,
+            #dce4ff
+        );
+
+    color: #5363d8;
+
+    border: 2px solid #ffffff;
+
+    box-shadow:
+        0 2px 8px
+        rgba(
+            15,
+            23,
+            42,
+            0.12
+        );
+}
+
+.student-profile-image {
+    position: absolute;
+
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    min-width: 100%;
+    min-height: 100%;
+
+    display: block;
+
+    border-radius: 50%;
+
+    object-fit: cover;
+    object-position: center;
+
+    background: #e9edf5;
+}
+
+.avatar-fallback {
+    position: absolute;
+
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background:
+        linear-gradient(
+            135deg,
+            #eef2ff,
+            #dfe5ff
+        );
+
+    color: #5262d8;
+
+    font-size: 14px;
+    font-weight: 800;
+
+    line-height: 1;
+
+    text-transform: uppercase;
+}
+
+
+/* =========================================================
+   NAME
+========================================================= */
+
+.student-name-block {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 4px;
+}
+
+.student-name-block strong {
+    display: block;
+
+    min-width: 0;
+    max-width: 180px;
+
+    overflow: hidden;
+
+    color: #1f2937;
+
+    font-size: 13px;
+    line-height: 1.2;
+
+    font-weight: 800;
+
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.student-name-block span {
+    display: block;
+
+    min-width: 0;
+    max-width: 190px;
+
+    overflow: hidden;
+
+    color: #8792a5;
+
+    font-size: 10px;
+    line-height: 1.25;
+
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+
+/* =========================================================
+   CONTACT
+========================================================= */
+
+.contact-cell {
+    min-width: 0;
+
+    display: flex;
+    flex-direction: column;
+
+    gap: 6px;
+}
+
+.contact-cell span {
+    min-width: 0;
+
+    display: flex;
+    align-items: center;
+
+    gap: 6px;
+
+    overflow: hidden;
+
+    color: #68758a;
+
+    font-size: 10px;
+
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.contact-cell svg {
+    flex-shrink: 0;
+
+    color: #9aa5b5;
+
+    font-size: 9px;
+}
+
+
+/* =========================================================
+   TABLE TEXT
+========================================================= */
+
+.table-primary-text {
+    display: block;
+
+    max-width: 110px;
+
+    overflow: hidden;
+
+    color: #354156;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+.department-text {
+    display: block;
+
+    max-width: 150px;
+
+    overflow: hidden;
+
+    color: #526075;
+
+    font-size: 11px;
+
+    white-space: nowrap;
+    text-overflow: ellipsis;
+}
+
+
+/* =========================================================
+   CGPA
+========================================================= */
+
+.cgpa-badge {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    min-width: 62px;
+
+    padding: 6px 8px;
+
+    border-radius: 7px;
+
+    background: #f5f7ff;
+
+    color: #5362d4;
+
+    font-size: 10px;
+    font-weight: 800;
+
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.status-badge {
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 5px;
+
+    padding: 6px 8px;
+
+    border-radius: 7px;
+
+    font-size: 9px;
+    font-weight: 800;
+
+    line-height: 1;
+
+    white-space: nowrap;
+}
+
+.status-badge.completed {
+    background: #ecfdf5;
+    color: #047857;
+}
+
+.status-badge.completed svg {
+    font-size: 9px;
+}
+
+.status-badge.incomplete {
+    background: #fff7ed;
+    color: #c2410c;
+}
+
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+.actions-column {
+    text-align: right !important;
+}
+
+.student-actions {
+    display: flex;
+
+    align-items: center;
+    justify-content: flex-end;
+
+    gap: 6px;
+
+    white-space: nowrap;
+}
+
+.view-student-btn,
+.delete-student-btn {
+    height: 34px;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 6px;
+
+    padding: 0 10px;
+
+    border-radius: 8px;
+
+    font-size: 10px;
+    font-weight: 800;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.18s ease,
+        background 0.18s ease,
+        border-color 0.18s ease;
+}
+
+.view-student-btn {
+    border: 1px solid #cbd8ff;
+
+    background: #f3f6ff;
+
+    color: #4b5ed2;
+}
+
+.view-student-btn:hover {
+    background: #e8edff;
+
+    border-color: #b9c7ff;
+
+    transform: translateY(-1px);
+}
+
+.delete-student-btn {
+    border: 1px solid #fecaca;
+
+    background: #fff5f5;
+
+    color: #dc2626;
+}
+
+.delete-student-btn:hover {
+    background: #feecec;
+
+    border-color: #fca5a5;
+
+    transform: translateY(-1px);
+}
+
+.delete-student-btn:disabled {
+    opacity: 0.5;
+
+    cursor: not-allowed;
+
+    transform: none;
+}
+
+
+/* =========================================================
+   EMPTY
+========================================================= */
+
+.students-empty {
+    height: 330px;
+
+    text-align: center;
+}
+
+.empty-icon {
+    width: 54px;
+    height: 54px;
+
+    margin: 0 auto 13px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background: #f1f4f8;
+
+    color: #9aa5b5;
+
+    font-size: 22px;
+}
+
+.students-empty h3 {
+    margin: 0 0 5px;
+
+    color: #334155;
+
+    font-size: 15px;
+}
+
+.students-empty p {
+    margin: 0;
+
+    color: #8a96a8;
+
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+.students-loading {
+    min-height: 500px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+    justify-content: center;
+
+    color: #64748b;
+}
+
+.students-loading h2 {
+    margin: 0 0 5px;
+
+    color: #334155;
+
+    font-size: 18px;
+}
+
+.students-loading p {
+    margin: 0;
+
+    font-size: 12px;
+}
+
+.loading-spinner {
+    width: 42px;
+    height: 42px;
+
+    margin-bottom: 16px;
+
+    border: 4px solid #dfe5ff;
+
+    border-top-color: #5965e8;
+
+    border-radius: 50%;
+
+    animation:
+        studentSpin
+        0.8s linear infinite;
+}
+
+@keyframes studentSpin {
+
+    to {
+        transform: rotate(360deg);
+    }
+
+}
+
+
+/* =========================================================
+   MODAL OVERLAY
+   IMPORTANT:
+   This is rendered directly under BODY using React Portal.
+========================================================= */
+
+.student-modal-overlay {
+    position: fixed;
+
+    inset: 0;
+
+    z-index: 2147483647;
+
+    width: 100vw;
+    height: 100dvh;
+
+    min-height: 100dvh;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    box-sizing: border-box;
+
+    padding: 20px;
+
+    background:
+        rgba(
+            15,
+            23,
+            42,
+            0.72
+        );
+
+    backdrop-filter:
+        blur(7px);
+
+    -webkit-backdrop-filter:
+        blur(7px);
+
+    overflow: hidden;
+
+    animation:
+        modalOverlayIn
+        0.18s ease;
+}
+
+@keyframes modalOverlayIn {
+
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+
+}
+
+
+/* =========================================================
+   MODAL
+========================================================= */
+
+.student-modal {
+    width: min(
+        940px,
+        100%
+    );
+
+    max-width: 940px;
+
+    height: min(
+        850px,
+        calc(100dvh - 40px)
+    );
+
+    max-height:
+        calc(100dvh - 40px);
+
+    min-height: 0;
+
+    display: flex;
+
+    flex-direction: column;
+
+    overflow: hidden;
+
+    box-sizing: border-box;
+
+    background: #ffffff;
+
+    border:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            0.9
+        );
+
+    border-radius: 20px;
+
+    box-shadow:
+        0 30px 90px
+        rgba(
+            15,
+            23,
+            42,
+            0.42
+        );
+
+    animation:
+        modalIn
+        0.22s ease;
+}
+
+@keyframes modalIn {
+
+    from {
+        opacity: 0;
+
+        transform:
+            translateY(15px)
+            scale(0.97);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0)
+            scale(1);
+    }
+
+}
+
+
+/* =========================================================
+   MODAL HEADER
+========================================================= */
+
+.modal-header {
+    position: relative;
+
+    z-index: 5;
+
+    flex: 0 0 auto;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 16px;
+
+    padding:
+        13px 18px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #17244b 0%,
+            #263f86 100%
+        );
+
+    border-bottom:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            0.12
+        );
+}
+
+.modal-header-left {
+    min-width: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 14px;
+}
+
+.modal-header-icon {
+    width: 48px;
+    height: 48px;
+
+    flex: 0 0 48px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 14px;
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            0.1
+        );
+
+    border:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            0.14
+        );
+
+    color: #dce5ff;
+
+    font-size: 20px;
+}
+
+.modal-header-title {
+    min-width: 0;
+}
+
+.modal-header-title span {
+    display: block;
+
+    margin-bottom: 3px;
+
+    color: #8ec5ff;
+
+    font-size: 9px;
+
+    font-weight: 800;
+
+    letter-spacing: 1px;
+
+    text-transform: uppercase;
+}
+
+.modal-header-title h2 {
+    max-width: 620px;
+
+    margin: 0;
+
+    overflow: hidden;
+
+    color: #ffffff;
+
+    font-size: 21px;
+
+    line-height: 1.15;
+
+    font-weight: 800;
+
+    white-space: nowrap;
+
+    text-overflow: ellipsis;
+}
+
+.modal-close {
+    width: 42px;
+    height: 42px;
+
+    flex: 0 0 42px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border:
+        1px solid
+        rgba(
+            255,
+            255,
+            255,
+            0.2
+        );
+
+    border-radius: 11px;
+
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            0.08
+        );
+
+    color: #ffffff;
+
+    font-size: 17px;
+
+    cursor: pointer;
+
+    transition:
+        background 0.18s ease,
+        transform 0.18s ease;
+}
+
+.modal-close:hover {
+    background:
+        rgba(
+            255,
+            255,
+            255,
+            0.18
+        );
+
+    transform: rotate(2deg);
+}
+
+
+/* =========================================================
+   MODAL SCROLL CONTENT
+========================================================= */
+
+.student-modal-content {
+    flex: 1 1 auto;
+
+    min-height: 0;
+
+    width: 100%;
+
+    overflow-y: auto;
+
+    overflow-x: hidden;
+
+    box-sizing: border-box;
+
+    padding:
+        0 0 24px;
+
+    overscroll-behavior:
+        contain;
+
+    scrollbar-width: thin;
+
+    scrollbar-color:
+        #cbd3df
+        transparent;
+}
+
+.student-modal-content::-webkit-scrollbar {
+    width: 8px;
+}
+
+.student-modal-content::-webkit-scrollbar-track {
+    background: transparent;
+}
+
+.student-modal-content::-webkit-scrollbar-thumb {
+    background: #cbd3df;
+
+    border-radius: 10px;
+
+    border:
+        2px solid
+        #ffffff;
+}
+
+.student-modal-content::-webkit-scrollbar-thumb:hover {
+    background: #aeb8c7;
+}
+
+
+/* =========================================================
+   PROFILE HERO
+========================================================= */
+
+.modal-profile {
+    min-width: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 16px;
+
+    margin:
+        20px 22px 0;
+
+    padding: 16px;
+
+    box-sizing: border-box;
+
+    background:
+        linear-gradient(
+            135deg,
+            #f8f9ff,
+            #f7f9fc
+        );
+
+    border:
+        1px solid
+        #e0e6f0;
+
+    border-radius: 15px;
+}
+
+
+/* =========================================================
+   MODAL PERFECT CIRCLE
+========================================================= */
+
+.modal-avatar {
+    position: relative;
+
+    width: 86px;
+    height: 86px;
+
+    min-width: 86px;
+    min-height: 86px;
+
+    max-width: 86px;
+    max-height: 86px;
+
+    flex: 0 0 86px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    overflow: hidden;
+
+    border-radius: 50%;
+
+    background:
+        linear-gradient(
+            135deg,
+            #e8ecff,
+            #dce4ff
+        );
+
+    color: #5363d8;
+
+    border:
+        3px solid
+        #ffffff;
+
+    box-shadow:
+        0 5px 18px
+        rgba(
+            15,
+            23,
+            42,
+            0.15
+        );
+}
+
+.modal-profile-image {
+    position: absolute;
+
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    min-width: 100%;
+    min-height: 100%;
+
+    max-width: none;
+
+    display: block;
+
+    border-radius: 50%;
+
+    /*
+     * REQUIRED:
+     * Photo fills the circular area.
+     */
+
+    object-fit: cover;
+
+    object-position: center;
+
+    background: #e7ebf3;
+
+    overflow: hidden;
+}
+
+.modal-avatar-fallback {
+    position: absolute;
+
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background:
+        linear-gradient(
+            135deg,
+            #eef2ff,
+            #dfe5ff
+        );
+
+    color: #5363d8;
+
+    font-size: 25px;
+
+    font-weight: 800;
+
+    line-height: 1;
+}
+
+
+/* =========================================================
+   PROFILE INFORMATION
+========================================================= */
+
+.modal-profile-info {
+    min-width: 0;
+
+    flex: 1 1 auto;
+}
+
+.modal-profile-info h3 {
+    min-width: 0;
+
+    max-width: 100%;
+
+    margin:
+        0 0 5px;
+
+    overflow: hidden;
+
+    color: #202a3d;
+
+    font-size: 20px;
+
+    line-height: 1.2;
+
+    font-weight: 800;
+
+    white-space: nowrap;
+
+    text-overflow: ellipsis;
+}
+
+.modal-profile-info p {
+    min-width: 0;
+
+    max-width: 100%;
+
+    margin:
+        0 0 9px;
+
+    overflow: hidden;
+
+    color: #758196;
+
+    font-size: 11px;
+
+    line-height: 1.4;
+
+    white-space: nowrap;
+
+    text-overflow: ellipsis;
+}
+
+.modal-profile-badges {
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 6px;
+}
+
+
+/* =========================================================
+   MODAL SECTIONS
+========================================================= */
+
+.modal-section {
+    margin:
+        22px 22px 0;
+}
+
+.modal-section-heading {
+    display: flex;
+
+    align-items: center;
+
+    gap: 9px;
+
+    margin-bottom: 11px;
+}
+
+.modal-section-icon {
+    width: 32px;
+    height: 32px;
+
+    flex: 0 0 32px;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 9px;
+
+    background: #eef2ff;
+
+    color: #5965e8;
+
+    font-size: 13px;
+}
+
+.modal-section-icon.academic {
+    background: #ecfdf5;
+    color: #059669;
+}
+
+.modal-section-icon.skills {
+    background: #fff7ed;
+    color: #ea580c;
+}
+
+.modal-section-icon.resume {
+    background: #fff1f2;
+    color: #dc2626;
+}
+
+.modal-section-heading h3 {
+    margin:
+        0 0 2px;
+
+    color: #27334a;
+
+    font-size: 13px;
+
+    line-height: 1.2;
+
+    font-weight: 800;
+}
+
+.modal-section-heading p {
+    margin: 0;
+
+    color: #8a96a8;
+
+    font-size: 10px;
+
+    line-height: 1.3;
+}
+
+
+/* =========================================================
+   DETAILS GRID
+========================================================= */
+
+.modal-details-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(0, 1fr)
+        );
+
+    gap: 10px;
+}
+
+.detail-item {
+    min-width: 0;
+
+    min-height: 68px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+    padding:
+        12px 14px;
+
+    box-sizing: border-box;
+
+    background: #f8fafc;
+
+    border:
+        1px solid
+        #e4e9f0;
+
+    border-radius: 10px;
+}
+
+.detail-item-full {
+    grid-column:
+        1 / -1;
+}
+
+.detail-item span {
+    display: block;
+
+    margin-bottom: 5px;
+
+    color: #8b97a9;
+
+    font-size: 9px;
+
+    line-height: 1.2;
+
+    font-weight: 800;
+
+    letter-spacing: 0.45px;
+
+    text-transform: uppercase;
+}
+
+.detail-item strong {
+    display: block;
+
+    min-width: 0;
+
+    color: #29364c;
+
+    font-size: 12px;
+
+    line-height: 1.45;
+
+    font-weight: 700;
+
+    overflow-wrap: anywhere;
+
+    word-break: break-word;
+}
+
+
+/* =========================================================
+   SKILLS
+========================================================= */
+
+.skills-box {
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 7px;
+
+    min-height: 46px;
+
+    padding: 11px;
+
+    box-sizing: border-box;
+
+    background: #f8fafc;
+
+    border:
+        1px solid
+        #e4e9f0;
+
+    border-radius: 10px;
+}
+
+.skills-box span {
+    display: inline-flex;
+
+    align-items: center;
+
+    padding:
+        6px 9px;
+
+    border-radius: 7px;
+
+    background: #eef2ff;
+
+    color: #4f5fd0;
+
+    font-size: 10px;
+
+    font-weight: 700;
+
+    line-height: 1.2;
+}
+
+.not-available-text {
+    margin: auto;
+
+    color: #929dae;
+
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   RESUME
+========================================================= */
+
+.modal-resume-btn {
+    min-height: 44px;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 9px;
+
+    padding:
+        0 13px;
+
+    box-sizing: border-box;
+
+    border:
+        1px solid
+        #fecdd3;
+
+    border-radius: 10px;
+
+    background: #fff7f8;
+
+    color: #c2410c;
+
+    text-decoration: none;
+
+    font-size: 11px;
+
+    font-weight: 800;
+
+    transition:
+        background 0.18s ease,
+        border-color 0.18s ease,
+        transform 0.18s ease;
+}
+
+.modal-resume-btn span {
+    flex: 1;
+}
+
+.modal-resume-btn:hover {
+    background: #fff0f2;
+
+    border-color: #fda4af;
+
+    transform: translateY(-1px);
+}
+
+.resume-not-uploaded {
+    min-height: 44px;
+
+    display: flex;
+
+    align-items: center;
+
+    padding:
+        0 13px;
+
+    box-sizing: border-box;
+
+    border:
+        1px dashed
+        #d8dee8;
+
+    border-radius: 10px;
+
+    background: #fafbfc;
+
+    color: #8a96a8;
+
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   DELETE
+========================================================= */
+
+.modal-delete-area {
+    margin:
+        22px 22px 0;
+
+    padding-top: 18px;
+
+    border-top:
+        1px solid
+        #edf0f4;
+}
+
+.modal-delete-btn {
+    min-height: 40px;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    gap: 7px;
+
+    padding:
+        0 13px;
+
+    border:
+        1px solid
+        #fecaca;
+
+    border-radius: 9px;
+
+    background: #fff5f5;
+
+    color: #dc2626;
+
+    font-size: 10px;
+
+    font-weight: 800;
+
+    cursor: pointer;
+
+    transition:
+        background 0.18s ease,
+        transform 0.18s ease;
+}
+
+.modal-delete-btn:hover {
+    background: #feecec;
+
+    transform: translateY(-1px);
+}
+
+.modal-delete-btn:disabled {
+    opacity: 0.5;
+
+    cursor: not-allowed;
+
+    transform: none;
+}
+
+
+/* =========================================================
+   MODAL FOOTER
+========================================================= */
+
+.modal-footer {
+    flex: 0 0 auto;
+
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 14px;
+
+    padding:
+        12px 18px;
+
+    background: #f8fafc;
+
+    border-top:
+        1px solid
+        #e7ebf1;
+}
+
+.modal-footer-note {
+    min-width: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    color: #7b879b;
+
+    font-size: 10px;
+}
+
+.modal-footer-note svg {
+    flex-shrink: 0;
+
+    color: #059669;
+}
+
+.modal-footer-close {
+    flex-shrink: 0;
+
+    min-height: 34px;
+
+    padding:
+        0 14px;
+
+    border: none;
+
+    border-radius: 8px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #1e293b,
+            #334155
+        );
+
+    color: #ffffff;
+
+    font-size: 10px;
+
+    font-weight: 800;
+
+    cursor: pointer;
+
+    transition:
+        transform 0.18s ease,
+        box-shadow 0.18s ease;
+}
+
+.modal-footer-close:hover {
+    transform: translateY(-1px);
+
+    box-shadow:
+        0 6px 15px
+        rgba(
+            15,
+            23,
+            42,
+            0.18
+        );
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 1000px) {
+
+    .manage-students-page {
+        padding: 22px;
+    }
+
+    .student-stat-grid {
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(0, 1fr)
+            );
+    }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 700px) {
+
+    .manage-students-page {
+        padding: 15px;
+    }
+
+
+    .students-page-header {
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        gap: 14px;
+    }
+
+
+    .student-total {
+        width: 100%;
+
+        box-sizing: border-box;
+
+        text-align: left;
+    }
+
+
+    .student-stat-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+    .students-toolbar {
+        align-items: stretch;
+
+        flex-direction: column;
+    }
+
+
+    .student-search {
+        width: 100%;
+    }
+
+
+    .student-result-count {
+        text-align: right;
+    }
+
+
+    /* =========================================
+       MOBILE MODAL
+    ========================================= */
+
+    .student-modal-overlay {
+        align-items: center;
+        justify-content: center;
+
+        padding: 8px;
+    }
+
+
+    .student-modal {
+
+        width: 100%;
+
+        max-width: 100%;
+
+        height:
+            calc(
+                100dvh - 16px
+            );
+
+        max-height:
+            calc(
+                100dvh - 16px
+            );
+
+        border-radius: 16px;
+    }
+
+
+    .modal-header {
+        padding:
+            11px 12px;
+    }
+
+
+    .modal-header-icon {
+        width: 42px;
+        height: 42px;
+
+        flex-basis: 42px;
+    }
+
+
+    .modal-header-title h2 {
+        max-width: 210px;
+
+        font-size: 18px;
+    }
+
+
+    .modal-close {
+        width: 38px;
+        height: 38px;
+
+        flex-basis: 38px;
+    }
+
+
+    .modal-profile {
+        margin:
+            14px 12px 0;
+
+        padding: 13px;
+
+        gap: 12px;
+    }
+
+
+    .modal-avatar {
+        width: 68px;
+        height: 68px;
+
+        min-width: 68px;
+        min-height: 68px;
+
+        max-width: 68px;
+        max-height: 68px;
+
+        flex-basis: 68px;
+    }
+
+
+    .modal-avatar-fallback {
+        font-size: 20px;
+    }
+
+
+    .modal-profile-info h3 {
+        font-size: 17px;
+    }
+
+
+    .modal-section {
+        margin:
+            18px 12px 0;
+    }
+
+
+    .modal-details-grid {
+        grid-template-columns: 1fr;
+    }
+
+
+    .detail-item-full {
+        grid-column: auto;
+    }
+
+
+    .modal-delete-area {
+        margin:
+            18px 12px 0;
+    }
+
+
+    .modal-footer {
+        padding:
+            10px 12px;
+    }
+
+
+    .modal-footer-note span {
+        display: none;
+    }
+
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 430px) {
+
+    .students-page-header h1 {
+        font-size: 26px;
+    }
+
+
+    .student-cell {
+        gap: 8px;
+    }
+
+
+    .student-avatar {
+        width: 40px;
+        height: 40px;
+
+        min-width: 40px;
+        min-height: 40px;
+
+        max-width: 40px;
+        max-height: 40px;
+
+        flex-basis: 40px;
+    }
+
+
+    .student-name-block strong {
+        max-width: 130px;
+    }
+
+
+    .student-name-block span {
+        max-width: 130px;
+    }
+
+
+    .modal-profile {
+        align-items: flex-start;
+    }
+
+
+    .modal-avatar {
+        width: 62px;
+        height: 62px;
+
+        min-width: 62px;
+        min-height: 62px;
+
+        max-width: 62px;
+        max-height: 62px;
+
+        flex-basis: 62px;
+    }
+
+
+    .modal-profile-info h3 {
+        max-width: 210px;
+    }
+
+
+    .modal-footer {
+        flex-direction: column;
+
+        align-items: stretch;
+    }
+
+
+    .modal-footer-close {
+        width: 100%;
+    }
+
+}

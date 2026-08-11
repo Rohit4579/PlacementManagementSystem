@@ -1,0 +1,178 @@
+/* ===========================
+   Resume Upload
+=========================== */
+
+.resume-upload{
+    width:100%;
+    display:flex;
+    justify-content:center;
+    align-items:flex-start;
+    padding:30px;
+    box-sizing:border-box;
+}
+
+.resume-card{
+    width:100%;
+    max-width:700px;
+    background:#ffffff;
+    border-radius:20px;
+    padding:40px;
+    box-shadow:0 10px 30px rgba(0,0,0,.08);
+}
+
+.resume-card h1{
+    margin:0;
+    font-size:30px;
+    color:#111827;
+    font-weight:700;
+}
+
+.resume-card p{
+    margin-top:10px;
+    margin-bottom:30px;
+    color:#6b7280;
+    font-size:16px;
+    line-height:1.6;
+}
+
+/* ===========================
+   File Upload
+=========================== */
+
+.resume-input{
+    width:100%;
+    padding:16px;
+    border:2px dashed #cbd5e1;
+    border-radius:14px;
+    background:#f8fafc;
+    cursor:pointer;
+    transition:.3s;
+    box-sizing:border-box;
+}
+
+.resume-input:hover{
+    border-color:#667eea;
+    background:#eef2ff;
+}
+
+.resume-input::file-selector-button{
+    background:#667eea;
+    color:#fff;
+    border:none;
+    padding:10px 18px;
+    border-radius:8px;
+    cursor:pointer;
+    margin-right:15px;
+    font-weight:600;
+    transition:.3s;
+}
+
+.resume-input::file-selector-button:hover{
+    background:#5646c9;
+}
+
+/* ===========================
+   Upload Button
+=========================== */
+
+.upload-btn{
+    width:100%;
+    margin-top:25px;
+    padding:15px;
+    border:none;
+    border-radius:12px;
+    background:#667eea;
+    color:#fff;
+    font-size:17px;
+    font-weight:600;
+    cursor:pointer;
+    transition:.3s;
+}
+
+.upload-btn:hover{
+    background:#5646c9;
+    transform:translateY(-2px);
+}
+
+.upload-btn:disabled{
+    background:#b8c0ff;
+    cursor:not-allowed;
+    transform:none;
+}
+
+/* ===========================
+   Resume Preview
+=========================== */
+
+.resume-preview{
+    margin-top:30px;
+    padding:20px;
+    background:#f9fafb;
+    border:1px solid #e5e7eb;
+    border-radius:14px;
+    display:flex;
+    justify-content:space-between;
+    align-items:center;
+    flex-wrap:wrap;
+    gap:15px;
+}
+
+.resume-preview span{
+    font-size:16px;
+    font-weight:600;
+    color:#111827;
+}
+
+.resume-preview a{
+    padding:12px 22px;
+    border-radius:10px;
+    background:#10b981;
+    color:#fff;
+    text-decoration:none;
+    font-weight:600;
+    transition:.3s;
+}
+
+.resume-preview a:hover{
+    background:#059669;
+}
+
+/* ===========================
+   Upload Status
+=========================== */
+
+.upload-status{
+    margin-top:18px;
+    font-size:15px;
+    color:#6b7280;
+}
+
+/* ===========================
+   Responsive
+=========================== */
+
+@media(max-width:768px){
+
+    .resume-upload{
+        padding:20px;
+    }
+
+    .resume-card{
+        padding:25px;
+    }
+
+    .resume-card h1{
+        font-size:24px;
+    }
+
+    .resume-preview{
+        flex-direction:column;
+        align-items:flex-start;
+    }
+
+    .resume-preview a{
+        width:100%;
+        text-align:center;
+    }
+
+}

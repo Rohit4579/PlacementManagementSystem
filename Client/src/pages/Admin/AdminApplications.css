@@ -1,0 +1,1497 @@
+/* =========================================================
+   ADMIN APPLICATIONS
+========================================================= */
+
+.admin-applications-page {
+
+    width: 100%;
+
+    min-height: 100%;
+
+    padding: 28px;
+
+    box-sizing: border-box;
+
+    background:
+        #f5f7fb;
+
+    color:
+        #172033;
+
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.applications-header {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 24px;
+
+    margin-bottom: 26px;
+
+}
+
+
+.page-label {
+
+    display: inline-block;
+
+    margin-bottom: 7px;
+
+    font-size: 11px;
+
+    font-weight: 800;
+
+    letter-spacing: 1.3px;
+
+    color:
+        #64748b;
+
+}
+
+
+.applications-header h1 {
+
+    margin: 0;
+
+    font-size: 30px;
+
+    line-height: 1.15;
+
+    font-weight: 800;
+
+    color:
+        #111827;
+
+}
+
+
+.applications-header p {
+
+    margin: 8px 0 0;
+
+    color:
+        #64748b;
+
+    font-size: 14px;
+
+}
+
+
+/* =========================================================
+   REFRESH BUTTON
+========================================================= */
+
+.refresh-button {
+
+    border: 0;
+
+    border-radius: 9px;
+
+    padding: 11px 18px;
+
+    min-width: 96px;
+
+    background:
+        #2563eb;
+
+    color:
+        #ffffff;
+
+    font-size: 13px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        background .2s ease,
+        transform .2s ease,
+        box-shadow .2s ease;
+
+}
+
+
+.refresh-button:hover {
+
+    background:
+        #1d4ed8;
+
+    transform:
+        translateY(-1px);
+
+    box-shadow:
+        0 6px 16px rgba(
+            37,
+            99,
+            235,
+            .18
+        );
+
+}
+
+
+.refresh-button:disabled {
+
+    opacity: .65;
+
+    cursor: not-allowed;
+
+    transform: none;
+
+}
+
+
+/* =========================================================
+   STATISTICS
+========================================================= */
+
+.application-stat-grid {
+
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            4,
+            minmax(
+                0,
+                1fr
+            )
+        );
+
+    gap: 16px;
+
+    margin-bottom: 22px;
+
+}
+
+
+.application-stat-card {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 14px;
+
+    min-width: 0;
+
+    padding: 17px;
+
+    background:
+        #ffffff;
+
+    border:
+        1px solid #e6eaf0;
+
+    border-radius: 13px;
+
+    box-shadow:
+        0 4px 16px rgba(
+            15,
+            23,
+            42,
+            .045
+        );
+
+}
+
+
+.stat-icon {
+
+    width: 42px;
+
+    height: 42px;
+
+    flex: 0 0 42px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 11px;
+
+    font-size: 15px;
+
+    font-weight: 800;
+
+}
+
+
+.stat-icon.total {
+
+    background:
+        #e8f0ff;
+
+    color:
+        #2563eb;
+
+}
+
+
+.stat-icon.pending {
+
+    background:
+        #fff7df;
+
+    color:
+        #b77900;
+
+}
+
+
+.stat-icon.accepted {
+
+    background:
+        #e7f8ee;
+
+    color:
+        #16834b;
+
+}
+
+
+.stat-icon.rejected {
+
+    background:
+        #ffeaea;
+
+    color:
+        #d63b3b;
+
+}
+
+
+.application-stat-card span {
+
+    display: block;
+
+    margin-bottom: 4px;
+
+    color:
+        #64748b;
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+}
+
+
+.application-stat-card strong {
+
+    display: block;
+
+    color:
+        #111827;
+
+    font-size: 22px;
+
+    line-height: 1;
+
+}
+
+
+/* =========================================================
+   TOOLBAR
+========================================================= */
+
+.applications-toolbar {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 14px;
+
+    margin-bottom: 16px;
+
+}
+
+
+.search-container {
+
+    position: relative;
+
+    width: min(
+        470px,
+        100%
+    );
+
+}
+
+
+.search-icon {
+
+    position: absolute;
+
+    top: 50%;
+
+    left: 14px;
+
+    transform:
+        translateY(-50%);
+
+    font-size: 14px;
+
+    pointer-events: none;
+
+}
+
+
+.search-container input {
+
+    width: 100%;
+
+    height: 44px;
+
+    box-sizing: border-box;
+
+    padding:
+        0 14px 0 40px;
+
+    border:
+        1px solid #dce2ea;
+
+    border-radius: 9px;
+
+    outline: none;
+
+    background:
+        #ffffff;
+
+    color:
+        #172033;
+
+    font-size: 13px;
+
+    transition:
+        border-color .2s ease,
+        box-shadow .2s ease;
+
+}
+
+
+.search-container input::placeholder {
+
+    color:
+        #9aa5b5;
+
+}
+
+
+.search-container input:focus {
+
+    border-color:
+        #2563eb;
+
+    box-shadow:
+        0 0 0 3px rgba(
+            37,
+            99,
+            235,
+            .09
+        );
+
+}
+
+
+.applications-toolbar select {
+
+    height: 44px;
+
+    min-width: 150px;
+
+    padding:
+        0 34px 0 13px;
+
+    border:
+        1px solid #dce2ea;
+
+    border-radius: 9px;
+
+    background:
+        #ffffff;
+
+    color:
+        #334155;
+
+    outline: none;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+    cursor: pointer;
+
+}
+
+
+/* =========================================================
+   APPLICATION CARD
+========================================================= */
+
+.applications-card {
+
+    width: 100%;
+
+    overflow: hidden;
+
+    background:
+        #ffffff;
+
+    border:
+        1px solid #e5e9f0;
+
+    border-radius: 14px;
+
+    box-shadow:
+        0 5px 20px rgba(
+            15,
+            23,
+            42,
+            .045
+        );
+
+}
+
+
+/* =========================================================
+   TABLE WRAPPER
+========================================================= */
+
+.applications-table-wrapper {
+
+    width: 100%;
+
+    overflow-x: auto;
+
+    overflow-y: hidden;
+
+    -webkit-overflow-scrolling: touch;
+
+}
+
+
+.applications-table {
+
+    width: 100%;
+
+    min-width: 920px;
+
+    border-collapse: collapse;
+
+    table-layout: fixed;
+
+}
+
+
+/* =========================================================
+   COLUMN WIDTHS
+========================================================= */
+
+.applications-table th:nth-child(1),
+.applications-table td:nth-child(1) {
+
+    width: 25%;
+
+}
+
+
+.applications-table th:nth-child(2),
+.applications-table td:nth-child(2) {
+
+    width: 18%;
+
+}
+
+
+.applications-table th:nth-child(3),
+.applications-table td:nth-child(3) {
+
+    width: 17%;
+
+}
+
+
+.applications-table th:nth-child(4),
+.applications-table td:nth-child(4) {
+
+    width: 12%;
+
+}
+
+
+.applications-table th:nth-child(5),
+.applications-table td:nth-child(5) {
+
+    width: 13%;
+
+}
+
+
+.applications-table th:nth-child(6),
+.applications-table td:nth-child(6) {
+
+    width: 15%;
+
+}
+
+
+/* =========================================================
+   TABLE HEADER
+========================================================= */
+
+.applications-table thead {
+
+    background:
+        #f8fafc;
+
+}
+
+
+.applications-table th {
+
+    padding:
+        14px 16px;
+
+    border-bottom:
+        1px solid #e7ebf1;
+
+    color:
+        #64748b;
+
+    font-size: 11px;
+
+    font-weight: 800;
+
+    text-align: left;
+
+    text-transform: uppercase;
+
+    letter-spacing: .55px;
+
+    white-space: nowrap;
+
+}
+
+
+/* =========================================================
+   TABLE BODY
+========================================================= */
+
+.applications-table td {
+
+    padding:
+        14px 16px;
+
+    border-bottom:
+        1px solid #eef1f5;
+
+    vertical-align: middle;
+
+}
+
+
+.applications-table tbody tr {
+
+    transition:
+        background .15s ease;
+
+}
+
+
+.applications-table tbody tr:hover {
+
+    background:
+        #fafcff;
+
+}
+
+
+.applications-table tbody tr:last-child td {
+
+    border-bottom:
+        none;
+
+}
+
+
+/* =========================================================
+   STUDENT CELL
+========================================================= */
+
+.student-cell {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 11px;
+
+    min-width: 0;
+
+}
+
+
+/* =========================================================
+   PERFECT CIRCULAR AVATAR
+========================================================= */
+
+.student-avatar {
+
+    position: relative;
+
+    width: 42px;
+
+    height: 42px;
+
+    min-width: 42px;
+
+    flex: 0 0 42px;
+
+    overflow: hidden;
+
+    border-radius: 50%;
+
+    background:
+        #e8eef8;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    box-sizing: border-box;
+
+    border:
+        2px solid #ffffff;
+
+    box-shadow:
+        0 0 0 1px #dce3ed;
+
+}
+
+
+/* REAL PROFILE PHOTO */
+
+.student-avatar-image {
+
+    display: block;
+
+    width: 100%;
+
+    height: 100%;
+
+    min-width: 100%;
+
+    min-height: 100%;
+
+    border-radius: 50%;
+
+    object-fit: cover;
+
+    object-position: center;
+
+}
+
+
+/* INITIALS FALLBACK */
+
+.student-avatar-fallback {
+
+    width: 100%;
+
+    height: 100%;
+
+    border-radius: 50%;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background:
+        #e8eef8;
+
+    color:
+        #315b9b;
+
+    font-size: 14px;
+
+    font-weight: 800;
+
+    line-height: 1;
+
+    text-transform: uppercase;
+
+}
+
+
+/* =========================================================
+   STUDENT INFO
+========================================================= */
+
+.student-info {
+
+    min-width: 0;
+
+    width: 100%;
+
+    overflow: hidden;
+
+}
+
+
+.student-info strong {
+
+    display: block;
+
+    max-width: 100%;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+
+    color:
+        #182233;
+
+    font-size: 13px;
+
+    font-weight: 750;
+
+    line-height: 1.35;
+
+}
+
+
+.student-info span {
+
+    display: block;
+
+    max-width: 100%;
+
+    margin-top: 3px;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+
+    color:
+        #7b8798;
+
+    font-size: 11px;
+
+    line-height: 1.3;
+
+}
+
+
+/* =========================================================
+   JOB
+========================================================= */
+
+.job-name {
+
+    display: block;
+
+    max-width: 100%;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+
+    color:
+        #1f2937;
+
+    font-size: 13px;
+
+    font-weight: 700;
+
+}
+
+
+/* =========================================================
+   COMPANY
+========================================================= */
+
+.company-name {
+
+    display: block;
+
+    max-width: 100%;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+
+    color:
+        #475569;
+
+    font-size: 13px;
+
+    font-weight: 600;
+
+}
+
+
+/* =========================================================
+   STATUS
+========================================================= */
+
+.application-status {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    min-width: 82px;
+
+    justify-content: center;
+
+    padding:
+        6px 9px;
+
+    border-radius: 999px;
+
+    font-size: 11px;
+
+    font-weight: 800;
+
+    white-space: nowrap;
+
+}
+
+
+.status-dot {
+
+    width: 6px;
+
+    height: 6px;
+
+    border-radius: 50%;
+
+    flex: 0 0 6px;
+
+}
+
+
+.application-status.pending {
+
+    background:
+        #fff7df;
+
+    color:
+        #9a6800;
+
+}
+
+
+.application-status.pending
+.status-dot {
+
+    background:
+        #d69e00;
+
+}
+
+
+.application-status.accepted {
+
+    background:
+        #e8f8ef;
+
+    color:
+        #16834b;
+
+}
+
+
+.application-status.accepted
+.status-dot {
+
+    background:
+        #18a558;
+
+}
+
+
+.application-status.rejected {
+
+    background:
+        #ffeaea;
+
+    color:
+        #c83232;
+
+}
+
+
+.application-status.rejected
+.status-dot {
+
+    background:
+        #df3c3c;
+
+}
+
+
+/* =========================================================
+   APPLIED DATE
+========================================================= */
+
+.applied-date {
+
+    display: block;
+
+    color:
+        #64748b;
+
+    font-size: 12px;
+
+    font-weight: 600;
+
+    white-space: nowrap;
+
+}
+
+
+/* =========================================================
+   ACTIONS
+========================================================= */
+
+.application-actions {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    flex-wrap: nowrap;
+
+}
+
+
+.application-actions button {
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 5px;
+
+    height: 32px;
+
+    padding:
+        0 9px;
+
+    border-radius: 7px;
+
+    font-size: 11px;
+
+    font-weight: 750;
+
+    cursor: pointer;
+
+    white-space: nowrap;
+
+    transition:
+        background .18s ease,
+        border-color .18s ease,
+        color .18s ease,
+        transform .18s ease;
+
+}
+
+
+.application-actions button:hover {
+
+    transform:
+        translateY(-1px);
+
+}
+
+
+.application-actions button:disabled {
+
+    opacity: .55;
+
+    cursor: not-allowed;
+
+    transform: none;
+
+}
+
+
+/* =========================================================
+   SELECT
+========================================================= */
+
+.select-button {
+
+    border:
+        1px solid #bde4cc;
+
+    background:
+        #f0fbf5;
+
+    color:
+        #16834b;
+
+}
+
+
+.select-button:hover {
+
+    background:
+        #e5f7ed;
+
+    border-color:
+        #9bd4b4;
+
+}
+
+
+.action-check {
+
+    font-size: 12px;
+
+    font-weight: 900;
+
+}
+
+
+/* =========================================================
+   REJECT
+========================================================= */
+
+.reject-button {
+
+    border:
+        1px solid #f2c7c7;
+
+    background:
+        #fff7f7;
+
+    color:
+        #c83232;
+
+}
+
+
+.reject-button:hover {
+
+    background:
+        #ffeded;
+
+    border-color:
+        #e8aaaa;
+
+}
+
+
+.trash-icon {
+
+    width: 13px;
+
+    height: 13px;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+}
+
+
+.trash-icon svg {
+
+    width: 13px;
+
+    height: 13px;
+
+    fill: currentColor;
+
+}
+
+
+/* =========================================================
+   MESSAGE / EMPTY STATE
+========================================================= */
+
+.applications-message {
+
+    min-height: 300px;
+
+    padding: 45px 25px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    flex-direction: column;
+
+    text-align: center;
+
+}
+
+
+.applications-message h3 {
+
+    margin:
+        12px 0 5px;
+
+    color:
+        #1e293b;
+
+    font-size: 17px;
+
+}
+
+
+.applications-message p {
+
+    margin: 0;
+
+    max-width: 420px;
+
+    color:
+        #718096;
+
+    font-size: 13px;
+
+    line-height: 1.6;
+
+}
+
+
+.empty-icon,
+.message-icon {
+
+    width: 48px;
+
+    height: 48px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 50%;
+
+    background:
+        #f1f5f9;
+
+    font-size: 20px;
+
+}
+
+
+.applications-message.error
+.empty-icon {
+
+    background:
+        #fff1f1;
+
+}
+
+
+/* =========================================================
+   ERROR BUTTON
+========================================================= */
+
+.applications-message button {
+
+    margin-top: 17px;
+
+    border: 0;
+
+    border-radius: 8px;
+
+    padding:
+        9px 16px;
+
+    background:
+        #2563eb;
+
+    color:
+        #ffffff;
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+}
+
+
+.applications-message button:hover {
+
+    background:
+        #1d4ed8;
+
+}
+
+
+/* =========================================================
+   LOADING SPINNER
+========================================================= */
+
+.loading-spinner {
+
+    width: 32px;
+
+    height: 32px;
+
+    border:
+        3px solid #e2e8f0;
+
+    border-top-color:
+        #2563eb;
+
+    border-radius: 50%;
+
+    animation:
+        adminApplicationsSpin
+        .8s
+        linear
+        infinite;
+
+}
+
+
+@keyframes adminApplicationsSpin {
+
+    to {
+
+        transform:
+            rotate(360deg);
+
+    }
+
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (
+    max-width: 1000px
+) {
+
+    .admin-applications-page {
+
+        padding: 22px;
+
+    }
+
+
+    .application-stat-grid {
+
+        grid-template-columns:
+            repeat(
+                2,
+                minmax(
+                    0,
+                    1fr
+                )
+            );
+
+    }
+
+
+    .applications-table {
+
+        min-width: 880px;
+
+    }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (
+    max-width: 700px
+) {
+
+    .admin-applications-page {
+
+        padding: 16px;
+
+    }
+
+
+    .applications-header {
+
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        gap: 14px;
+
+    }
+
+
+    .applications-header h1 {
+
+        font-size: 25px;
+
+    }
+
+
+    .refresh-button {
+
+        width: 100%;
+
+    }
+
+
+    .application-stat-grid {
+
+        grid-template-columns:
+            1fr 1fr;
+
+        gap: 10px;
+
+    }
+
+
+    .application-stat-card {
+
+        padding: 13px;
+
+        gap: 10px;
+
+    }
+
+
+    .stat-icon {
+
+        width: 36px;
+
+        height: 36px;
+
+        flex-basis: 36px;
+
+    }
+
+
+    .application-stat-card span {
+
+        font-size: 10px;
+
+    }
+
+
+    .application-stat-card strong {
+
+        font-size: 19px;
+
+    }
+
+
+    .applications-toolbar {
+
+        align-items: stretch;
+
+        flex-direction: column;
+
+    }
+
+
+    .search-container {
+
+        width: 100%;
+
+    }
+
+
+    .applications-toolbar select {
+
+        width: 100%;
+
+    }
+
+
+    .applications-card {
+
+        border-radius: 11px;
+
+    }
+
+
+    .applications-table {
+
+        min-width: 900px;
+
+    }
+
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (
+    max-width: 420px
+) {
+
+    .admin-applications-page {
+
+        padding: 12px;
+
+    }
+
+
+    .application-stat-grid {
+
+        grid-template-columns:
+            1fr;
+
+    }
+
+
+    .applications-header p {
+
+        font-size: 12px;
+
+    }
+
+}

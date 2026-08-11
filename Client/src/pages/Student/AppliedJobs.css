@@ -1,0 +1,1363 @@
+/* =========================================================
+   APPLIED JOBS PAGE
+========================================================= */
+
+.applied-page {
+    width: 100%;
+    min-height: 100%;
+    padding: 24px;
+    box-sizing: border-box;
+
+    background: #f8fafc;
+}
+
+
+/* =========================================================
+   HEADER
+========================================================= */
+
+.applied-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+
+    gap: 24px;
+
+    margin-bottom: 26px;
+}
+
+.applied-header-content {
+    min-width: 0;
+}
+
+.applied-label {
+    display: inline-block;
+
+    margin-bottom: 7px;
+
+    color: #6366f1;
+
+    font-size: 10px;
+    font-weight: 800;
+
+    letter-spacing: 1.1px;
+}
+
+.applied-header h1 {
+    margin: 0 0 7px;
+
+    color: #111827;
+
+    font-size: 30px;
+    line-height: 1.2;
+
+    font-weight: 800;
+
+    letter-spacing: -0.4px;
+}
+
+.applied-header p {
+    max-width: 620px;
+
+    margin: 0;
+
+    color: #64748b;
+
+    font-size: 13px;
+
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   APPLICATION COUNT
+========================================================= */
+
+.applications-count {
+    display: flex;
+    align-items: center;
+
+    gap: 11px;
+
+    flex-shrink: 0;
+
+    padding: 11px 15px;
+
+    background: #ffffff;
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 12px;
+
+    box-shadow:
+        0 3px 12px
+        rgba(15, 23, 42, 0.04);
+}
+
+.applications-count-icon {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    width: 38px;
+    height: 38px;
+
+    flex-shrink: 0;
+
+    border-radius: 10px;
+
+    background: #eef2ff;
+
+    color: #4f46e5;
+
+    font-size: 15px;
+}
+
+.applications-count-text {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 1px;
+}
+
+.applications-count strong {
+    color: #111827;
+
+    font-size: 18px;
+
+    line-height: 1;
+
+    font-weight: 800;
+}
+
+.applications-count span {
+    color: #94a3b8;
+
+    font-size: 10px;
+
+    font-weight: 600;
+}
+
+
+/* =========================================================
+   APPLICATION GRID
+========================================================= */
+
+.application-grid {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(0, 1fr)
+        );
+
+    gap: 18px;
+
+    width: 100%;
+}
+
+
+/* =========================================================
+   APPLICATION CARD
+========================================================= */
+
+.application-card {
+    display: flex;
+
+    flex-direction: column;
+
+    min-width: 0;
+
+    width: 100%;
+
+    padding: 26px;
+
+    box-sizing: border-box;
+
+    background: #ffffff;
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 16px;
+
+    box-shadow:
+        0 4px 15px
+        rgba(15, 23, 42, 0.04);
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        border-color 0.2s ease;
+}
+
+.application-card:hover {
+    transform: translateY(-2px);
+
+    border-color: #d7daf7;
+
+    box-shadow:
+        0 10px 26px
+        rgba(15, 23, 42, 0.07);
+}
+
+
+/* =========================================================
+   CARD TOP
+========================================================= */
+
+.application-card-top {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 16px;
+
+    width: 100%;
+
+    min-width: 0;
+
+    margin-bottom: 20px;
+
+    box-sizing: border-box;
+}
+
+
+/* =========================================================
+   COMPANY MAIN
+========================================================= */
+
+.company-main {
+    display: flex;
+
+    align-items: center;
+
+    gap: 14px;
+
+    min-width: 0;
+
+    flex: 1 1 auto;
+}
+
+
+/* =========================================================
+   COMPANY AVATAR
+========================================================= */
+
+.company-avatar {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 54px;
+    height: 54px;
+
+    min-width: 54px;
+
+    flex-shrink: 0;
+
+    box-sizing: border-box;
+
+    border-radius: 13px;
+
+    background: #eef2ff;
+
+    color: #4f46e5;
+
+    font-size: 18px;
+}
+
+
+/* =========================================================
+   COMPANY DETAILS
+========================================================= */
+
+.company-details {
+    min-width: 0;
+
+    flex: 1 1 auto;
+
+    overflow: hidden;
+}
+
+.company-details > span {
+    display: block;
+
+    margin-bottom: 4px;
+
+    color: #94a3b8;
+
+    font-size: 8px;
+
+    font-weight: 800;
+
+    letter-spacing: 0.9px;
+}
+
+.company-details h2 {
+    width: 100%;
+
+    margin: 0;
+
+    overflow: hidden;
+
+    color: #1e293b;
+
+    font-size: 16px;
+
+    line-height: 1.3;
+
+    font-weight: 750;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   STATUS BADGE
+   CLEAN STYLE - NO BACKGROUND BOX
+========================================================= */
+
+.status-badge {
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: flex-end;
+
+    gap: 7px;
+
+    flex: 0 0 auto;
+
+    width: auto;
+
+    min-width: 0;
+
+    max-width: 100%;
+
+    min-height: 0;
+
+    padding: 0;
+
+    box-sizing: border-box;
+
+    border: none;
+
+    border-radius: 0;
+
+    background: transparent;
+
+    box-shadow: none;
+
+    font-size: 10px;
+
+    font-weight: 750;
+
+    line-height: 1;
+
+    white-space: nowrap;
+
+    overflow: visible;
+
+    flex-shrink: 0;
+}
+
+.status-badge svg {
+    display: block;
+
+    flex: 0 0 auto;
+
+    width: 11px;
+
+    height: 11px;
+
+    font-size: 11px;
+}
+
+.status-badge span {
+    display: block;
+
+    flex: 0 0 auto;
+
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   PENDING
+========================================================= */
+
+.status-badge.pending {
+    color: #c2410c;
+
+    background: transparent;
+
+    border: none;
+
+    box-shadow: none;
+}
+
+
+/* =========================================================
+   APPLIED
+========================================================= */
+
+.status-badge.applied {
+    color: #2563eb;
+
+    background: transparent;
+
+    border: none;
+
+    box-shadow: none;
+}
+
+
+/* =========================================================
+   SHORTLISTED
+========================================================= */
+
+.status-badge.shortlisted {
+    color: #b45309;
+
+    background: transparent;
+
+    border: none;
+
+    box-shadow: none;
+}
+
+
+/* =========================================================
+   ACCEPTED
+========================================================= */
+
+.status-badge.accepted {
+    color: #059669;
+
+    background: transparent;
+
+    border: none;
+
+    box-shadow: none;
+}
+
+
+/* =========================================================
+   REJECTED
+========================================================= */
+
+.status-badge.rejected {
+    color: #b91c1c;
+
+    background: transparent;
+
+    border: none;
+
+    box-shadow: none;
+}
+
+
+/* =========================================================
+   JOB HEADING
+========================================================= */
+
+.job-heading {
+    width: 100%;
+
+    padding-bottom: 17px;
+
+    box-sizing: border-box;
+
+    border-bottom: 1px solid #f1f5f9;
+}
+
+.job-heading h3 {
+    display: flex;
+
+    align-items: flex-start;
+
+    gap: 9px;
+
+    min-width: 0;
+
+    margin: 0;
+
+    color: #111827;
+
+    font-size: 19px;
+
+    line-height: 1.4;
+
+    font-weight: 750;
+}
+
+.job-heading h3 svg {
+    flex-shrink: 0;
+
+    margin-top: 5px;
+
+    color: #6366f1;
+
+    font-size: 14px;
+}
+
+.job-heading h3 span {
+    min-width: 0;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+}
+
+
+/* =========================================================
+   APPLICATION DETAILS
+========================================================= */
+
+.application-details {
+    display: grid;
+
+    grid-template-columns:
+        repeat(
+            2,
+            minmax(0, 1fr)
+        );
+
+    gap: 10px;
+
+    width: 100%;
+
+    margin-top: 17px;
+}
+
+.detail-item {
+    display: flex;
+
+    align-items: flex-start;
+
+    gap: 9px;
+
+    min-width: 0;
+
+    padding: 13px;
+
+    box-sizing: border-box;
+
+    border-radius: 10px;
+
+    background: #f8fafc;
+
+    border: 1px solid #eef2f7;
+}
+
+.detail-icon {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 30px;
+    height: 30px;
+
+    min-width: 30px;
+
+    flex-shrink: 0;
+
+    border-radius: 8px;
+
+    background: #ffffff;
+
+    color: #6366f1;
+
+    font-size: 11px;
+}
+
+.detail-item > div:last-child {
+    display: flex;
+
+    flex-direction: column;
+
+    gap: 3px;
+
+    min-width: 0;
+
+    flex: 1 1 auto;
+}
+
+.detail-item span {
+    color: #94a3b8;
+
+    font-size: 8px;
+
+    font-weight: 700;
+
+    line-height: 1.3;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.3px;
+}
+
+.detail-item strong {
+    min-width: 0;
+
+    overflow: hidden;
+
+    color: #334155;
+
+    font-size: 12px;
+
+    line-height: 1.4;
+
+    font-weight: 650;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   JOB DESCRIPTION
+========================================================= */
+
+.application-description {
+    width: 100%;
+
+    margin-top: 18px;
+
+    padding-top: 17px;
+
+    box-sizing: border-box;
+
+    border-top: 1px solid #f1f5f9;
+}
+
+.application-description h4 {
+    margin: 0 0 7px;
+
+    color: #334155;
+
+    font-size: 11px;
+
+    font-weight: 750;
+}
+
+.application-description p {
+    display: -webkit-box;
+
+    margin: 0;
+
+    overflow: hidden;
+
+    color: #64748b;
+
+    font-size: 11px;
+
+    line-height: 1.6;
+
+    -webkit-box-orient: vertical;
+
+}
+
+
+/* =========================================================
+   SKILLS
+========================================================= */
+
+.application-skills {
+    width: 100%;
+
+    margin-top: 17px;
+}
+
+.skills-heading {
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    margin-bottom: 9px;
+
+    color: #475569;
+
+    font-size: 10px;
+
+    font-weight: 750;
+}
+
+.skills-heading svg {
+    color: #6366f1;
+
+    font-size: 10px;
+}
+
+.skills-list {
+    display: flex;
+
+    flex-wrap: wrap;
+
+    gap: 6px;
+
+    min-width: 0;
+}
+
+.skills-list span {
+    display: inline-block;
+
+    max-width: 100%;
+
+    padding: 5px 9px;
+
+    border-radius: 6px;
+
+    background: #eef2ff;
+
+    color: #4f46e5;
+
+    font-size: 9px;
+
+    font-weight: 600;
+
+    line-height: 1.3;
+
+    overflow-wrap: anywhere;
+}
+
+
+/* =========================================================
+   CARD FOOTER
+========================================================= */
+
+.application-footer {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 10px;
+
+    margin-top: 19px;
+
+    padding-top: 14px;
+
+    border-top: 1px solid #f1f5f9;
+}
+
+.application-id {
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    min-width: 0;
+
+    color: #94a3b8;
+
+    font-size: 9px;
+}
+
+.application-id svg {
+    flex-shrink: 0;
+
+    color: #10b981;
+
+    font-size: 10px;
+}
+
+.application-reference {
+    flex-shrink: 0;
+
+    color: #cbd5e1;
+
+    font-family: monospace;
+
+    font-size: 8px;
+}
+
+
+/* =========================================================
+   DELETE APPLICATION BUTTON
+========================================================= */
+
+.delete-application-button {
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 7px;
+
+    width: 100%;
+
+    min-height: 40px;
+
+    margin-top: 14px;
+
+    padding: 9px 14px;
+
+    box-sizing: border-box;
+
+    border: 1px solid #fecaca;
+
+    border-radius: 8px;
+
+    background: #ffffff;
+
+    color: #b91c1c;
+
+    font-family: inherit;
+
+    font-size: 11px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease,
+        transform 0.15s ease;
+}
+
+.delete-application-button:hover:not(:disabled) {
+    background: #fef2f2;
+
+    border-color: #fca5a5;
+
+    color: #991b1b;
+
+    transform: translateY(-1px);
+}
+
+.delete-application-button:active:not(:disabled) {
+    transform: translateY(0);
+}
+
+.delete-application-button:disabled {
+    opacity: 0.6;
+
+    cursor: not-allowed;
+}
+
+
+/* =========================================================
+   EMPTY STATE
+========================================================= */
+
+.empty-state {
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    min-height: 330px;
+
+    padding: 45px 20px;
+
+    box-sizing: border-box;
+
+    text-align: center;
+
+    background: #ffffff;
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 15px;
+
+    box-shadow:
+        0 4px 15px
+        rgba(15, 23, 42, 0.04);
+}
+
+.empty-icon {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 58px;
+    height: 58px;
+
+    margin-bottom: 14px;
+
+    border-radius: 50%;
+
+    background: #eef2ff;
+
+    color: #6366f1;
+
+    font-size: 21px;
+}
+
+.empty-state h2 {
+    margin: 0 0 7px;
+
+    color: #1e293b;
+
+    font-size: 18px;
+
+    font-weight: 750;
+}
+
+.empty-state p {
+    max-width: 420px;
+
+    margin: 0;
+
+    color: #94a3b8;
+
+    font-size: 12px;
+
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   LOADING
+========================================================= */
+
+.applied-loading {
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    min-height: 350px;
+
+    padding: 40px;
+
+    box-sizing: border-box;
+
+    background: #ffffff;
+
+    border: 1px solid #e5e7eb;
+
+    border-radius: 15px;
+
+    text-align: center;
+}
+
+.applied-spinner {
+    width: 32px;
+    height: 32px;
+
+    margin-bottom: 15px;
+
+    border: 3px solid #e5e7eb;
+
+    border-top-color: #6366f1;
+
+    border-radius: 50%;
+
+    animation:
+        applied-spin
+        0.8s linear infinite;
+}
+
+@keyframes applied-spin {
+    to {
+        transform: rotate(360deg);
+    }
+}
+
+.applied-loading h2 {
+    margin: 0 0 6px;
+
+    color: #334155;
+
+    font-size: 17px;
+}
+
+.applied-loading p {
+    margin: 0;
+
+    color: #94a3b8;
+
+    font-size: 12px;
+}
+
+
+/* =========================================================
+   ERROR
+========================================================= */
+
+.applied-error {
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    min-height: 330px;
+
+    padding: 40px 20px;
+
+    box-sizing: border-box;
+
+    background: #ffffff;
+
+    border: 1px solid #fecaca;
+
+    border-radius: 15px;
+
+    text-align: center;
+}
+
+.applied-error-icon {
+    display: flex;
+
+    align-items: center;
+    justify-content: center;
+
+    width: 54px;
+    height: 54px;
+
+    margin-bottom: 13px;
+
+    border-radius: 50%;
+
+    background: #fef2f2;
+
+    font-size: 21px;
+}
+
+.applied-error h2 {
+    margin: 0 0 7px;
+
+    color: #991b1b;
+
+    font-size: 18px;
+}
+
+.applied-error p {
+    max-width: 400px;
+
+    margin: 0;
+
+    color: #64748b;
+
+    font-size: 12px;
+
+    line-height: 1.5;
+}
+
+.applied-error button {
+    margin-top: 17px;
+
+    padding: 9px 17px;
+
+    border: none;
+
+    border-radius: 8px;
+
+    background: #4f46e5;
+
+    color: #ffffff;
+
+    font-family: inherit;
+
+    font-size: 11px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    transition:
+        background 0.2s ease;
+}
+
+.applied-error button:hover {
+    background: #4338ca;
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 950px) {
+
+    .application-grid {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 700px) {
+
+    .applied-page {
+        padding: 16px;
+    }
+
+
+    .applied-header {
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        gap: 16px;
+
+        margin-bottom: 20px;
+    }
+
+
+    .applied-header h1 {
+        font-size: 25px;
+    }
+
+
+    .applied-header p {
+        font-size: 12px;
+    }
+
+
+    .applications-count {
+        align-self: flex-start;
+    }
+
+
+    .application-card {
+        padding: 19px;
+    }
+
+
+    /* -----------------------------------------
+       MOBILE CARD TOP
+    ----------------------------------------- */
+
+    .application-card-top {
+        display: flex;
+
+        align-items: flex-start;
+
+        flex-direction: column;
+
+        gap: 13px;
+
+        margin-bottom: 18px;
+    }
+
+
+    .company-main {
+        width: 100%;
+    }
+
+
+    .company-avatar {
+        width: 48px;
+
+        height: 48px;
+
+        min-width: 48px;
+    }
+
+
+    /* -----------------------------------------
+       MOBILE STATUS
+       NO BOX / NO PADDING
+    ----------------------------------------- */
+
+    .status-badge {
+        align-self: flex-start;
+
+        width: auto;
+
+        min-width: 0;
+
+        min-height: 0;
+
+        padding: 0;
+
+        background: transparent;
+
+        border: none;
+
+        border-radius: 0;
+
+        box-shadow: none;
+    }
+
+
+    .application-details {
+        grid-template-columns: 1fr;
+    }
+
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 430px) {
+
+    .applied-page {
+        padding: 12px;
+    }
+
+
+    .applied-header h1 {
+        font-size: 23px;
+    }
+
+
+    .application-card {
+        padding: 16px;
+    }
+
+
+    .company-main {
+        gap: 11px;
+    }
+
+
+    .company-avatar {
+        width: 44px;
+
+        height: 44px;
+
+        min-width: 44px;
+
+        border-radius: 11px;
+    }
+
+
+    .company-details h2 {
+        font-size: 15px;
+    }
+
+
+    /* -----------------------------------------
+       SMALL MOBILE STATUS
+    ----------------------------------------- */
+
+    .status-badge {
+        width: auto;
+
+        min-width: 0;
+
+        min-height: 0;
+
+        padding: 0;
+
+        gap: 7px;
+
+        font-size: 10px;
+
+        background: transparent;
+
+        border: none;
+
+        border-radius: 0;
+
+        box-shadow: none;
+    }
+
+
+    .job-heading h3 {
+        font-size: 16px;
+    }
+
+
+    .application-footer {
+        align-items: flex-start;
+
+        flex-direction: column;
+    }
+
+
+    .application-reference {
+        display: none;
+    }
+
+}
+
+
+/* =========================================================
+   VERY SMALL SCREENS
+========================================================= */
+
+@media (max-width: 350px) {
+
+    .applied-page {
+        padding: 10px;
+    }
+
+
+    .application-card {
+        padding: 14px;
+    }
+
+
+    .application-card-top {
+        gap: 11px;
+    }
+
+
+    .company-avatar {
+        width: 42px;
+
+        height: 42px;
+
+        min-width: 42px;
+    }
+
+
+    .company-details h2 {
+        font-size: 14px;
+    }
+
+
+    /* -----------------------------------------
+       VERY SMALL STATUS
+    ----------------------------------------- */
+
+    .status-badge {
+        width: auto;
+
+        min-width: 0;
+
+        min-height: 0;
+
+        padding: 0;
+
+        gap: 6px;
+
+        font-size: 9px;
+
+        background: transparent;
+
+        border: none;
+
+        border-radius: 0;
+
+        box-shadow: none;
+    }
+
+}
