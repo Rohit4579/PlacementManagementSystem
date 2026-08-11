@@ -27,7 +27,7 @@
    PAGE HEADER
 ========================================================= */
 
-.manage-companies-header {
+.companies-page-header {
     width: 100%;
 
     display: flex;
@@ -39,11 +39,11 @@
     margin-bottom: 28px;
 }
 
-.manage-companies-heading {
+.companies-header-content {
     min-width: 0;
 }
 
-.admin-page-label {
+.companies-page-eyebrow {
     display: inline-block;
 
     margin-bottom: 8px;
@@ -53,26 +53,26 @@
     font-size: 12px;
     font-weight: 800;
 
-    letter-spacing: 1.2px;
+    letter-spacing: 1.4px;
 }
 
-.manage-companies-header h1 {
+.companies-page-header h1 {
     margin: 0;
 
     color: #172033;
 
     font-size: 32px;
-    line-height: 1.15;
+    line-height: 1.2;
 
     font-weight: 800;
 
-    letter-spacing: -0.5px;
+    letter-spacing: -0.6px;
 }
 
-.manage-companies-header p {
+.companies-page-header p {
     margin: 9px 0 0;
 
-    color: #68738a;
+    color: #6d778b;
 
     font-size: 14px;
     line-height: 1.6;
@@ -80,34 +80,34 @@
 
 
 /* =========================================================
-   TOTAL COMPANIES
+   TOTAL CARD
 ========================================================= */
 
-.company-total-card {
-    min-width: 190px;
+.companies-total-card {
+    min-width: 205px;
 
     display: flex;
     align-items: center;
 
     gap: 14px;
 
-    padding: 18px 20px;
+    padding: 17px 20px;
+
+    box-sizing: border-box;
 
     background: #ffffff;
 
-    border: 1px solid #e5e9f2;
+    border: 1px solid #e2e7ef;
 
-    border-radius: 14px;
+    border-radius: 15px;
 
     box-shadow:
-        0 4px 16px rgba(28, 39, 68, 0.04);
-
-    box-sizing: border-box;
+        0 5px 20px rgba(28, 39, 68, 0.045);
 }
 
-.company-total-icon {
-    width: 44px;
-    height: 44px;
+.companies-total-icon {
+    width: 46px;
+    height: 46px;
 
     flex-shrink: 0;
 
@@ -115,27 +115,27 @@
     align-items: center;
     justify-content: center;
 
-    border-radius: 12px;
+    border-radius: 13px;
 
     background: #eef0ff;
 
     color: #5965e8;
 
-    font-size: 18px;
+    font-size: 19px;
 }
 
-.company-total-card span {
+.companies-total-content span {
     display: block;
 
     margin-bottom: 4px;
 
-    color: #7c879c;
+    color: #7b8598;
 
     font-size: 12px;
     font-weight: 600;
 }
 
-.company-total-card strong {
+.companies-total-content strong {
     display: block;
 
     color: #172033;
@@ -151,79 +151,81 @@
    TOOLBAR
 ========================================================= */
 
-.company-toolbar {
+.companies-toolbar {
     width: 100%;
 
     display: flex;
     align-items: center;
     justify-content: space-between;
 
-    gap: 16px;
+    gap: 18px;
 
     margin-bottom: 20px;
 }
 
-.company-search {
+.companies-search-box {
     width: min(680px, 100%);
     height: 48px;
 
     display: flex;
     align-items: center;
 
-    gap: 10px;
+    gap: 11px;
 
     padding: 0 14px;
 
+    box-sizing: border-box;
+
     background: #ffffff;
 
-    border: 1px solid #dfe4ee;
+    border: 1px solid #dfe4ed;
 
     border-radius: 11px;
-
-    box-sizing: border-box;
 
     transition:
         border-color 0.2s ease,
         box-shadow 0.2s ease;
 }
 
-.company-search:focus-within {
-    border-color: #8992f0;
+.companies-search-box:focus-within {
+    border-color: #8790ed;
 
     box-shadow:
         0 0 0 3px rgba(89, 101, 232, 0.1);
 }
 
-.search-icon {
+.companies-search-icon {
     flex-shrink: 0;
 
-    color: #7c879a;
+    color: #7e899d;
 
-    font-size: 15px;
+    font-size: 14px;
 }
 
-.company-search input {
+.companies-search-box input {
     width: 100%;
     min-width: 0;
     height: 100%;
+
+    padding: 0;
 
     border: none;
     outline: none;
 
     background: transparent;
 
-    color: #172033;
+    color: #1c2639;
 
     font-size: 13px;
 }
 
-.company-search input::placeholder {
-    color: #9aa3b3;
+.companies-search-box input::placeholder {
+    color: #9aa4b4;
 }
 
-.clear-search-btn {
-    width: 30px;
-    height: 30px;
+.companies-clear-search {
+    width: 29px;
+    height: 29px;
 
     flex-shrink: 0;
 
@@ -231,45 +233,54 @@
     align-items: center;
     justify-content: center;
 
+    padding: 0;
+
     border: none;
+
     border-radius: 7px;
 
-    background: #f0f2f7;
+    background: #f0f2f6;
 
-    color: #68738a;
+    color: #6f798b;
 
     cursor: pointer;
 }
 
-.clear-search-btn:hover {
-    background: #e6e9ef;
+.companies-clear-search:hover {
+    background: #e7eaf0;
+
+    color: #303a4e;
 }
 
-.toolbar-right {
+
+/* =========================================================
+   TOOLBAR RIGHT
+========================================================= */
+
+.companies-toolbar-right {
     display: flex;
     align-items: center;
-    justify-content: flex-end;
 
     gap: 14px;
 
     flex-shrink: 0;
 }
 
-.company-result-count {
-    color: #7b8699;
+.companies-result-text {
+    color: #7c8698;
 
     font-size: 13px;
 
     white-space: nowrap;
 }
 
-.company-result-count strong {
-    color: #303a50;
+.companies-result-text strong {
+    color: #30394d;
 
     font-weight: 800;
 }
 
-.refresh-company-btn {
+.companies-refresh-btn {
     height: 44px;
 
     display: inline-flex;
@@ -280,13 +291,13 @@
 
     padding: 0 17px;
 
-    border: 1px solid #dfe3ec;
+    border: 1px solid #dce2eb;
 
     border-radius: 9px;
 
     background: #ffffff;
 
-    color: #46516a;
+    color: #465168;
 
     font-size: 13px;
     font-weight: 700;
@@ -296,15 +307,15 @@
     transition: all 0.2s ease;
 }
 
-.refresh-company-btn:hover {
-    border-color: #b9c0f4;
+.companies-refresh-btn:hover {
+    border-color: #b8c0f1;
 
     background: #f8f9ff;
 
-    color: #515ee0;
+    color: #515edc;
 }
 
-.refresh-company-btn:disabled {
+.companies-refresh-btn:disabled {
     opacity: 0.6;
 
     cursor: not-allowed;
@@ -312,7 +323,7 @@
 
 
 /* =========================================================
-   TABLE
+   TABLE CARD
 ========================================================= */
 
 .companies-table-card {
@@ -322,38 +333,64 @@
 
     background: #ffffff;
 
-    border: 1px solid #e3e7ef;
+    border: 1px solid #e1e6ee;
 
     border-radius: 16px;
 
     box-shadow:
-        0 5px 22px rgba(28, 39, 68, 0.05);
+        0 5px 22px rgba(28, 39, 68, 0.045);
 }
 
-.table-wrapper {
+.companies-table-scroll {
     width: 100%;
 
     overflow-x: auto;
+
+    scrollbar-width: thin;
+
+    scrollbar-color: #cbd2df transparent;
 }
 
-.table-wrapper table {
+.companies-table-scroll::-webkit-scrollbar {
+    height: 7px;
+}
+
+.companies-table-scroll::-webkit-scrollbar-track {
+    background: #f7f8fa;
+}
+
+.companies-table-scroll::-webkit-scrollbar-thumb {
+    background: #cbd2df;
+
+    border-radius: 20px;
+}
+
+
+/* =========================================================
+   TABLE
+========================================================= */
+
+.companies-table {
     width: 100%;
-    min-width: 1100px;
+
+    min-width: 1220px;
 
     border-collapse: separate;
     border-spacing: 0;
+
+    table-layout: fixed;
 }
 
-.table-wrapper th {
-    padding: 15px 17px;
+.companies-table th {
+    padding: 15px 16px;
 
     background: #f8f9fc;
 
-    border-bottom: 1px solid #e4e8f0;
+    border-bottom: 1px solid #e3e7ef;
 
-    color: #6d778a;
+    color: #697488;
 
-    font-size: 11px;
+    font-size: 10px;
     line-height: 1.2;
 
     font-weight: 800;
@@ -362,17 +399,17 @@
 
     text-transform: uppercase;
 
-    letter-spacing: 0.6px;
+    letter-spacing: 0.7px;
 
     white-space: nowrap;
 }
 
-.table-wrapper td {
-    padding: 16px 17px;
+.companies-table td {
+    padding: 17px 16px;
 
-    border-bottom: 1px solid #edf0f5;
+    border-bottom: 1px solid #edf0f4;
 
-    color: #4a5568;
+    color: #4b566b;
 
     font-size: 13px;
     line-height: 1.5;
@@ -380,64 +417,68 @@
     vertical-align: middle;
 }
 
-.table-wrapper tbody tr {
+.companies-table tbody tr {
     transition: background 0.18s ease;
 }
 
-.table-wrapper tbody tr:hover td {
-    background: #fafbff;
+.companies-table tbody tr:hover td {
+    background: #fbfcff;
 }
 
-.table-wrapper tbody tr:last-child td {
+.companies-table tbody tr:last-child td {
     border-bottom: none;
 }
 
 
 /* =========================================================
-   ACTION COLUMN
+   COLUMN WIDTHS
 ========================================================= */
 
-.table-wrapper th.actions-heading {
-    text-align: center;
-
-    color: #4f5fe4;
-
-    background: #f0f3ff;
-
-    border-left: 1px solid #e1e6f5;
+.companies-table .company-column {
+    width: 23%;
 }
 
-.table-wrapper td.actions-cell {
-    min-width: 190px;
-
-    background: #f8f9ff;
-
-    border-left: 1px solid #e8ebf5;
-
-    text-align: center;
+.companies-table .contact-column {
+    width: 20%;
 }
 
-.table-wrapper tbody tr:hover td.actions-cell {
-    background: #f0f3ff;
+.companies-table .industry-column {
+    width: 14%;
+}
+
+.companies-table .location-column {
+    width: 12%;
+}
+
+.companies-table .website-column {
+    width: 13%;
+}
+
+.companies-table .status-column {
+    width: 10%;
+}
+
+.companies-table .actions-column {
+    width: 18%;
 }
 
 
 /* =========================================================
-   COMPANY INFO
+   COMPANY PROFILE
 ========================================================= */
 
-.company-info {
+.company-table-profile {
+    min-width: 0;
+
     display: flex;
     align-items: center;
 
     gap: 12px;
-
-    min-width: 245px;
 }
 
-.company-avatar {
-    width: 42px;
-    height: 42px;
+.company-table-avatar {
+    width: 44px;
+    height: 44px;
 
     flex-shrink: 0;
 
@@ -447,7 +488,12 @@
 
     border-radius: 12px;
 
-    background: #e9ecff;
+    background:
+        linear-gradient(
+            135deg,
+            #edf0ff,
+            #e2e6ff
+        );
 
     color: #5965e8;
 
@@ -455,40 +501,36 @@
     font-weight: 800;
 }
 
-.company-name-wrapper {
+.company-table-name {
     min-width: 0;
 }
 
-.company-info strong {
+.company-table-name strong {
     display: block;
-
-    max-width: 230px;
-
-    margin-bottom: 3px;
 
     overflow: hidden;
 
-    color: #202a3d;
+    color: #202a3c;
 
     font-size: 13px;
     font-weight: 750;
 
+    line-height: 1.4;
+
     text-overflow: ellipsis;
+
     white-space: nowrap;
 }
 
-.company-info small {
+.company-table-name span {
     display: block;
 
-    max-width: 220px;
+    margin-top: 3px;
 
-    overflow: hidden;
-
-    color: #98a1b2;
+    color: #99a2b1;
 
     font-size: 10px;
 
-    text-overflow: ellipsis;
     white-space: nowrap;
 }
 
@@ -497,26 +539,47 @@
    CONTACT
 ========================================================= */
 
-.table-contact {
-    max-width: 230px;
+.company-contact-list {
+    min-width: 0;
+}
+
+.company-contact-item {
+    min-width: 0;
 
     display: flex;
     align-items: center;
 
-    gap: 7px;
+    gap: 8px;
+
+    margin-bottom: 7px;
 
     color: #596579;
 }
 
-.table-contact svg {
-    flex-shrink: 0;
-
-    color: #6874e8;
-
-    font-size: 12px;
+.company-contact-item:last-child {
+    margin-bottom: 0;
 }
 
-.table-contact span {
+.contact-icon {
+    width: 23px;
+    height: 23px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 6px;
+
+    background: #f0f2ff;
+
+    color: #5d69df;
+
+    font-size: 10px;
+}
+
+.contact-value {
     min-width: 0;
 
     overflow: hidden;
@@ -526,8 +589,11 @@
     white-space: nowrap;
 }
 
-.table-contact + .table-contact {
-    margin-top: 7px;
+.company-not-available,
+.company-muted-text {
+    color: #9aa3b2;
+
+    font-size: 12px;
 }
 
 
@@ -535,19 +601,21 @@
    INDUSTRY
 ========================================================= */
 
-.industry-badge {
+.company-industry-badge {
+    max-width: 100%;
+
     display: inline-flex;
     align-items: center;
 
-    gap: 6px;
+    gap: 7px;
 
-    max-width: 190px;
+    padding: 7px 9px;
 
-    padding: 6px 9px;
+    box-sizing: border-box;
 
-    border-radius: 7px;
+    border-radius: 8px;
 
-    background: #f0f2f7;
+    background: #f1f3f7;
 
     color: #566174;
 
@@ -555,15 +623,51 @@
     font-weight: 700;
 }
 
-.industry-badge svg {
+.company-industry-badge svg {
     flex-shrink: 0;
 
-    color: #6874e8;
+    color: #6571e5;
 
     font-size: 10px;
 }
 
-.industry-badge span {
+.company-industry-badge span {
+    min-width: 0;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+}
+
+
+/* =========================================================
+   LOCATION
+========================================================= */
+
+.company-location {
+    min-width: 0;
+
+    display: flex;
+    align-items: center;
+
+    gap: 8px;
+
+    color: #596579;
+}
+
+.company-location svg {
+    flex-shrink: 0;
+
+    color: #6471e6;
+
+    font-size: 12px;
+}
+
+.company-location span {
+    min-width: 0;
+
     overflow: hidden;
 
     text-overflow: ellipsis;
@@ -576,32 +680,48 @@
    WEBSITE
 ========================================================= */
 
-.table-website {
+.company-website {
+    min-width: 0;
+
     display: inline-flex;
     align-items: center;
 
     gap: 7px;
 
-    color: #5663df;
+    color: #5362d9;
 
     font-size: 12px;
     font-weight: 700;
 
     text-decoration: none;
+}
+
+.company-website > svg:first-child {
+    flex-shrink: 0;
+}
+
+.company-website span {
+    min-width: 0;
+
+    max-width: 125px;
+
+    overflow: hidden;
+
+    text-overflow: ellipsis;
 
     white-space: nowrap;
 }
 
-.table-website:hover {
-    color: #3f4cc9;
+.company-website:hover {
+    color: #3e4cc5;
 
     text-decoration: underline;
 }
 
-.not-available {
-    color: #9aa3b2;
+.website-external-icon {
+    font-size: 8px !important;
 
-    font-size: 12px;
+    opacity: 0.65;
 }
 
 
@@ -609,13 +729,13 @@
    STATUS
 ========================================================= */
 
-.company-status {
+.company-status-badge {
     display: inline-flex;
     align-items: center;
 
-    gap: 5px;
+    gap: 6px;
 
-    padding: 6px 10px;
+    padding: 7px 10px;
 
     border-radius: 999px;
 
@@ -623,31 +743,31 @@
 
     color: #16804b;
 
-    font-size: 11px;
-    font-weight: 750;
+    font-size: 10px;
+    font-weight: 800;
 
     white-space: nowrap;
+}
+
+.company-status-badge svg {
+    font-size: 10px;
 }
 
 
 /* =========================================================
-   ACTION BUTTONS
+   ACTIONS
 ========================================================= */
 
-.company-actions {
+.company-action-buttons {
     display: flex;
     align-items: center;
-    justify-content: center;
 
-    gap: 8px;
-
-    white-space: nowrap;
+    gap: 7px;
 }
 
-.view-company-btn,
-.delete-company-btn {
-    min-width: 72px;
-    height: 36px;
+.company-view-btn,
+.company-delete-btn {
+    height: 35px;
 
     display: inline-flex;
     align-items: center;
@@ -655,7 +775,7 @@
 
     gap: 6px;
 
-    padding: 0 12px;
+    padding: 0 11px;
 
     border-radius: 8px;
 
@@ -670,7 +790,7 @@
         transform 0.2s ease;
 }
 
-.view-company-btn {
+.company-view-btn {
     border: 1px solid #cbd3ff;
 
     background: #eef1ff;
@@ -678,31 +798,31 @@
     color: #4f5fe4;
 }
 
-.view-company-btn:hover {
-    background: #dfe5ff;
+.company-view-btn:hover {
+    border-color: #adb7ff;
 
-    border-color: #aebaff;
+    background: #e0e5ff;
 
     transform: translateY(-1px);
 }
 
-.delete-company-btn {
-    border: 1px solid #f5baba;
+.company-delete-btn {
+    border: 1px solid #f3b8b8;
 
-    background: #fff0f0;
+    background: #fff1f1;
 
     color: #dc2626;
 }
 
-.delete-company-btn:hover:not(:disabled) {
-    background: #ffe0e0;
+.company-delete-btn:hover:not(:disabled) {
+    border-color: #ef9a9a;
 
-    border-color: #f19a9a;
+    background: #ffe2e2;
 
     transform: translateY(-1px);
 }
 
-.delete-company-btn:disabled {
+.company-delete-btn:disabled {
     opacity: 0.55;
 
     cursor: not-allowed;
@@ -713,9 +833,10 @@
    EMPTY / LOADING
 ========================================================= */
 
-.companies-state {
+.companies-loading-state,
+.companies-empty-state {
     width: 100%;
-    min-height: 330px;
+    min-height: 340px;
 
     display: flex;
     align-items: center;
@@ -723,20 +844,21 @@
 
     flex-direction: column;
 
-    box-sizing: border-box;
-
     padding: 40px 25px;
+
+    box-sizing: border-box;
 
     text-align: center;
 
     background: #ffffff;
 
-    border: 1px solid #e4e8f0;
+    border: 1px solid #e2e7ef;
 
     border-radius: 16px;
 }
 
-.companies-state h3 {
+.companies-loading-state h3,
+.companies-empty-state h3 {
     margin: 15px 0 7px;
 
     color: #273247;
@@ -745,7 +867,8 @@
     font-weight: 750;
 }
 
-.companies-state p {
+.companies-loading-state p,
+.companies-empty-state p {
     max-width: 500px;
 
     margin: 0;
@@ -753,50 +876,15 @@
     color: #929bab;
 
     font-size: 13px;
+
     line-height: 1.6;
 }
 
-.empty-icon {
-    width: 64px;
-    height: 64px;
+.companies-loading-spinner {
+    width: 38px;
+    height: 38px;
 
-    display: flex;
-    align-items: center;
-    justify-content: center;
-
-    border-radius: 18px;
-
-    background: #eef0ff;
-
-    color: #5965e8;
-
-    font-size: 25px;
-}
-
-.empty-clear-btn {
-    margin-top: 18px;
-
-    padding: 9px 15px;
-
-    border: none;
-
-    border-radius: 8px;
-
-    background: #eef0ff;
-
-    color: #505dde;
-
-    font-size: 12px;
-    font-weight: 700;
-
-    cursor: pointer;
-}
-
-.loading-spinner {
-    width: 36px;
-    height: 36px;
-
-    border: 4px solid #e5e8f0;
+    border: 4px solid #e6e9f1;
 
     border-top-color: #5965e8;
 
@@ -816,9 +904,54 @@
     }
 }
 
+.companies-empty-icon {
+    width: 64px;
+    height: 64px;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 18px;
+
+    background: #eef0ff;
+
+    color: #5965e8;
+
+    font-size: 25px;
+}
+
+.companies-empty-clear {
+    margin-top: 18px;
+
+    padding: 9px 16px;
+
+    border: none;
+
+    border-radius: 8px;
+
+    background: #eef0ff;
+
+    color: #505dde;
+
+    font-size: 12px;
+    font-weight: 700;
+
+    cursor: pointer;
+}
+
 
 /* =========================================================
-   COMPANY MODAL OVERLAY
+   MOBILE LIST
+========================================================= */
+
+.companies-mobile-list {
+    display: none;
+}
+
+
+/* =========================================================
+   MODAL OVERLAY
 ========================================================= */
 
 .company-modal-overlay {
@@ -832,11 +965,11 @@
     align-items: center;
     justify-content: center;
 
-    padding: 12px;
+    padding: 20px;
 
     box-sizing: border-box;
 
-    background: rgba(15, 23, 42, 0.62);
+    background: rgba(15, 23, 42, 0.66);
 
     backdrop-filter: blur(5px);
     -webkit-backdrop-filter: blur(5px);
@@ -861,11 +994,9 @@
 ========================================================= */
 
 .company-modal {
-    position: relative;
+    width: min(960px, 100%);
 
-    width: min(1180px, 100%);
-
-    max-height: calc(100vh - 24px);
+    max-height: calc(100vh - 40px);
 
     display: flex;
     flex-direction: column;
@@ -874,13 +1005,11 @@
 
     background: #ffffff;
 
-    border: 1px solid rgba(255, 255, 255, 0.8);
-
-    border-radius: 28px;
+    border-radius: 22px;
 
     box-shadow:
-        0 30px 80px rgba(9, 18, 38, 0.30),
-        0 12px 30px rgba(9, 18, 38, 0.12);
+        0 30px 80px rgba(8, 17, 38, 0.3),
+        0 10px 30px rgba(8, 17, 38, 0.12);
 
     animation: companyModalOpen 0.25s ease-out;
 }
@@ -891,7 +1020,7 @@
         opacity: 0;
 
         transform:
-            translateY(15px)
+            translateY(14px)
             scale(0.985);
     }
 
@@ -906,22 +1035,20 @@
 
 
 /* =========================================================
-   MODAL DARK HEADER
+   MODAL HEADER
 ========================================================= */
 
 .company-modal-header {
-    position: relative;
+    min-height: 145px;
 
     flex-shrink: 0;
-
-    min-height: 150px;
 
     display: flex;
     align-items: center;
 
-    gap: 18px;
+    gap: 17px;
 
-    padding: 26px 32px;
+    padding: 25px 28px;
 
     box-sizing: border-box;
 
@@ -929,35 +1056,16 @@
         linear-gradient(
             135deg,
             #101a34 0%,
-            #162653 55%,
-            #263e87 100%
+            #172758 55%,
+            #29438d 100%
         );
 
     color: #ffffff;
 }
 
-.company-modal-header::after {
-    content: "";
-
-    position: absolute;
-
-    left: 0;
-    right: 0;
-    bottom: 0;
-
-    height: 1px;
-
-    background: rgba(255, 255, 255, 0.12);
-}
-
-
-/* =========================================================
-   HEADER ICON
-========================================================= */
-
-.company-modal-header-icon {
-    width: 70px;
-    height: 70px;
+.company-modal-avatar {
+    width: 66px;
+    height: 66px;
 
     flex-shrink: 0;
 
@@ -965,73 +1073,62 @@
     align-items: center;
     justify-content: center;
 
-    border-radius: 18px;
+    border-radius: 17px;
 
     background: rgba(255, 255, 255, 0.12);
 
-    color: #c8d9ff;
+    color: #cbdcff;
 
-    font-size: 28px;
+    font-size: 25px;
+    font-weight: 800;
 
     box-shadow:
-        inset 0 1px 0 rgba(255, 255, 255, 0.08);
+        inset 0 1px 0 rgba(255, 255, 255, 0.1);
 }
 
-
-/* =========================================================
-   MODAL TITLE
-========================================================= */
-
-.modal-title-area {
+.company-modal-title {
     min-width: 0;
 
     flex: 1;
 }
 
-.modal-eyebrow {
+.company-modal-title > span {
     display: block;
 
-    margin-bottom: 8px;
+    margin-bottom: 6px;
 
-    color: #8ec5ff;
+    color: #8fc5ff;
 
-    font-size: 12px;
-
+    font-size: 10px;
     font-weight: 800;
 
-    letter-spacing: 1.4px;
+    letter-spacing: 1.3px;
 }
 
-.company-modal-header h2 {
+.company-modal-title h2 {
     margin: 0;
 
     color: #ffffff;
 
-    font-size: 28px;
-    line-height: 1.2;
+    font-size: 25px;
+    line-height: 1.25;
 
     font-weight: 800;
 
     overflow-wrap: anywhere;
 }
 
-.modal-title-area p {
-    margin: 7px 0 0;
+.company-modal-title p {
+    margin: 6px 0 0;
 
-    color: rgba(255, 255, 255, 0.72);
+    color: rgba(255, 255, 255, 0.68);
 
-    font-size: 13px;
-    line-height: 1.5;
+    font-size: 12px;
 }
 
-
-/* =========================================================
-   MODAL CLOSE
-========================================================= */
-
-.close-modal-btn {
-    width: 50px;
-    height: 50px;
+.company-modal-close {
+    width: 44px;
+    height: 44px;
 
     flex-shrink: 0;
 
@@ -1039,28 +1136,25 @@
     align-items: center;
     justify-content: center;
 
+    padding: 0;
+
     border: 1px solid rgba(255, 255, 255, 0.18);
 
-    border-radius: 13px;
+    border-radius: 11px;
 
     background: rgba(255, 255, 255, 0.08);
 
     color: #ffffff;
 
-    font-size: 18px;
+    font-size: 16px;
 
     cursor: pointer;
 
-    transition:
-        background 0.2s ease,
-        border-color 0.2s ease,
-        transform 0.2s ease;
+    transition: all 0.2s ease;
 }
 
-.close-modal-btn:hover {
-    background: rgba(255, 255, 255, 0.16);
-
-    border-color: rgba(255, 255, 255, 0.3);
+.company-modal-close:hover {
+    background: rgba(255, 255, 255, 0.17);
 
     transform: translateY(-1px);
 }
@@ -1077,7 +1171,7 @@
 
     overflow-y: auto;
 
-    padding: 34px 32px 28px;
+    padding: 28px;
 
     box-sizing: border-box;
 
@@ -1085,11 +1179,11 @@
 }
 
 .company-modal-body::-webkit-scrollbar {
-    width: 8px;
+    width: 7px;
 }
 
 .company-modal-body::-webkit-scrollbar-track {
-    background: #f5f7fa;
+    background: #f6f7fa;
 }
 
 .company-modal-body::-webkit-scrollbar-thumb {
@@ -1098,35 +1192,31 @@
     border-radius: 20px;
 }
 
-.company-modal-body::-webkit-scrollbar-thumb:hover {
-    background: #aeb8c8;
-}
-
 
 /* =========================================================
-   SECTION HEADING
+   MODAL SECTION
 ========================================================= */
 
-.company-detail-section {
-    margin-bottom: 28px;
+.company-modal-section {
+    margin-bottom: 30px;
 }
 
-.company-detail-section:last-child {
+.company-modal-section:last-child {
     margin-bottom: 0;
 }
 
-.company-section-heading {
+.company-modal-section-heading {
     display: flex;
     align-items: center;
 
-    gap: 16px;
+    gap: 13px;
 
-    margin-bottom: 24px;
+    margin-bottom: 18px;
 }
 
-.section-heading-icon {
-    width: 50px;
-    height: 50px;
+.company-section-icon {
+    width: 43px;
+    height: 43px;
 
     flex-shrink: 0;
 
@@ -1134,36 +1224,35 @@
     align-items: center;
     justify-content: center;
 
-    border-radius: 14px;
+    border-radius: 11px;
 
-    background: #eff6ff;
+    background: #eff4ff;
 
     color: #2563eb;
 
-    font-size: 19px;
+    font-size: 16px;
 }
 
-.company-section-heading h3 {
+.company-modal-section-heading h3 {
     margin: 0;
 
-    color: #182235;
+    color: #1b2639;
 
-    font-size: 19px;
-
+    font-size: 17px;
     font-weight: 800;
 }
 
-.company-section-heading p {
-    margin: 5px 0 0;
+.company-modal-section-heading p {
+    margin: 4px 0 0;
 
-    color: #718096;
+    color: #7a8496;
 
-    font-size: 12px;
+    font-size: 11px;
 }
 
 
 /* =========================================================
-   INFORMATION GRID
+   DETAIL GRID
 ========================================================= */
 
 .company-detail-grid {
@@ -1172,56 +1261,43 @@
     grid-template-columns:
         repeat(2, minmax(0, 1fr));
 
-    gap: 16px;
+    gap: 12px;
 }
 
-
-/* =========================================================
-   INFORMATION CARD
-========================================================= */
-
-.company-detail-card {
+.company-detail-item {
     min-width: 0;
-    min-height: 96px;
+    min-height: 90px;
 
     display: flex;
     flex-direction: column;
     justify-content: center;
 
-    padding: 17px 19px;
+    padding: 15px 17px;
 
     box-sizing: border-box;
 
     background: #f8fafc;
 
-    border: 1px solid #dfe6ef;
+    border: 1px solid #e0e6ee;
 
-    border-radius: 14px;
-
-    transition:
-        background 0.2s ease,
-        border-color 0.2s ease;
+    border-radius: 12px;
 }
 
-.company-detail-card:hover {
-    background: #f7faff;
-
-    border-color: #d4dce8;
+.company-detail-item.full-width {
+    grid-column: 1 / -1;
 }
 
-.company-detail-card > span {
+.company-detail-item > span {
     display: flex;
     align-items: center;
 
     gap: 7px;
 
-    margin-bottom: 9px;
+    margin-bottom: 8px;
 
-    color: #68758a;
+    color: #6d788b;
 
     font-size: 10px;
-    line-height: 1.3;
-
     font-weight: 800;
 
     letter-spacing: 0.4px;
@@ -1229,79 +1305,57 @@
     text-transform: uppercase;
 }
 
-.company-detail-card > span svg {
-    color: #2563eb;
+.company-detail-item > span svg {
+    color: #5265df;
 
-    font-size: 11px;
+    font-size: 10px;
 }
 
-.company-detail-card strong {
-    display: block;
-
+.company-detail-item strong {
     min-width: 0;
 
-    color: #243047;
+    color: #263249;
 
-    font-size: 14px;
+    font-size: 13px;
     line-height: 1.5;
 
-    font-weight: 750;
+    font-weight: 700;
 
     overflow-wrap: anywhere;
 
     word-break: break-word;
-
-    white-space: normal;
 }
 
-.break-anywhere {
-    overflow-wrap: anywhere !important;
-
-    word-break: break-word !important;
-}
-
-.company-id-value {
-    font-family:
-        "SFMono-Regular",
-        Consolas,
-        "Liberation Mono",
-        monospace;
-
-    font-size: 11px !important;
-
-    color: #5e687c !important;
-
-    overflow-wrap: anywhere !important;
-
-    word-break: break-all !important;
+.company-detail-item .long-value {
+    word-break: break-word;
 }
 
 
 /* =========================================================
-   WEBSITE
+   WEBSITE BOX
 ========================================================= */
 
-.company-single-detail {
-    min-height: 70px;
+.company-website-box {
+    min-height: 68px;
 
     display: flex;
     align-items: center;
     justify-content: space-between;
 
-    gap: 20px;
+    gap: 18px;
 
-    padding: 16px 18px;
+    padding: 14px 17px;
 
     box-sizing: border-box;
 
     background: #f8fafc;
 
-    border: 1px solid #dfe6ef;
+    border: 1px solid #e0e6ee;
 
-    border-radius: 14px;
+    border-radius: 12px;
 }
 
-.company-single-detail > span {
+.company-website-label {
     display: flex;
     align-items: center;
 
@@ -1309,7 +1363,7 @@
 
     flex-shrink: 0;
 
-    color: #68758a;
+    color: #6d788b;
 
     font-size: 10px;
     font-weight: 800;
@@ -1319,18 +1373,12 @@
     letter-spacing: 0.4px;
 }
 
-.company-single-detail > span svg {
-    color: #2563eb;
+.company-website-label svg {
+    color: #5265df;
 }
 
-.company-single-detail strong {
-    color: #253047;
-
-    font-size: 13px;
-}
-
-.company-website-link {
-    max-width: 70%;
+.company-modal-website-link {
+    min-width: 0;
 
     display: inline-flex;
     align-items: center;
@@ -1340,7 +1388,6 @@
     color: #2563eb;
 
     font-size: 13px;
-
     font-weight: 700;
 
     text-decoration: none;
@@ -1348,22 +1395,26 @@
     text-align: right;
 
     overflow-wrap: anywhere;
-
-    word-break: break-word;
 }
 
-.company-website-link:hover {
+.company-modal-website-link:hover {
     color: #1d4ed8;
 
     text-decoration: underline;
 }
 
+.company-modal-website-link svg {
+    flex-shrink: 0;
+
+    font-size: 9px;
+}
+
 
 /* =========================================================
-   DESCRIPTION / LOCATION
+   DESCRIPTION
 ========================================================= */
 
-.company-description-box {
+.company-description {
     width: 100%;
 
     display: flex;
@@ -1371,49 +1422,37 @@
 
     gap: 11px;
 
-    padding: 16px 18px;
+    padding: 17px;
 
     box-sizing: border-box;
 
     background: #f8fafc;
 
-    border: 1px solid #dfe6ef;
+    border: 1px solid #e0e6ee;
 
-    border-radius: 14px;
+    border-radius: 12px;
 }
 
-.company-description-box > svg {
+.company-description > svg {
     flex-shrink: 0;
 
     margin-top: 3px;
 
-    color: #2563eb;
+    color: #5265df;
 
-    font-size: 14px;
+    font-size: 13px;
 }
 
-.company-description-box p {
+.company-description p {
     margin: 0;
 
-    color: #46536a;
+    color: #4c586d;
 
     font-size: 13px;
 
-    line-height: 1.7;
+    line-height: 1.75;
 
     white-space: pre-wrap;
-
-    overflow-wrap: anywhere;
-
-    word-break: break-word;
-}
-
-.location-box span {
-    color: #46536a;
-
-    font-size: 13px;
-
-    line-height: 1.6;
 
     overflow-wrap: anywhere;
 
@@ -1426,64 +1465,53 @@
 ========================================================= */
 
 .company-modal-footer {
-    flex-shrink: 0;
+    min-height: 76px;
 
-    min-height: 86px;
+    flex-shrink: 0;
 
     display: flex;
     align-items: center;
     justify-content: space-between;
 
-    gap: 20px;
+    gap: 18px;
 
-    padding: 16px 32px;
+    padding: 13px 28px;
 
     box-sizing: border-box;
 
     background: #f8fafc;
 
-    border-top: 1px solid #dfe5ed;
+    border-top: 1px solid #e0e6ee;
 }
 
-
-/* =========================================================
-   FOOTER NOTE
-========================================================= */
-
-.modal-footer-note {
+.company-modal-status {
     display: flex;
     align-items: center;
 
-    gap: 10px;
+    gap: 8px;
 
     color: #718096;
 
-    font-size: 12px;
+    font-size: 11px;
+    font-weight: 600;
 }
 
-.modal-footer-note svg {
-    flex-shrink: 0;
-
+.company-modal-status svg {
     color: #16a34a;
 
-    font-size: 14px;
+    font-size: 13px;
 }
 
-
-/* =========================================================
-   FOOTER BUTTONS
-========================================================= */
-
-.modal-footer-actions {
+.company-modal-actions {
     display: flex;
     align-items: center;
 
-    gap: 10px;
+    gap: 9px;
 }
 
-.close-details-btn,
-.modal-delete-btn {
-    height: 50px;
+.company-modal-delete,
+.company-modal-close-btn {
+    height: 43px;
 
     display: inline-flex;
     align-items: center;
@@ -1491,58 +1519,42 @@
 
     gap: 7px;
 
-    padding: 0 18px;
+    padding: 0 16px;
 
-    border-radius: 13px;
+    border-radius: 10px;
 
-    font-size: 13px;
-
+    font-size: 12px;
     font-weight: 800;
 
     cursor: pointer;
 
-    transition:
-        background 0.2s ease,
-        transform 0.2s ease,
-        box-shadow 0.2s ease;
+    transition: all 0.2s ease;
 }
 
-
-/* =========================================================
-   DELETE
-========================================================= */
-
-.modal-delete-btn {
-    min-width: 110px;
-
-    border: 1px solid #f5baba;
+.company-modal-delete {
+    border: 1px solid #f2b8b8;
 
     background: #fff0f0;
 
     color: #dc2626;
 }
 
-.modal-delete-btn:hover:not(:disabled) {
-    background: #ffe0e0;
+.company-modal-delete:hover:not(:disabled) {
+    background: #ffe1e1;
 
-    border-color: #f19a9a;
+    border-color: #ef9a9a;
 
     transform: translateY(-1px);
 }
 
-.modal-delete-btn:disabled {
+.company-modal-delete:disabled {
     opacity: 0.55;
 
     cursor: not-allowed;
 }
 
-
-/* =========================================================
-   CLOSE
-========================================================= */
-
-.close-details-btn {
-    min-width: 118px;
+.company-modal-close-btn {
+    min-width: 90px;
 
     border: none;
 
@@ -1551,16 +1563,13 @@
     color: #ffffff;
 
     box-shadow:
-        0 7px 18px rgba(15, 23, 42, 0.16);
+        0 5px 14px rgba(15, 23, 42, 0.14);
 }
 
-.close-details-btn:hover {
+.company-modal-close-btn:hover {
     background: #1b2945;
 
     transform: translateY(-1px);
-
-    box-shadow:
-        0 10px 22px rgba(15, 23, 42, 0.22);
 }
 
 
@@ -1568,56 +1577,46 @@
    TABLET
 ========================================================= */
 
-@media (max-width: 900px) {
+@media (max-width: 1000px) {
 
     .manage-companies-page {
-        padding: 24px;
+        padding: 25px;
     }
 
-    .manage-companies-header {
+    .companies-page-header {
         align-items: flex-start;
 
         flex-direction: column;
     }
 
-    .company-total-card {
+    .companies-total-card {
         width: 100%;
     }
 
-    .company-toolbar {
+    .companies-toolbar {
         align-items: stretch;
 
         flex-direction: column;
     }
 
-    .company-search {
+    .companies-search-box {
         width: 100%;
     }
 
-    .toolbar-right {
+    .companies-toolbar-right {
         justify-content: space-between;
     }
 
+    .companies-table {
+        min-width: 1150px;
+    }
+
     .company-modal-overlay {
-        padding: 10px;
+        padding: 14px;
     }
 
     .company-modal {
-        max-height: calc(100vh - 20px);
-
-        border-radius: 22px;
-    }
-
-    .company-modal-header {
-        padding: 23px 24px;
-    }
-
-    .company-modal-body {
-        padding: 28px 24px;
-    }
-
-    .company-modal-footer {
-        padding: 14px 24px;
+        max-height: calc(100vh - 28px);
     }
 }
 
@@ -1626,46 +1625,223 @@
    MOBILE
 ========================================================= */
 
-@media (max-width: 650px) {
+@media (max-width: 700px) {
 
     .manage-companies-page {
         padding: 16px;
     }
 
-    .manage-companies-header {
+    .companies-page-header {
         gap: 18px;
 
         margin-bottom: 20px;
     }
 
-    .manage-companies-header h1 {
+    .companies-page-header h1 {
         font-size: 26px;
     }
 
-    .manage-companies-header p {
+    .companies-page-header p {
         font-size: 13px;
     }
 
-    .company-total-card {
+    .companies-total-card {
+        min-width: 0;
+
         padding: 14px 16px;
     }
 
-    .toolbar-right {
+
+    /* Hide desktop table */
+
+    .companies-table-card {
+        display: none;
+    }
+
+
+    /* Show mobile cards */
+
+    .companies-mobile-list {
+        display: flex;
+
+        flex-direction: column;
+
+        gap: 12px;
+    }
+
+    .company-mobile-card {
+        width: 100%;
+
+        padding: 17px;
+
+        box-sizing: border-box;
+
+        background: #ffffff;
+
+        border: 1px solid #e1e6ee;
+
+        border-radius: 15px;
+
+        box-shadow:
+            0 4px 15px rgba(28, 39, 68, 0.04);
+    }
+
+    .company-mobile-top {
+        display: flex;
+        align-items: flex-start;
+        justify-content: space-between;
+
+        gap: 12px;
+
+        padding-bottom: 15px;
+
+        border-bottom: 1px solid #edf0f4;
+    }
+
+    .company-mobile-profile {
+        min-width: 0;
+
+        display: flex;
+        align-items: center;
+
+        gap: 11px;
+    }
+
+    .company-mobile-avatar {
+        width: 43px;
+        height: 43px;
+
+        flex-shrink: 0;
+
+        display: flex;
+        align-items: center;
+        justify-content: center;
+
+        border-radius: 11px;
+
+        background: #eef0ff;
+
+        color: #5965e8;
+
+        font-size: 15px;
+        font-weight: 800;
+    }
+
+    .company-mobile-profile h3 {
+        margin: 0;
+
+        color: #202a3c;
+
+        font-size: 14px;
+        font-weight: 800;
+
+        overflow-wrap: anywhere;
+    }
+
+    .company-mobile-profile span {
+        display: block;
+
+        margin-top: 3px;
+
+        color: #99a2b1;
+
+        font-size: 10px;
+    }
+
+    .company-mobile-top .company-status-badge {
+        flex-shrink: 0;
+
+        padding: 6px 8px;
+
+        font-size: 9px;
+    }
+
+    .company-mobile-details {
+        display: grid;
+
+        grid-template-columns: 1fr 1fr;
+
+        gap: 12px;
+
+        padding: 16px 0;
+    }
+
+    .mobile-detail-item {
+        min-width: 0;
+    }
+
+    .mobile-detail-label {
+        display: flex;
+        align-items: center;
+
+        gap: 6px;
+
+        margin-bottom: 5px;
+
+        color: #7a8496;
+
+        font-size: 9px;
+        font-weight: 800;
+
+        text-transform: uppercase;
+
+        letter-spacing: 0.35px;
+    }
+
+    .mobile-detail-label svg {
+        color: #5d6ae0;
+
+        font-size: 9px;
+    }
+
+    .mobile-detail-item strong,
+    .mobile-detail-item a {
+        display: block;
+
+        color: #354056;
+
+        font-size: 12px;
+        line-height: 1.45;
+
+        font-weight: 650;
+
+        overflow-wrap: anywhere;
+
+        word-break: break-word;
+    }
+
+    .mobile-detail-item a {
+        color: #4f5fd5;
+
+        text-decoration: none;
+    }
+
+    .mobile-detail-item a:hover {
+        text-decoration: underline;
+    }
+
+    .mobile-website-item {
+        grid-column: 1 / -1;
+    }
+
+    .company-mobile-actions {
+        display: grid;
+
+        grid-template-columns: 1fr 1fr;
+
+        gap: 8px;
+
+        padding-top: 14px;
+
+        border-top: 1px solid #edf0f4;
+    }
+
+    .company-mobile-actions button {
         width: 100%;
     }
 
-    .company-result-count {
-        font-size: 12px;
-    }
 
-    .refresh-company-btn {
-        padding: 0 13px;
-    }
-
-
-    /* =====================================================
-       MODAL
-    ===================================================== */
+    /* Modal */
 
     .company-modal-overlay {
         align-items: flex-start;
@@ -1682,14 +1858,14 @@
     }
 
     .company-modal-header {
-        min-height: 125px;
+        min-height: 120px;
 
-        padding: 20px 18px;
+        padding: 18px;
 
-        gap: 13px;
+        gap: 12px;
     }
 
-    .company-modal-header-icon {
+    .company-modal-avatar {
         width: 50px;
         height: 50px;
 
@@ -1698,73 +1874,54 @@
         font-size: 20px;
     }
 
-    .modal-eyebrow {
-        margin-bottom: 5px;
+    .company-modal-title > span {
+        margin-bottom: 4px;
 
+        font-size: 9px;
+    }
+
+    .company-modal-title h2 {
+        font-size: 20px;
+    }
+
+    .company-modal-title p {
         font-size: 10px;
     }
 
-    .company-modal-header h2 {
-        font-size: 21px;
-    }
+    .company-modal-close {
+        width: 38px;
+        height: 38px;
 
-    .modal-title-area p {
-        font-size: 11px;
-    }
+        border-radius: 9px;
 
-    .close-modal-btn {
-        width: 40px;
-        height: 40px;
-
-        border-radius: 10px;
-
-        font-size: 15px;
+        font-size: 14px;
     }
 
     .company-modal-body {
-        padding: 22px 18px;
+        padding: 21px 17px;
     }
 
-    .company-section-heading {
-        gap: 12px;
-
-        margin-bottom: 18px;
-    }
-
-    .section-heading-icon {
-        width: 43px;
-        height: 43px;
-
-        border-radius: 11px;
-
-        font-size: 16px;
-    }
-
-    .company-section-heading h3 {
-        font-size: 16px;
-    }
-
-    .company-section-heading p {
-        font-size: 11px;
+    .company-modal-section {
+        margin-bottom: 24px;
     }
 
     .company-detail-grid {
         grid-template-columns: 1fr;
 
-        gap: 10px;
+        gap: 9px;
     }
 
-    .company-detail-card {
-        min-height: 78px;
+    .company-detail-item {
+        min-height: 75px;
 
         padding: 13px 14px;
     }
 
-    .company-detail-card strong {
-        font-size: 13px;
+    .company-detail-item.full-width {
+        grid-column: auto;
     }
 
-    .company-single-detail {
+    .company-website-box {
         align-items: flex-start;
 
         flex-direction: column;
@@ -1772,119 +1929,110 @@
         gap: 9px;
     }
 
-    .company-website-link {
-        max-width: 100%;
+    .company-modal-website-link {
+        width: 100%;
 
         text-align: left;
     }
 
     .company-modal-footer {
-        min-height: 76px;
+        align-items: stretch;
 
-        padding: 12px 18px;
+        flex-direction: column;
 
-        gap: 12px;
+        padding: 12px 17px;
     }
 
-    .modal-footer-note {
-        font-size: 10px;
+    .company-modal-status {
+        justify-content: center;
     }
 
-    .modal-footer-actions {
-        gap: 7px;
+    .company-modal-actions {
+        width: 100%;
     }
 
-    .close-details-btn,
-    .modal-delete-btn {
-        height: 43px;
+    .company-modal-delete,
+    .company-modal-close-btn {
+        flex: 1;
 
-        padding: 0 13px;
-
-        border-radius: 10px;
-
-        font-size: 11px;
-    }
-
-    .close-details-btn {
-        min-width: 85px;
-    }
-
-    .modal-delete-btn {
-        min-width: 80px;
+        min-width: 0;
     }
 }
 
 
 /* =========================================================
-   VERY SMALL DEVICES
+   SMALL MOBILE
 ========================================================= */
 
 @media (max-width: 430px) {
 
-    .manage-companies-header h1 {
-        font-size: 22px;
+    .companies-page-header h1 {
+        font-size: 23px;
     }
 
-    .admin-page-label {
+    .companies-page-eyebrow {
         font-size: 10px;
     }
 
-    .company-total-card {
-        min-width: 0;
-    }
-
-    .toolbar-right {
+    .companies-toolbar-right {
         align-items: stretch;
 
         flex-direction: column;
     }
 
-    .company-result-count {
+    .companies-result-text {
         text-align: left;
     }
 
-    .refresh-company-btn {
+    .companies-refresh-btn {
         width: 100%;
     }
 
-    .company-modal-header {
-        gap: 10px;
+    .company-mobile-top {
+        align-items: flex-start;
     }
 
-    .company-modal-header-icon {
+    .company-mobile-top .company-status-badge {
+        display: none;
+    }
+
+    .company-mobile-details {
+        grid-template-columns: 1fr;
+    }
+
+    .mobile-website-item {
+        grid-column: auto;
+    }
+
+    .company-modal-header {
+        padding: 16px;
+
+        gap: 9px;
+    }
+
+    .company-modal-avatar {
         width: 44px;
         height: 44px;
 
-        border-radius: 12px;
+        border-radius: 11px;
 
         font-size: 18px;
     }
 
-    .company-modal-header h2 {
-        font-size: 19px;
+    .company-modal-title h2 {
+        font-size: 18px;
     }
 
-    .close-modal-btn {
-        width: 36px;
-        height: 36px;
-    }
-
-    .modal-footer-note span {
-        display: none;
+    .company-modal-close {
+        width: 35px;
+        height: 35px;
     }
 
     .company-modal-footer {
         padding: 10px 14px;
     }
 
-    .modal-footer-actions {
-        width: 100%;
-    }
-
-    .close-details-btn,
-    .modal-delete-btn {
-        flex: 1;
-
-        min-width: 0;
+    .company-modal-status {
+        display: none;
     }
 }

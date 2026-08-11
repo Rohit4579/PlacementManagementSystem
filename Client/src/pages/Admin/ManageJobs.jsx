@@ -1,145 +1,426 @@
-import {
-    useCallback,
-    useEffect,
-    useMemo,
-    useState
-} from "react";
+import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
     collection,
-    getDocs,
     deleteDoc,
     doc,
+    getDocs,
     orderBy,
-    query
+    query,
+    limit
 } from "firebase/firestore";
 
 import {
     FaBriefcase,
     FaBuilding,
+    FaEnvelope,
     FaMapMarkerAlt,
     FaMoneyBillWave,
     FaCalendarAlt,
-    FaGraduationCap,
-    FaCode,
-    FaUserTie,
-    FaEnvelope,
-    FaClock,
     FaEye,
     FaTrash,
-    FaTimes,
     FaSearch,
-    FaSyncAlt,
+    FaTimes,
     FaCheckCircle,
-    FaLayerGroup,
-    FaChartLine
+    FaAlignLeft,
+    FaSyncAlt,
+    FaUserTie,
+    FaGraduationCap,
+    FaTools
 } from "react-icons/fa";
 
 import { db } from "../../firebase/firebaseConfig";
 
 import "./ManageJobs.css";
 
-function ManageJobs() {
-    const [jobs, setJobs] = useState([]);
-    const [loading, setLoading] = useState(true);
-    const [search, setSearch] = useState("");
-    const [deletingId, setDeletingId] = useState(null);
-    const [selectedJob, setSelectedJob] = useState(null);
 
-    /* =====================================================
-       NORMALIZE VALUE
-    ===================================================== */
+/* =========================================================
+   CONSTANTS
+========================================================= */
 
-    const normalize = useCallback((value) => {
-        if (value === undefined || value === null) {
+const MAX_JOBS = 500;
+
+const SEARCH_FIELDS = [
+    "jobTitle",
+    "companyName",
+    "companyEmail",
+    "location",
+    "salary",
+    "deadline",
+    "education",
+    "skills",
+    "description",
+    "requirements"
+];
+
+
+/* =========================================================
+   SAFE VALUE NORMALIZATION
+========================================================= */
+
+const normalize = (value) => {
+    if (value === undefined || value === null) {
+        return "";
+    }
+
+    if (typeof value === "string") {
+        return value.trim();
+    }
+
+    if (typeof value === "number" || typeof value === "boolean") {
+        return String(value);
+    }
+
+    if (Array.isArray(value)) {
+        return value
+            .map((item) => normalize(item))
+            .filter(Boolean)
+            .join(", ");
+    }
+
+    /*
+        Firestore Timestamp
+    */
+    if (
+        typeof value === "object" &&
+        typeof value.toDate === "function"
+    ) {
+        try {
+            return value.toDate().toISOString();
+        } catch {
             return "";
         }
+    }
 
-        if (Array.isArray(value)) {
-            return value.join(", ");
+    /*
+        Firestore Timestamp-like object
+    */
+    if (
+        typeof value === "object" &&
+        typeof value.seconds === "number"
+    ) {
+        try {
+            return new Date(
+                value.seconds * 1000
+            ).toISOString();
+        } catch {
+            return "";
         }
+    }
+
+    /*
+        Do not dump arbitrary objects into the UI.
+        This prevents unexpected structures from becoming
+        confusing "[object Object]" values.
+    */
+    if (typeof value === "object") {
+        try {
+            return JSON.stringify(value);
+        } catch {
+            return "";
+        }
+    }
+
+    return String(value);
+};
+
+
+/* =========================================================
+   FIRST AVAILABLE FIELD
+========================================================= */
+
+const getFirstValue = (data, fields) => {
+    for (const field of fields) {
+        const value = data?.[field];
+
+        if (
+            value !== undefined &&
+            value !== null &&
+            value !== ""
+        ) {
+            return normalize(value);
+        }
+    }
+
+    return "";
+};
+
+
+/* =========================================================
+   DATE FORMAT
+========================================================= */
+
+const formatDate = (value) => {
+    if (!value) {
+        return "Not specified";
+    }
+
+    try {
+        let date;
 
         if (
             typeof value === "object" &&
             typeof value.toDate === "function"
         ) {
-            return value.toDate().toISOString();
+            date = value.toDate();
+        } else if (
+            typeof value === "object" &&
+            typeof value.seconds === "number"
+        ) {
+            date = new Date(
+                value.seconds * 1000
+            );
+        } else {
+            date = new Date(value);
         }
 
-        return String(value);
-    }, []);
+        if (Number.isNaN(date.getTime())) {
+            return normalize(value) || "Not specified";
+        }
+
+        return date.toLocaleDateString(
+            "en-GB",
+            {
+                day: "2-digit",
+                month: "short",
+                year: "numeric"
+            }
+        );
+    } catch {
+        return normalize(value) || "Not specified";
+    }
+};
+
+
+/* =========================================================
+   SALARY FORMAT
+========================================================= */
+
+const formatSalary = (salary) => {
+    const value = normalize(salary);
+
+    return value || "Not specified";
+};
+
+
+/* =========================================================
+   JOB INITIAL
+========================================================= */
+
+const getJobInitial = (title) => {
+    const name = normalize(title);
+
+    return name
+        ? name.charAt(0).toUpperCase()
+        : "J";
+};
+
+
+/* =========================================================
+   NORMALIZE FIRESTORE JOB
+========================================================= */
+
+const normalizeJob = (firestoreDoc) => {
+    const data = firestoreDoc.data() || {};
+
+    return {
+        id: firestoreDoc.id,
+
+        jobTitle: getFirstValue(
+            data,
+            [
+                "jobTitle",
+                "title",
+                "jobName",
+                "position",
+                "role"
+            ]
+        ),
+
+        companyName: getFirstValue(
+            data,
+            [
+                "companyName",
+                "company",
+                "company_name",
+                "organization"
+            ]
+        ),
+
+        companyEmail: getFirstValue(
+            data,
+            [
+                "companyEmail",
+                "email",
+                "company_email"
+            ]
+        ),
+
+        location: getFirstValue(
+            data,
+            [
+                "location",
+                "jobLocation",
+                "city",
+                "place"
+            ]
+        ),
+
+        salary: getFirstValue(
+            data,
+            [
+                "salary",
+                "package",
+                "ctc",
+                "salaryPackage",
+                "pay"
+            ]
+        ),
+
+        deadline: getFirstValue(
+            data,
+            [
+                "deadline",
+                "applicationDeadline",
+                "lastDate",
+                "lastDateToApply",
+                "closingDate"
+            ]
+        ),
+
+        education: getFirstValue(
+            data,
+            [
+                "education",
+                "qualification",
+                "qualificationRequired",
+                "educationalQualification"
+            ]
+        ),
+
+        skills: getFirstValue(
+            data,
+            [
+                "skills",
+                "requiredSkills",
+                "technicalSkills",
+                "skill"
+            ]
+        ),
+
+        description: getFirstValue(
+            data,
+            [
+                "description",
+                "jobDescription",
+                "aboutJob",
+                "details"
+            ]
+        ),
+
+        requirements: getFirstValue(
+            data,
+            [
+                "requirements",
+                "jobRequirements",
+                "responsibilities",
+                "eligibility"
+            ]
+        )
+    };
+};
+
+
+/* =========================================================
+   COMPONENT
+========================================================= */
+
+function ManageJobs() {
+
+    const [jobs, setJobs] = useState([]);
+    const [loading, setLoading] = useState(true);
+    const [refreshing, setRefreshing] = useState(false);
+
+    const [search, setSearch] = useState("");
+
+    const [selectedJob, setSelectedJob] = useState(null);
+
+    const [deletingId, setDeletingId] = useState(null);
+
+    const [error, setError] = useState("");
+
 
     /* =====================================================
        FETCH JOBS
     ===================================================== */
 
-    const fetchJobs = useCallback(async () => {
-        try {
-            setLoading(true);
-
-            const jobsRef = collection(db, "jobs");
-            let jobsData = [];
+    const fetchJobs = useCallback(
+        async ({ silent = false } = {}) => {
 
             try {
+                setError("");
+
+                if (silent) {
+                    setRefreshing(true);
+                } else {
+                    setLoading(true);
+                }
+
+                /*
+                    IMPORTANT:
+
+                    This query is limited so the admin browser
+                    cannot accidentally download an unlimited
+                    collection.
+
+                    Security is still enforced by Firestore Rules.
+                */
+
+                const jobsRef = collection(
+                    db,
+                    "jobs"
+                );
+
                 const jobsQuery = query(
                     jobsRef,
-                    orderBy("createdAt", "desc")
+                    orderBy(
+                        "createdAt",
+                        "desc"
+                    ),
+                    limit(MAX_JOBS)
                 );
 
-                const snapshot = await getDocs(jobsQuery);
-
-                jobsData = snapshot.docs.map((item) => ({
-                    id: item.id,
-                    ...item.data()
-                }));
-            } catch (orderedError) {
-                console.warn(
-                    "Ordered query failed. Using fallback:",
-                    orderedError
+                const snapshot = await getDocs(
+                    jobsQuery
                 );
 
-                const snapshot = await getDocs(jobsRef);
+                const jobsData = snapshot.docs
+                    .map(normalizeJob);
 
-                jobsData = snapshot.docs.map((item) => ({
-                    id: item.id,
-                    ...item.data()
-                }));
+                setJobs(jobsData);
 
-                jobsData.sort((a, b) => {
-                    const getTime = (value) => {
-                        if (
-                            value &&
-                            typeof value.toDate === "function"
-                        ) {
-                            return value.toDate().getTime();
-                        }
+            } catch (error) {
 
-                        if (value && value.seconds) {
-                            return Number(value.seconds) * 1000;
-                        }
+                console.error(
+                    "Manage Jobs fetch error:",
+                    error
+                );
 
-                        const date = new Date(value);
+                setError(
+                    error?.code === "permission-denied"
+                        ? "You do not have permission to view job listings."
+                        : "Unable to load job listings."
+                );
 
-                        return Number.isNaN(date.getTime())
-                            ? 0
-                            : date.getTime();
-                    };
+            } finally {
 
-                    return (
-                        getTime(b.createdAt) -
-                        getTime(a.createdAt)
-                    );
-                });
+                setLoading(false);
+                setRefreshing(false);
             }
+        },
+        []
+    );
 
-            setJobs(jobsData);
-        } catch (error) {
-            console.error("Jobs Fetch Error:", error);
-            setJobs([]);
-        } finally {
-            setLoading(false);
-        }
-    }, []);
 
     /* =====================================================
        INITIAL LOAD
@@ -149,251 +430,180 @@ function ManageJobs() {
         fetchJobs();
     }, [fetchJobs]);
 
+
     /* =====================================================
        ESCAPE MODAL
     ===================================================== */
 
     useEffect(() => {
+
         const handleEscape = (event) => {
             if (event.key === "Escape") {
                 setSelectedJob(null);
             }
         };
 
-        window.addEventListener(
-            "keydown",
-            handleEscape
-        );
+        if (selectedJob) {
+            document.addEventListener(
+                "keydown",
+                handleEscape
+            );
+        }
 
         return () => {
-            window.removeEventListener(
+            document.removeEventListener(
                 "keydown",
                 handleEscape
             );
         };
-    }, []);
+
+    }, [selectedJob]);
+
+
+    /* =====================================================
+       BODY SCROLL LOCK WHEN MODAL IS OPEN
+    ===================================================== */
+
+    useEffect(() => {
+
+        if (!selectedJob) {
+            return;
+        }
+
+        const previousOverflow =
+            document.body.style.overflow;
+
+        document.body.style.overflow = "hidden";
+
+        return () => {
+            document.body.style.overflow =
+                previousOverflow;
+        };
+
+    }, [selectedJob]);
+
+
+    /* =====================================================
+       SEARCH
+    ===================================================== */
+
+    const filteredJobs = useMemo(() => {
+
+        const searchText =
+            search
+                .trim()
+                .toLocaleLowerCase();
+
+        if (!searchText) {
+            return jobs;
+        }
+
+        return jobs.filter((job) => {
+
+            const searchableText =
+                SEARCH_FIELDS
+                    .map(
+                        (field) =>
+                            normalize(job[field])
+                    )
+                    .join(" ")
+                    .toLocaleLowerCase();
+
+            return searchableText.includes(
+                searchText
+            );
+        });
+
+    }, [jobs, search]);
+
 
     /* =====================================================
        DELETE JOB
     ===================================================== */
 
     const deleteJob = async (jobId) => {
-        if (!jobId) return;
 
-        const confirmDelete = window.confirm(
-            "Are you sure you want to delete this job?"
-        );
+        if (!jobId || deletingId) {
+            return;
+        }
 
-        if (!confirmDelete) return;
-
-        try {
-            setDeletingId(jobId);
-
-            await deleteDoc(
-                doc(db, "jobs", jobId)
+        const job =
+            jobs.find(
+                (item) =>
+                    item.id === jobId
             );
 
-            setJobs((previousJobs) =>
-                previousJobs.filter(
-                    (job) => job.id !== jobId
+        const jobName =
+            job?.jobTitle ||
+            "this job";
+
+        const confirmed =
+            window.confirm(
+                `Delete "${jobName}"?\n\nThis action cannot be undone.`
+            );
+
+        if (!confirmed) {
+            return;
+        }
+
+        try {
+
+            setDeletingId(jobId);
+
+            /*
+                Firestore Security Rules MUST independently
+                verify that the current user is an admin.
+            */
+
+            await deleteDoc(
+                doc(
+                    db,
+                    "jobs",
+                    jobId
                 )
             );
 
-            if (selectedJob?.id === jobId) {
-                setSelectedJob(null);
-            }
-
-            window.alert(
-                "Job deleted successfully."
+            setJobs(
+                (previous) =>
+                    previous.filter(
+                        (item) =>
+                            item.id !== jobId
+                    )
             );
+
+            setSelectedJob(
+                (current) =>
+                    current?.id === jobId
+                        ? null
+                        : current
+            );
+
         } catch (error) {
+
             console.error(
                 "Delete Job Error:",
                 error
             );
 
-            window.alert(
-                error?.message ||
-                "Unable to delete job."
-            );
+            if (
+                error?.code ===
+                "permission-denied"
+            ) {
+                alert(
+                    "You do not have permission to delete this job."
+                );
+            } else {
+                alert(
+                    "Unable to delete this job. Please try again."
+                );
+            }
+
         } finally {
+
             setDeletingId(null);
         }
     };
 
-    /* =====================================================
-       FORMAT DATE
-    ===================================================== */
-
-    const formatDate = (value) => {
-        if (!value) {
-            return "Not Available";
-        }
-
-        try {
-            if (
-                typeof value.toDate === "function"
-            ) {
-                return value
-                    .toDate()
-                    .toLocaleDateString(
-                        "en-IN",
-                        {
-                            day: "2-digit",
-                            month: "short",
-                            year: "numeric"
-                        }
-                    );
-            }
-
-            if (value.seconds !== undefined) {
-                return new Date(
-                    Number(value.seconds) * 1000
-                ).toLocaleDateString(
-                    "en-IN",
-                    {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric"
-                    }
-                );
-            }
-
-            const date = new Date(value);
-
-            if (!Number.isNaN(date.getTime())) {
-                return date.toLocaleDateString(
-                    "en-IN",
-                    {
-                        day: "2-digit",
-                        month: "short",
-                        year: "numeric"
-                    }
-                );
-            }
-
-            return String(value);
-        } catch {
-            return "Not Available";
-        }
-    };
-
-    /* =====================================================
-       FORMAT DATE TIME
-    ===================================================== */
-
-    const formatDateTime = (value) => {
-        if (!value) {
-            return "Not Available";
-        }
-
-        try {
-            let date;
-
-            if (
-                value &&
-                typeof value.toDate === "function"
-            ) {
-                date = value.toDate();
-            } else if (
-                value &&
-                value.seconds !== undefined
-            ) {
-                date = new Date(
-                    Number(value.seconds) * 1000
-                );
-            } else {
-                date = new Date(value);
-            }
-
-            if (Number.isNaN(date.getTime())) {
-                return "Not Available";
-            }
-
-            return date.toLocaleString(
-                "en-IN",
-                {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric",
-                    hour: "2-digit",
-                    minute: "2-digit"
-                }
-            );
-        } catch {
-            return "Not Available";
-        }
-    };
-
-    /* =====================================================
-       FILTER JOBS
-    ===================================================== */
-
-    const filteredJobs = useMemo(() => {
-        const searchText = search
-            .trim()
-            .toLowerCase();
-
-        return jobs.filter((job) => {
-            const eligibility =
-                job.eligibility || {};
-
-            const searchableText = [
-                job.title,
-                job.jobTitle,
-                job.companyName,
-                job.company,
-                job.location,
-                job.description,
-                job.jobDescription,
-                job.skills,
-                job.requiredSkills,
-                job.salary,
-                job.package,
-                job.ctc,
-                job.jobType,
-                job.type,
-                eligibility.education,
-                eligibility.branches,
-                eligibility.experience,
-                eligibility.minimum10th,
-                eligibility.minimum12th,
-                eligibility.minimumCGPA
-            ]
-                .map(normalize)
-                .join(" ")
-                .toLowerCase();
-
-            return (
-                !searchText ||
-                searchableText.includes(searchText)
-            );
-        });
-    }, [
-        jobs,
-        search,
-        normalize
-    ]);
-
-    /* =====================================================
-       COMPANY COUNT
-    ===================================================== */
-
-    const companyCount = useMemo(() => {
-        const companies = jobs
-            .map((job) => {
-                return (
-                    normalize(job.companyId).trim() ||
-                    normalize(
-                        job.companyName ||
-                        job.company
-                    ).trim()
-                );
-            })
-            .filter(Boolean);
-
-        return new Set(companies).size;
-    }, [jobs, normalize]);
 
     /* =====================================================
        VIEW JOB
@@ -403,37 +613,55 @@ function ManageJobs() {
         setSelectedJob(job);
     };
 
+
     /* =====================================================
        LOADING
     ===================================================== */
 
     if (loading) {
+
         return (
-            <div className="admin-jobs-page">
-                <div className="admin-jobs-loading">
-                    <div className="loading-spinner"></div>
+            <div className="manage-jobs-page">
+
+                <div className="jobs-loading-state">
+
+                    <div
+                        className="jobs-loading-spinner"
+                        aria-hidden="true"
+                    />
+
+                    <h3>
+                        Loading Jobs
+                    </h3>
 
                     <p>
-                        Loading jobs...
+                        Fetching registered job listings...
                     </p>
+
                 </div>
+
             </div>
         );
     }
+
 
     /* =====================================================
        PAGE
     ===================================================== */
 
     return (
-        <div className="admin-jobs-page">
 
-            {/* HEADER */}
+        <div className="manage-jobs-page">
 
-            <div className="admin-jobs-header">
+            {/* =================================================
+                HEADER
+            ================================================= */}
 
-                <div>
-                    <span className="admin-page-label">
+            <header className="jobs-page-header">
+
+                <div className="jobs-header-content">
+
+                    <span className="jobs-page-eyebrow">
                         TPO / ADMIN
                     </span>
 
@@ -442,35 +670,21 @@ function ManageJobs() {
                     </h1>
 
                     <p>
-                        Monitor and manage all
-                        job opportunities posted
-                        by companies.
+                        View, search and manage all registered
+                        job listings.
                     </p>
+
                 </div>
 
-                <div className="jobs-total">
-                    <span>
-                        Total Jobs
-                    </span>
 
-                    <strong>
-                        {jobs.length}
-                    </strong>
-                </div>
+                <div className="jobs-total-card">
 
-            </div>
-
-            {/* STAT CARDS */}
-
-            <div className="job-stat-grid">
-
-                <div className="job-stat-card">
-
-                    <div className="job-stat-icon blue">
+                    <div className="jobs-total-icon">
                         <FaBriefcase />
                     </div>
 
-                    <div>
+                    <div className="jobs-total-content">
+
                         <span>
                             Total Jobs
                         </span>
@@ -478,17 +692,114 @@ function ManageJobs() {
                         <strong>
                             {jobs.length}
                         </strong>
+
                     </div>
 
                 </div>
 
-                <div className="job-stat-card">
+            </header>
 
-                    <div className="job-stat-icon purple">
-                        <FaSearch />
+
+            {/* =================================================
+                ERROR
+            ================================================= */}
+
+            {error && (
+
+                <div
+                    className="jobs-error-banner"
+                    role="alert"
+                >
+
+                    <span>
+                        {error}
+                    </span>
+
+                    <button
+                        type="button"
+                        onClick={() =>
+                            fetchJobs()
+                        }
+                    >
+                        Try Again
+                    </button>
+
+                </div>
+
+            )}
+
+
+            {/* =================================================
+                SEARCH TOOLBAR
+            ================================================= */}
+
+            <section
+                className="jobs-toolbar"
+                aria-label="Job search controls"
+            >
+
+                <div className="jobs-search-wrapper">
+
+                    <div className="jobs-search-box">
+
+                        <span
+                            className="jobs-search-icon-container"
+                            aria-hidden="true"
+                        >
+                            <FaSearch />
+                        </span>
+
+                        <input
+                            id="job-search"
+                            type="search"
+                            value={search}
+                            placeholder="Search jobs, companies, locations, skills..."
+                            onChange={(event) =>
+                                setSearch(
+                                    event.target.value
+                                )
+                            }
+                            aria-label="Search jobs"
+                            autoComplete="off"
+                            spellCheck="false"
+                        />
+
+                        {search && (
+
+                            <button
+                                type="button"
+                                className="jobs-clear-search"
+                                onClick={() =>
+                                    setSearch("")
+                                }
+                                aria-label="Clear search"
+                            >
+                                <FaTimes />
+                            </button>
+
+                        )}
+
                     </div>
 
-                    <div>
+                    {search && (
+
+                        <span className="jobs-search-hint">
+                            Searching {filteredJobs.length} matching
+                            job{filteredJobs.length === 1 ? "" : "s"}.
+                        </span>
+
+                    )}
+
+                </div>
+
+
+                <div className="jobs-toolbar-right">
+
+                    <div
+                        className="jobs-result-text"
+                        aria-live="polite"
+                    >
+
                         <span>
                             Showing
                         </span>
@@ -496,354 +807,373 @@ function ManageJobs() {
                         <strong>
                             {filteredJobs.length}
                         </strong>
-                    </div>
 
-                </div>
-
-                <div className="job-stat-card">
-
-                    <div className="job-stat-icon green">
-                        <FaBuilding />
-                    </div>
-
-                    <div>
                         <span>
-                            Companies
+                            of
                         </span>
 
                         <strong>
-                            {companyCount}
+                            {jobs.length}
                         </strong>
+
+                        <span>
+                            jobs
+                        </span>
+
                     </div>
 
-                </div>
 
-            </div>
-
-            {/* FILTER BAR */}
-
-            <div className="jobs-filter-card">
-
-                <div className="search-wrapper">
-
-                    <FaSearch className="search-icon" />
-
-                    <input
-                        type="text"
-                        placeholder="Search by job title, company, location or skills..."
-                        value={search}
-                        onChange={(event) =>
-                            setSearch(
-                                event.target.value
-                            )
+                    <button
+                        type="button"
+                        className="jobs-refresh-btn"
+                        onClick={() =>
+                            fetchJobs({
+                                silent: true
+                            })
                         }
-                    />
+                        disabled={refreshing}
+                    >
 
-                    {search && (
-                        <button
-                            type="button"
-                            className="clear-search-btn"
-                            onClick={() =>
-                                setSearch("")
+                        <FaSyncAlt
+                            className={
+                                refreshing
+                                    ? "jobs-refresh-spinning"
+                                    : ""
                             }
-                            aria-label="Clear search"
-                        >
-                            <FaTimes />
-                        </button>
-                    )}
+                        />
+
+                        <span>
+                            {refreshing
+                                ? "Refreshing..."
+                                : "Refresh"
+                            }
+                        </span>
+
+                    </button>
 
                 </div>
 
-                <button
-                    type="button"
-                    className="refresh-btn"
-                    onClick={fetchJobs}
-                    disabled={loading}
-                >
-                    <FaSyncAlt />
-                    Refresh
-                </button>
+            </section>
 
-            </div>
 
-            {/* EMPTY */}
+            {/* =================================================
+                EMPTY
+            ================================================= */}
 
             {filteredJobs.length === 0 && (
-                <div className="jobs-empty">
 
-                    <div className="empty-icon">
+                <div className="jobs-empty-state">
+
+                    <div className="jobs-empty-icon">
                         <FaBriefcase />
                     </div>
 
-                    <h2>
+                    <h3>
                         No Jobs Found
-                    </h2>
+                    </h3>
 
                     <p>
                         {jobs.length === 0
-                            ? "No companies have posted any jobs yet."
+                            ? "No jobs have been registered yet."
                             : "No jobs match your current search."
                         }
                     </p>
 
                     {search && (
+
                         <button
                             type="button"
-                            className="empty-clear-btn"
+                            className="jobs-empty-clear"
                             onClick={() =>
                                 setSearch("")
                             }
                         >
                             Clear Search
                         </button>
+
                     )}
 
                 </div>
+
             )}
 
-            {/* TABLE */}
+
+            {/* =================================================
+                DESKTOP TABLE
+            ================================================= */}
 
             {filteredJobs.length > 0 && (
-                <div className="jobs-table-card">
 
-                    <div className="table-header">
+                <section className="jobs-table-card">
 
-                        <div>
-                            <h2>
-                                Job Listings
-                            </h2>
+                    <div className="jobs-table-scroll">
 
-                            <p>
-                                View complete job information
-                                or remove a listing.
-                            </p>
-                        </div>
-
-                        <span>
-                            {filteredJobs.length}{" "}
-                            job
-                            {filteredJobs.length !== 1
-                                ? "s"
-                                : ""}
-                        </span>
-
-                    </div>
-
-                    <div className="table-wrapper">
-
-                        <table>
-
-                            {/* =================================================
-                                FIXED COLUMN WIDTHS
-                            ================================================= */}
-
-                            <colgroup>
-                                <col className="job-col" />
-                                <col className="company-col" />
-                                <col className="location-col" />
-                                <col className="salary-col" />
-                                <col className="deadline-col" />
-                                <col className="action-col" />
-                            </colgroup>
+                        <table className="jobs-table">
 
                             <thead>
                                 <tr>
 
-                                    <th>
+                                    <th className="job-column">
                                         Job
                                     </th>
 
-                                    <th>
+                                    <th className="company-column">
                                         Company
                                     </th>
 
-                                    <th>
+                                    <th className="location-column">
                                         Location
                                     </th>
 
-                                    <th>
+                                    <th className="salary-column">
                                         Salary
                                     </th>
 
-                                    <th>
+                                    <th className="deadline-column">
                                         Deadline
                                     </th>
 
-                                    <th className="action-header">
-                                        Action
+                                    <th className="actions-column">
+                                        Actions
                                     </th>
 
                                 </tr>
                             </thead>
 
+
                             <tbody>
 
                                 {filteredJobs.map(
-                                    (job) => {
+                                    (job) => (
 
-                                        const title =
-                                            normalize(
-                                                job.title ||
-                                                job.jobTitle
-                                            ) ||
-                                            "Untitled Job";
+                                        <tr key={job.id}>
 
-                                        const company =
-                                            normalize(
-                                                job.companyName ||
-                                                job.company
-                                            ) ||
-                                            "Unknown Company";
+                                            {/* JOB */}
 
-                                        const location =
-                                            normalize(
-                                                job.location
-                                            ) ||
-                                            "Not Available";
+                                            <td className="job-column">
 
-                                        const salary =
-                                            normalize(
-                                                job.salary ||
-                                                job.package ||
-                                                job.ctc
-                                            ) ||
-                                            "Not Available";
+                                                <div className="job-table-profile">
 
-                                        const deadline =
-                                            job.deadline ||
-                                            job.lastDate ||
-                                            job.applicationDeadline;
-
-                                        return (
-                                            <tr key={job.id}>
-
-                                                {/* JOB */}
-
-                                                <td>
-                                                    <div className="job-title-cell">
-
-                                                        <div className="job-icon">
-                                                            <FaBriefcase />
-                                                        </div>
-
-                                                        <div>
-                                                            <strong>
-                                                                {title}
-                                                            </strong>
-                                                        </div>
-
+                                                    <div className="job-table-avatar">
+                                                        {getJobInitial(
+                                                            job.jobTitle
+                                                        )}
                                                     </div>
-                                                </td>
 
-                                                {/* COMPANY */}
+                                                    <div className="job-table-name">
 
-                                                <td>
-                                                    <div className="company-cell">
-
-                                                        <strong>
-                                                            {company}
+                                                        <strong
+                                                            title={
+                                                                job.jobTitle ||
+                                                                "Untitled Job"
+                                                            }
+                                                        >
+                                                            {
+                                                                job.jobTitle ||
+                                                                "Untitled Job"
+                                                            }
                                                         </strong>
 
-                                                        <small>
-                                                            {normalize(
-                                                                job.companyEmail
-                                                            ) ||
-                                                                "Email unavailable"}
-                                                        </small>
+                                                        <span>
+                                                            Job listing
+                                                        </span>
 
                                                     </div>
-                                                </td>
 
-                                                {/* LOCATION */}
+                                                </div>
 
-                                                <td>
-                                                    <span className="location-text">
+                                            </td>
+
+
+                                            {/* COMPANY */}
+
+                                            <td className="company-column">
+
+                                                <div className="job-company-info">
+
+                                                    <div className="job-company-name">
+
+                                                        <FaBuilding />
+
+                                                        <strong
+                                                            title={
+                                                                job.companyName ||
+                                                                "Not specified"
+                                                            }
+                                                        >
+                                                            {
+                                                                job.companyName ||
+                                                                "Not specified"
+                                                            }
+                                                        </strong>
+
+                                                    </div>
+
+                                                    {job.companyEmail && (
+
+                                                        <div
+                                                            className="job-company-email"
+                                                            title={
+                                                                job.companyEmail
+                                                            }
+                                                        >
+
+                                                            <FaEnvelope />
+
+                                                            <span>
+                                                                {
+                                                                    job.companyEmail
+                                                                }
+                                                            </span>
+
+                                                        </div>
+
+                                                    )}
+
+                                                </div>
+
+                                            </td>
+
+
+                                            {/* LOCATION */}
+
+                                            <td className="location-column">
+
+                                                {job.location ? (
+
+                                                    <div
+                                                        className="job-location"
+                                                        title={
+                                                            job.location
+                                                        }
+                                                    >
 
                                                         <FaMapMarkerAlt />
 
-                                                        {location}
-
-                                                    </span>
-                                                </td>
-
-                                                {/* SALARY */}
-
-                                                <td>
-                                                    <span className="salary-cell">
-
-                                                        <FaMoneyBillWave />
-
-                                                        {salary}
-
-                                                    </span>
-                                                </td>
-
-                                                {/* DEADLINE */}
-
-                                                <td>
-                                                    <span className="deadline-cell">
-
-                                                        <FaCalendarAlt />
-
-                                                        {formatDate(
-                                                            deadline
-                                                        )}
-
-                                                    </span>
-                                                </td>
-
-                                                {/* ACTION */}
-
-                                                <td className="action-cell">
-
-                                                    <div className="job-actions">
-
-                                                        <button
-                                                            type="button"
-                                                            className="view-job-btn"
-                                                            onClick={() =>
-                                                                viewJob(job)
+                                                        <span>
+                                                            {
+                                                                job.location
                                                             }
-                                                            title="View complete job details"
-                                                        >
-                                                            <FaEye />
-
-                                                            <span>
-                                                                View
-                                                            </span>
-                                                        </button>
-
-                                                        <button
-                                                            type="button"
-                                                            className="delete-job-btn"
-                                                            onClick={() =>
-                                                                deleteJob(
-                                                                    job.id
-                                                                )
-                                                            }
-                                                            disabled={
-                                                                deletingId ===
-                                                                job.id
-                                                            }
-                                                            title="Delete job"
-                                                        >
-                                                            <FaTrash />
-
-                                                            <span>
-                                                                {deletingId ===
-                                                                job.id
-                                                                    ? "Deleting..."
-                                                                    : "Delete"}
-                                                            </span>
-                                                        </button>
+                                                        </span>
 
                                                     </div>
 
-                                                </td>
+                                                ) : (
 
-                                            </tr>
-                                        );
-                                    }
+                                                    <span className="job-muted-text">
+                                                        Not available
+                                                    </span>
+
+                                                )}
+
+                                            </td>
+
+
+                                            {/* SALARY */}
+
+                                            <td className="salary-column">
+
+                                                <span
+                                                    className="job-salary-badge"
+                                                    title={
+                                                        formatSalary(
+                                                            job.salary
+                                                        )
+                                                    }
+                                                >
+
+                                                    <FaMoneyBillWave />
+
+                                                    <span>
+                                                        {
+                                                            formatSalary(
+                                                                job.salary
+                                                            )
+                                                        }
+                                                    </span>
+
+                                                </span>
+
+                                            </td>
+
+
+                                            {/* DEADLINE */}
+
+                                            <td className="deadline-column">
+
+                                                <div className="job-deadline">
+
+                                                    <FaCalendarAlt />
+
+                                                    <span>
+                                                        {
+                                                            formatDate(
+                                                                job.deadline
+                                                            )
+                                                        }
+                                                    </span>
+
+                                                </div>
+
+                                            </td>
+
+
+                                            {/* ACTIONS */}
+
+                                            <td className="actions-column">
+
+                                                <div className="job-action-buttons">
+
+                                                    <button
+                                                        type="button"
+                                                        className="job-view-btn"
+                                                        onClick={() =>
+                                                            viewJob(job)
+                                                        }
+                                                    >
+
+                                                        <FaEye />
+
+                                                        <span>
+                                                            View
+                                                        </span>
+
+                                                    </button>
+
+
+                                                    <button
+                                                        type="button"
+                                                        className="job-delete-btn"
+                                                        onClick={() =>
+                                                            deleteJob(
+                                                                job.id
+                                                            )
+                                                        }
+                                                        disabled={
+                                                            deletingId ===
+                                                            job.id
+                                                        }
+                                                    >
+
+                                                        <FaTrash />
+
+                                                        <span>
+                                                            {deletingId ===
+                                                            job.id
+                                                                ? "Deleting..."
+                                                                : "Delete"
+                                                            }
+                                                        </span>
+
+                                                    </button>
+
+                                                </div>
+
+                                            </td>
+
+                                        </tr>
+
+                                    )
                                 )}
 
                             </tbody>
@@ -852,107 +1182,321 @@ function ManageJobs() {
 
                     </div>
 
-                </div>
+                </section>
+
             )}
 
-            {/* =====================================================
-                VIEW JOB MODAL
-            ===================================================== */}
+
+            {/* =================================================
+                MOBILE CARDS
+            ================================================= */}
+
+            {filteredJobs.length > 0 && (
+
+                <section className="jobs-mobile-list">
+
+                    {filteredJobs.map(
+                        (job) => (
+
+                            <article
+                                className="job-mobile-card"
+                                key={job.id}
+                            >
+
+                                <div className="job-mobile-top">
+
+                                    <div className="job-mobile-profile">
+
+                                        <div className="job-mobile-avatar">
+                                            {getJobInitial(
+                                                job.jobTitle
+                                            )}
+                                        </div>
+
+                                        <div>
+
+                                            <h3>
+                                                {
+                                                    job.jobTitle ||
+                                                    "Untitled Job"
+                                                }
+                                            </h3>
+
+                                            <span>
+                                                {
+                                                    job.companyName ||
+                                                    "Company not specified"
+                                                }
+                                            </span>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <span className="job-status-badge">
+
+                                        <FaCheckCircle />
+
+                                        Active
+
+                                    </span>
+
+                                </div>
+
+
+                                <div className="job-mobile-details">
+
+                                    <div className="mobile-job-detail-item">
+
+                                        <span className="mobile-job-detail-label">
+                                            <FaBuilding />
+                                            Company
+                                        </span>
+
+                                        <strong>
+                                            {
+                                                job.companyName ||
+                                                "Not available"
+                                            }
+                                        </strong>
+
+                                    </div>
+
+
+                                    <div className="mobile-job-detail-item">
+
+                                        <span className="mobile-job-detail-label">
+                                            <FaMapMarkerAlt />
+                                            Location
+                                        </span>
+
+                                        <strong>
+                                            {
+                                                job.location ||
+                                                "Not available"
+                                            }
+                                        </strong>
+
+                                    </div>
+
+
+                                    <div className="mobile-job-detail-item">
+
+                                        <span className="mobile-job-detail-label">
+                                            <FaMoneyBillWave />
+                                            Salary
+                                        </span>
+
+                                        <strong>
+                                            {
+                                                formatSalary(
+                                                    job.salary
+                                                )
+                                            }
+                                        </strong>
+
+                                    </div>
+
+
+                                    <div className="mobile-job-detail-item">
+
+                                        <span className="mobile-job-detail-label">
+                                            <FaCalendarAlt />
+                                            Deadline
+                                        </span>
+
+                                        <strong>
+                                            {
+                                                formatDate(
+                                                    job.deadline
+                                                )
+                                            }
+                                        </strong>
+
+                                    </div>
+
+
+                                    <div className="mobile-job-detail-item mobile-job-full-width">
+
+                                        <span className="mobile-job-detail-label">
+                                            <FaEnvelope />
+                                            Company Email
+                                        </span>
+
+                                        <strong>
+                                            {
+                                                job.companyEmail ||
+                                                "Not available"
+                                            }
+                                        </strong>
+
+                                    </div>
+
+                                </div>
+
+
+                                <div className="job-mobile-actions">
+
+                                    <button
+                                        type="button"
+                                        className="job-view-btn"
+                                        onClick={() =>
+                                            viewJob(job)
+                                        }
+                                    >
+
+                                        <FaEye />
+
+                                        View Details
+
+                                    </button>
+
+
+                                    <button
+                                        type="button"
+                                        className="job-delete-btn"
+                                        onClick={() =>
+                                            deleteJob(
+                                                job.id
+                                            )
+                                        }
+                                        disabled={
+                                            deletingId ===
+                                            job.id
+                                        }
+                                    >
+
+                                        <FaTrash />
+
+                                        {deletingId === job.id
+                                            ? "Deleting..."
+                                            : "Delete"
+                                        }
+
+                                    </button>
+
+                                </div>
+
+                            </article>
+
+                        )
+                    )}
+
+                </section>
+
+            )}
+
+
+            {/* =================================================
+                JOB MODAL
+            ================================================= */}
 
             {selectedJob && (
+
                 <div
                     className="job-modal-overlay"
-                    onClick={() =>
-                        setSelectedJob(null)
-                    }
+                    onMouseDown={(event) => {
+
+                        if (
+                            event.target ===
+                            event.currentTarget
+                        ) {
+                            setSelectedJob(null);
+                        }
+
+                    }}
+                    role="presentation"
                 >
 
                     <div
                         className="job-modal"
-                        onClick={(event) =>
-                            event.stopPropagation()
-                        }
+                        role="dialog"
+                        aria-modal="true"
+                        aria-labelledby="job-modal-title"
                     >
 
                         {/* MODAL HEADER */}
 
                         <div className="job-modal-header">
 
-                            <div className="modal-title-area">
+                            <div className="job-modal-avatar">
+                                {getJobInitial(
+                                    selectedJob.jobTitle
+                                )}
+                            </div>
 
-                                <div className="modal-job-icon">
-                                    <FaBriefcase />
-                                </div>
 
-                                <div>
+                            <div className="job-modal-title">
 
-                                    <span>
-                                        JOB DETAILS
-                                    </span>
+                                <span>
+                                    JOB LISTING
+                                </span>
 
-                                    <h2>
-                                        {normalize(
-                                            selectedJob.jobTitle ||
-                                            selectedJob.title
-                                        ) ||
-                                            "Untitled Job"}
-                                    </h2>
+                                <h2 id="job-modal-title">
+                                    {
+                                        selectedJob.jobTitle ||
+                                        "Untitled Job"
+                                    }
+                                </h2>
 
-                                    <p>
-                                        {normalize(
-                                            selectedJob.companyName ||
-                                            selectedJob.company
-                                        ) ||
-                                            "Unknown Company"}
-                                    </p>
-
-                                </div>
+                                <p>
+                                    {
+                                        selectedJob.companyName ||
+                                        "Company not specified"
+                                    }
+                                </p>
 
                             </div>
 
+
                             <button
                                 type="button"
-                                className="modal-close-btn"
+                                className="job-modal-close"
                                 onClick={() =>
                                     setSelectedJob(null)
                                 }
-                                aria-label="Close"
+                                aria-label="Close job details"
                             >
                                 <FaTimes />
                             </button>
 
                         </div>
 
+
                         {/* MODAL BODY */}
 
                         <div className="job-modal-body">
 
-                            {/* JOB INFORMATION */}
+                            {/* BASIC INFORMATION */}
 
-                            <div className="modal-section">
+                            <section className="job-modal-section">
 
-                                <div className="modal-section-title">
+                                <div className="job-modal-section-heading">
 
-                                    <div>
+                                    <div className="job-section-icon">
                                         <FaBriefcase />
                                     </div>
 
                                     <div>
+
                                         <h3>
                                             Job Information
                                         </h3>
 
                                         <p>
-                                            Basic details about
-                                            the position.
+                                            Basic information about this
+                                            job listing.
                                         </p>
+
                                     </div>
 
                                 </div>
 
-                                <div className="detail-grid">
 
-                                    <div className="detail-item">
+                                <div className="job-detail-grid">
+
+                                    <div className="job-detail-item">
 
                                         <span>
                                             <FaBriefcase />
@@ -960,16 +1504,50 @@ function ManageJobs() {
                                         </span>
 
                                         <strong>
-                                            {normalize(
+                                            {
                                                 selectedJob.jobTitle ||
-                                                selectedJob.title
-                                            ) ||
-                                                "Not Available"}
+                                                "Not available"
+                                            }
                                         </strong>
 
                                     </div>
 
-                                    <div className="detail-item">
+
+                                    <div className="job-detail-item">
+
+                                        <span>
+                                            <FaBuilding />
+                                            Company
+                                        </span>
+
+                                        <strong>
+                                            {
+                                                selectedJob.companyName ||
+                                                "Not available"
+                                            }
+                                        </strong>
+
+                                    </div>
+
+
+                                    <div className="job-detail-item">
+
+                                        <span>
+                                            <FaEnvelope />
+                                            Company Email
+                                        </span>
+
+                                        <strong className="long-value">
+                                            {
+                                                selectedJob.companyEmail ||
+                                                "Not available"
+                                            }
+                                        </strong>
+
+                                    </div>
+
+
+                                    <div className="job-detail-item">
 
                                         <span>
                                             <FaMapMarkerAlt />
@@ -977,33 +1555,34 @@ function ManageJobs() {
                                         </span>
 
                                         <strong>
-                                            {normalize(
-                                                selectedJob.location
-                                            ) ||
-                                                "Not Available"}
+                                            {
+                                                selectedJob.location ||
+                                                "Not available"
+                                            }
                                         </strong>
 
                                     </div>
 
-                                    <div className="detail-item">
+
+                                    <div className="job-detail-item">
 
                                         <span>
                                             <FaMoneyBillWave />
-                                            Salary / Package
+                                            Salary
                                         </span>
 
-                                        <strong className="salary-highlight">
-                                            {normalize(
-                                                selectedJob.salary ||
-                                                selectedJob.package ||
-                                                selectedJob.ctc
-                                            ) ||
-                                                "Not Available"}
+                                        <strong>
+                                            {
+                                                formatSalary(
+                                                    selectedJob.salary
+                                                )
+                                            }
                                         </strong>
 
                                     </div>
 
-                                    <div className="detail-item">
+
+                                    <div className="job-detail-item">
 
                                         <span>
                                             <FaCalendarAlt />
@@ -1011,377 +1590,230 @@ function ManageJobs() {
                                         </span>
 
                                         <strong>
-                                            {formatDate(
-                                                selectedJob.deadline ||
-                                                selectedJob.lastDate ||
-                                                selectedJob.applicationDeadline
-                                            )}
+                                            {
+                                                formatDate(
+                                                    selectedJob.deadline
+                                                )
+                                            }
                                         </strong>
 
                                     </div>
 
-                                    <div className="detail-item full-detail">
+
+                                    <div className="job-detail-item full-width">
 
                                         <span>
-                                            <FaCode />
+                                            <FaGraduationCap />
+                                            Education / Qualification
+                                        </span>
+
+                                        <strong>
+                                            {
+                                                selectedJob.education ||
+                                                "Not specified"
+                                            }
+                                        </strong>
+
+                                    </div>
+
+                                </div>
+
+                            </section>
+
+
+                            {/* SKILLS */}
+
+                            <section className="job-modal-section">
+
+                                <div className="job-modal-section-heading">
+
+                                    <div className="job-section-icon">
+                                        <FaTools />
+                                    </div>
+
+                                    <div>
+
+                                        <h3>
                                             Required Skills
-                                        </span>
+                                        </h3>
 
-                                        <strong>
-                                            {normalize(
-                                                selectedJob.skills ||
-                                                selectedJob.requiredSkills
-                                            ) ||
-                                                "Not Available"}
-                                        </strong>
+                                        <p>
+                                            Skills required for this
+                                            position.
+                                        </p>
 
                                     </div>
 
-                                    <div className="detail-item full-detail description-item">
+                                </div>
 
-                                        <span>
+
+                                <div className="job-skills-box">
+
+                                    <FaTools />
+
+                                    <p>
+                                        {
+                                            selectedJob.skills ||
+                                            "No specific skills have been added."
+                                        }
+                                    </p>
+
+                                </div>
+
+                            </section>
+
+
+                            {/* DESCRIPTION */}
+
+                            <section className="job-modal-section">
+
+                                <div className="job-modal-section-heading">
+
+                                    <div className="job-section-icon">
+                                        <FaAlignLeft />
+                                    </div>
+
+                                    <div>
+
+                                        <h3>
                                             Job Description
-                                        </span>
-
-                                        <div className="description-text">
-                                            {normalize(
-                                                selectedJob.jobDescription ||
-                                                selectedJob.description
-                                            ) ||
-                                                "No job description provided."}
-                                        </div>
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-                            {/* ELIGIBILITY */}
-
-                            <div className="modal-section">
-
-                                <div className="modal-section-title">
-
-                                    <div className="eligibility-icon">
-                                        <FaGraduationCap />
-                                    </div>
-
-                                    <div>
-                                        <h3>
-                                            Eligibility Criteria
                                         </h3>
 
                                         <p>
-                                            Academic and experience
-                                            requirements.
+                                            Description and overview of
+                                            this position.
                                         </p>
+
                                     </div>
 
                                 </div>
 
-                                <div className="eligibility-grid">
 
-                                    <div className="eligibility-card">
+                                <div className="job-description">
 
-                                        <FaGraduationCap />
+                                    <FaAlignLeft />
 
-                                        <span>
-                                            Minimum Education
-                                        </span>
+                                    <p>
+                                        {
+                                            selectedJob.description ||
+                                            "No job description has been added."
+                                        }
+                                    </p>
 
-                                        <strong>
-                                            {normalize(
-                                                selectedJob
-                                                    .eligibility
-                                                    ?.education
-                                            ) ||
-                                                "Not Specified"}
-                                        </strong>
+                                </div>
 
-                                    </div>
+                            </section>
 
-                                    <div className="eligibility-card">
 
+                            {/* REQUIREMENTS */}
+
+                            <section className="job-modal-section">
+
+                                <div className="job-modal-section-heading">
+
+                                    <div className="job-section-icon">
                                         <FaUserTie />
-
-                                        <span>
-                                            Experience
-                                        </span>
-
-                                        <strong>
-                                            {normalize(
-                                                selectedJob
-                                                    .eligibility
-                                                    ?.experience
-                                            ) ||
-                                                "Not Specified"}
-                                        </strong>
-
-                                    </div>
-
-                                    <div className="eligibility-card">
-
-                                        <FaChartLine />
-
-                                        <span>
-                                            Minimum 10th
-                                        </span>
-
-                                        <strong>
-                                            {selectedJob
-                                                .eligibility
-                                                ?.minimum10th !==
-                                            undefined
-                                                ? `${selectedJob.eligibility.minimum10th}%`
-                                                : "Not Specified"}
-                                        </strong>
-
-                                    </div>
-
-                                    <div className="eligibility-card">
-
-                                        <FaChartLine />
-
-                                        <span>
-                                            Minimum 12th
-                                        </span>
-
-                                        <strong>
-                                            {selectedJob
-                                                .eligibility
-                                                ?.minimum12th !==
-                                            undefined
-                                                ? `${selectedJob.eligibility.minimum12th}%`
-                                                : "Not Specified"}
-                                        </strong>
-
-                                    </div>
-
-                                    <div className="eligibility-card">
-
-                                        <FaLayerGroup />
-
-                                        <span>
-                                            Minimum CGPA
-                                        </span>
-
-                                        <strong>
-                                            {selectedJob
-                                                .eligibility
-                                                ?.minimumCGPA !==
-                                            undefined
-                                                ? `${selectedJob.eligibility.minimumCGPA} / 10`
-                                                : "Not Specified"}
-                                        </strong>
-
-                                    </div>
-
-                                    <div className="eligibility-card">
-
-                                        <FaCode />
-
-                                        <span>
-                                            Eligible Branches
-                                        </span>
-
-                                        <strong>
-                                            {normalize(
-                                                selectedJob
-                                                    .eligibility
-                                                    ?.branches
-                                            ) ||
-                                                "All Branches"}
-                                        </strong>
-
-                                    </div>
-
-                                </div>
-
-                            </div>
-
-                            {/* COMPANY */}
-
-                            <div className="modal-section">
-
-                                <div className="modal-section-title">
-
-                                    <div className="company-icon">
-                                        <FaBuilding />
                                     </div>
 
                                     <div>
+
                                         <h3>
-                                            Company Information
+                                            Requirements
                                         </h3>
 
                                         <p>
-                                            Details of the company
-                                            that posted this job.
+                                            Eligibility, responsibilities
+                                            and other requirements.
                                         </p>
-                                    </div>
-
-                                </div>
-
-                                <div className="detail-grid">
-
-                                    <div className="detail-item">
-
-                                        <span>
-                                            <FaBuilding />
-                                            Company Name
-                                        </span>
-
-                                        <strong>
-                                            {normalize(
-                                                selectedJob.companyName ||
-                                                selectedJob.company
-                                            ) ||
-                                                "Not Available"}
-                                        </strong>
-
-                                    </div>
-
-                                    <div className="detail-item">
-
-                                        <span>
-                                            <FaEnvelope />
-                                            Company Email
-                                        </span>
-
-                                        <strong>
-                                            {normalize(
-                                                selectedJob.companyEmail
-                                            ) ||
-                                                "Not Available"}
-                                        </strong>
 
                                     </div>
 
                                 </div>
 
-                            </div>
 
-                            {/* STATUS */}
+                                <div className="job-requirements">
 
-                            <div className="modal-section">
+                                    <FaUserTie />
 
-                                <div className="modal-section-title">
-
-                                    <div className="status-icon">
-                                        <FaCheckCircle />
-                                    </div>
-
-                                    <div>
-                                        <h3>
-                                            Job Status
-                                        </h3>
-
-                                        <p>
-                                            System information
-                                            for this job listing.
-                                        </p>
-                                    </div>
+                                    <p>
+                                        {
+                                            selectedJob.requirements ||
+                                            "No additional requirements have been added."
+                                        }
+                                    </p>
 
                                 </div>
 
-                                <div className="status-grid">
-
-                                    <div className="status-item">
-
-                                        <span>
-                                            Status
-                                        </span>
-
-                                        <strong className="status-badge">
-
-                                            <FaCheckCircle />
-
-                                            {normalize(
-                                                selectedJob.status
-                                            ) ||
-                                                "Not Specified"}
-
-                                        </strong>
-
-                                    </div>
-
-                                    <div className="status-item">
-
-                                        <span>
-                                            Created
-                                        </span>
-
-                                        <strong>
-
-                                            <FaClock />
-
-                                            {formatDateTime(
-                                                selectedJob.createdAt
-                                            )}
-
-                                        </strong>
-
-                                    </div>
-
-                                    <div className="status-item">
-
-                                        <span>
-                                            Last Updated
-                                        </span>
-
-                                        <strong>
-
-                                            <FaClock />
-
-                                            {formatDateTime(
-                                                selectedJob.updatedAt
-                                            )}
-
-                                        </strong>
-
-                                    </div>
-
-                                </div>
-
-                            </div>
+                            </section>
 
                         </div>
+
 
                         {/* MODAL FOOTER */}
 
                         <div className="job-modal-footer">
 
-                            <div>
+                            <div className="job-modal-status">
 
                                 <FaCheckCircle />
 
                                 <span>
-                                    Admin / TPO can view
-                                    all job information.
+                                    Active job listing
                                 </span>
 
                             </div>
 
-                            <button
-                                type="button"
-                                className="modal-close-footer-btn"
-                                onClick={() =>
-                                    setSelectedJob(null)
-                                }
-                            >
-                                Close
-                            </button>
+
+                            <div className="job-modal-actions">
+
+                                <button
+                                    type="button"
+                                    className="job-modal-delete"
+                                    onClick={() =>
+                                        deleteJob(
+                                            selectedJob.id
+                                        )
+                                    }
+                                    disabled={
+                                        deletingId ===
+                                        selectedJob.id
+                                    }
+                                >
+
+                                    <FaTrash />
+
+                                    {deletingId ===
+                                    selectedJob.id
+                                        ? "Deleting..."
+                                        : "Delete Job"
+                                    }
+
+                                </button>
+
+
+                                <button
+                                    type="button"
+                                    className="job-modal-close-btn"
+                                    onClick={() =>
+                                        setSelectedJob(null)
+                                    }
+                                >
+                                    Close
+                                </button>
+
+                            </div>
 
                         </div>
 
                     </div>
 
                 </div>
+
             )}
 
         </div>
     );
 }
+
 
 export default ManageJobs;

@@ -1,5 +1,4 @@
-
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import {
     collection,
@@ -7,60 +6,55 @@ import {
 } from "firebase/firestore";
 
 import {
-    FaBriefcase,
     FaUsers,
-    FaUserCheck,
-    FaClock,
+    FaSearch,
+    FaEnvelope,
+    FaUniversity,
     FaGraduationCap,
-    FaChartLine,
-    FaArrowRight,
-    FaMapMarkerAlt,
-    FaCalendarAlt,
-    FaMoneyBillWave,
+    FaBriefcase,
     FaBuilding,
-    FaCheckCircle,
-    FaUserGraduate
+    FaCalendarAlt,
+    FaSyncAlt,
+    FaFileAlt
 } from "react-icons/fa";
-
-import { useNavigate } from "react-router-dom";
 
 import { db } from "../../firebase/firebaseConfig";
 
-import "./AdminDashboard.css";
+import "./AdminApplications.css";
 
 
 /* =========================================================
-   ADMIN DASHBOARD
+   ADMIN APPLICATIONS
+   ---------------------------------------------------------
+   Fetches ALL applicants from:
+   1. applications
+   2. studentProfiles
+
+   This page does NOT:
+   - fetch jobs
+   - fetch placement statistics
+   - update applications
+   - delete applications
+   - modify Firebase data
 ========================================================= */
 
-function AdminDashboard() {
-
-    const navigate = useNavigate();
-
+function Applications() {
 
     /* =====================================================
        STATES
     ===================================================== */
 
-    const [totalJobs, setTotalJobs] = useState(0);
-
-    const [totalApplicants, setTotalApplicants] = useState(0);
-
-    const [selected, setSelected] = useState(0);
-
-    const [placed, setPlaced] = useState(0);
-
-    const [pending, setPending] = useState(0);
-
-    const [placementRate, setPlacementRate] = useState(0);
-
-    const [jobs, setJobs] = useState([]);
-
-    const [selectedStudents, setSelectedStudents] = useState([]);
-
-    const [placedStudents, setPlacedStudents] = useState([]);
+    const [applications, setApplications] = useState([]);
 
     const [loading, setLoading] = useState(true);
+
+    const [refreshing, setRefreshing] = useState(false);
+
+    const [error, setError] = useState("");
+
+    const [search, setSearch] = useState("");
+
+    const [statusFilter, setStatusFilter] = useState("all");
 
 
     /* =====================================================
@@ -99,26 +93,7 @@ function AdminDashboard() {
 
 
     /* =====================================================
-       GET PROFILE PHOTO
-
-       Checks student profile first.
-
-       Supported fields:
-
-       photoURL
-       photoUrl
-       profilePhoto
-       profilePhotoURL
-       profilePhotoUrl
-       profileImage
-       profileImageURL
-       profileImageUrl
-       photo
-       image
-       imageURL
-       imageUrl
-       avatar
-       avatarUrl
+       PROFILE PHOTO
     ===================================================== */
 
     const getProfilePhoto = (
@@ -151,16 +126,15 @@ function AdminDashboard() {
         ];
 
 
-        /* ---------------------------------------------
+        /* -------------------------------------------------
            FIRST: STUDENT PROFILE
-        --------------------------------------------- */
+        ------------------------------------------------- */
 
-        const profilePhoto =
-            getFirstValue(
-                profile,
-                photoFields,
-                ""
-            );
+        const profilePhoto = getFirstValue(
+            profile,
+            photoFields,
+            ""
+        );
 
 
         if (profilePhoto) {
@@ -172,16 +146,15 @@ function AdminDashboard() {
         }
 
 
-        /* ---------------------------------------------
+        /* -------------------------------------------------
            SECOND: APPLICATION
-        --------------------------------------------- */
+        ------------------------------------------------- */
 
-        const applicationPhoto =
-            getFirstValue(
-                application,
-                photoFields,
-                ""
-            );
+        const applicationPhoto = getFirstValue(
+            application,
+            photoFields,
+            ""
+        );
 
 
         if (applicationPhoto) {
@@ -199,54 +172,7 @@ function AdminDashboard() {
 
 
     /* =====================================================
-       FORMAT DATE
-    ===================================================== */
-
-    const formatDate = (value) => {
-
-        if (!value) {
-            return "Not Available";
-        }
-
-        try {
-
-            if (
-                value &&
-                typeof value.toDate === "function"
-            ) {
-
-                return value
-                    .toDate()
-                    .toLocaleDateString();
-
-            }
-
-            const date = new Date(value);
-
-            if (isNaN(date.getTime())) {
-                return "Not Available";
-            }
-
-            return date.toLocaleDateString();
-
-        }
-
-        catch (error) {
-
-            console.error(
-                "Date formatting error:",
-                error
-            );
-
-            return "Not Available";
-
-        }
-
-    };
-
-
-    /* =====================================================
-       GET DATE TIME
+       DATE VALUE
     ===================================================== */
 
     const getDateTime = (value) => {
@@ -277,90 +203,166 @@ function AdminDashboard() {
             return date.getTime();
 
         }
-
         catch {
+
             return 0;
+
         }
 
     };
 
 
     /* =====================================================
-       LOAD DASHBOARD
+       FORMAT DATE
+    ===================================================== */
+
+    const formatDate = (value) => {
+
+        if (!value) {
+            return "Not Available";
+        }
+
+        try {
+
+            if (
+                value &&
+                typeof value.toDate === "function"
+            ) {
+
+                return value
+                    .toDate()
+                    .toLocaleDateString(
+                        "en-IN",
+                        {
+                            day: "2-digit",
+                            month: "short",
+                            year: "numeric"
+                        }
+                    );
+
+            }
+
+            const date = new Date(value);
+
+            if (isNaN(date.getTime())) {
+                return "Not Available";
+            }
+
+            return date.toLocaleDateString(
+                "en-IN",
+                {
+                    day: "2-digit",
+                    month: "short",
+                    year: "numeric"
+                }
+            );
+
+        }
+        catch {
+
+            return "Not Available";
+
+        }
+
+    };
+
+
+    /* =====================================================
+       NORMALIZE STATUS
+    ===================================================== */
+
+    const getStatus = (application) => {
+
+        const rawStatus =
+            application?.status ||
+            "pending";
+
+        const status =
+            String(rawStatus)
+                .trim()
+                .toLowerCase();
+
+
+        if (
+            status === "accepted" ||
+            status === "selected"
+        ) {
+
+            return "accepted";
+
+        }
+
+
+        if (status === "rejected") {
+
+            return "rejected";
+
+        }
+
+
+        if (status === "placed") {
+
+            return "placed";
+
+        }
+
+
+        return "pending";
+
+    };
+
+
+    /* =====================================================
+       STATUS LABEL
+    ===================================================== */
+
+    const getStatusLabel = (status) => {
+
+        switch (status) {
+
+            case "accepted":
+                return "Selected";
+
+            case "rejected":
+                return "Rejected";
+
+            case "placed":
+                return "Placed";
+
+            default:
+                return "Pending";
+
+        }
+
+    };
+
+
+    /* =====================================================
+       LOAD ALL APPLICATIONS
     ===================================================== */
 
     useEffect(() => {
 
-        fetchDashboard();
+        fetchApplications();
 
     }, []);
 
 
     /* =====================================================
-       FETCH DASHBOARD
+       FETCH APPLICATIONS
     ===================================================== */
 
-    const fetchDashboard = async () => {
+    const fetchApplications = async () => {
 
         try {
+
+            setError("");
 
             setLoading(true);
 
 
             /* =================================================
-               1. LOAD JOBS
-            ================================================= */
-
-            const jobsSnapshot =
-                await getDocs(
-                    collection(
-                        db,
-                        "jobs"
-                    )
-                );
-
-
-            const jobList =
-                jobsSnapshot.docs.map(
-                    (document) => ({
-
-                        id: document.id,
-
-                        ...document.data()
-
-                    })
-                );
-
-
-            /* =================================================
-               SORT JOBS NEWEST FIRST
-            ================================================= */
-
-            jobList.sort(
-                (a, b) => {
-
-                    return (
-                        getDateTime(
-                            b.createdAt
-                        ) -
-                        getDateTime(
-                            a.createdAt
-                        )
-                    );
-
-                }
-            );
-
-
-            setJobs(jobList);
-
-            setTotalJobs(
-                jobList.length
-            );
-
-
-            /* =================================================
-               2. LOAD APPLICATIONS
+               1. FETCH ALL APPLICATIONS
             ================================================= */
 
             const applicationsSnapshot =
@@ -372,7 +374,7 @@ function AdminDashboard() {
                 );
 
 
-            const applications =
+            const applicationList =
                 applicationsSnapshot.docs.map(
                     (document) => ({
 
@@ -385,7 +387,7 @@ function AdminDashboard() {
 
 
             /* =================================================
-               3. LOAD ALL STUDENT PROFILES ONCE
+               2. FETCH ALL STUDENT PROFILES
             ================================================= */
 
             const profilesSnapshot =
@@ -410,7 +412,7 @@ function AdminDashboard() {
 
 
                     /* -----------------------------------------
-                       DOCUMENT ID
+                       STORE USING DOCUMENT ID
                     ----------------------------------------- */
 
                     profilesById[
@@ -425,12 +427,10 @@ function AdminDashboard() {
 
 
                     /* -----------------------------------------
-                       UID
+                       STORE USING UID
                     ----------------------------------------- */
 
-                    if (
-                        profile.uid
-                    ) {
+                    if (profile.uid) {
 
                         profilesByUid[
                             profile.uid
@@ -449,8 +449,7 @@ function AdminDashboard() {
 
 
             /* =================================================
-               HELPER:
-               FIND STUDENT PROFILE
+               3. FIND STUDENT PROFILE
             ================================================= */
 
             const findStudentProfile = (
@@ -469,7 +468,7 @@ function AdminDashboard() {
 
 
                 /* -----------------------------------------
-                   FIRST TRY DOCUMENT ID
+                   FIRST: DOCUMENT ID
                 ----------------------------------------- */
 
                 if (
@@ -486,7 +485,7 @@ function AdminDashboard() {
 
 
                 /* -----------------------------------------
-                   THEN TRY UID
+                   SECOND: UID
                 ----------------------------------------- */
 
                 if (
@@ -508,411 +507,277 @@ function AdminDashboard() {
 
 
             /* =================================================
-               4. COUNTERS
+               4. MERGE APPLICATION + STUDENT PROFILE
             ================================================= */
 
-            let selectedCount = 0;
+            const mergedApplications =
+                applicationList.map(
+                    (application) => {
 
-            let placedCount = 0;
+                        const profile =
+                            findStudentProfile(
+                                application
+                            );
 
-            let pendingCount = 0;
+
+                        /* -------------------------------------
+                           STUDENT NAME
+                        ------------------------------------- */
+
+                        const studentName =
+                            getFirstValue(
+                                profile,
+                                [
+                                    "studentName",
+                                    "name",
+                                    "fullName",
+                                    "displayName"
+                                ],
+                                application.studentName ||
+                                application.name ||
+                                "Student"
+                            );
+
+
+                        /* -------------------------------------
+                           EMAIL
+                        ------------------------------------- */
+
+                        const email =
+                            getFirstValue(
+                                profile,
+                                [
+                                    "email",
+                                    "studentEmail",
+                                    "emailAddress"
+                                ],
+                                application.studentEmail ||
+                                application.email ||
+                                "Not Available"
+                            );
+
+
+                        /* -------------------------------------
+                           COLLEGE
+                        ------------------------------------- */
+
+                        const college =
+                            getFirstValue(
+                                profile,
+                                [
+                                    "college",
+                                    "collegeName",
+                                    "college_name",
+                                    "institute",
+                                    "instituteName",
+                                    "university",
+                                    "universityName",
+                                    "institution",
+                                    "institutionName"
+                                ],
+                                application.college ||
+                                application.collegeName ||
+                                "Not Available"
+                            );
+
+
+                        /* -------------------------------------
+                           DEGREE
+                        ------------------------------------- */
+
+                        const degree =
+                            getFirstValue(
+                                profile,
+                                [
+                                    "degree",
+                                    "course",
+                                    "program",
+                                    "qualification",
+                                    "education",
+                                    "highestQualification",
+                                    "degreeName",
+                                    "courseName",
+                                    "programName"
+                                ],
+                                application.degree ||
+                                application.course ||
+                                "Not Available"
+                            );
+
+
+                        /* -------------------------------------
+                           DEPARTMENT
+                        ------------------------------------- */
+
+                        const department =
+                            getFirstValue(
+                                profile,
+                                [
+                                    "department",
+                                    "branch",
+                                    "stream",
+                                    "specialization"
+                                ],
+                                application.department ||
+                                application.branch ||
+                                "Not Available"
+                            );
+
+
+                        /* -------------------------------------
+                           PHONE
+                        ------------------------------------- */
+
+                        const phone =
+                            getFirstValue(
+                                profile,
+                                [
+                                    "phone",
+                                    "mobile",
+                                    "mobileNumber",
+                                    "phoneNumber",
+                                    "contactNumber"
+                                ],
+                                application.phone ||
+                                "Not Available"
+                            );
+
+
+                        /* -------------------------------------
+                           PHOTO
+                        ------------------------------------- */
+
+                        const profilePhoto =
+                            getProfilePhoto(
+                                profile,
+                                application
+                            );
+
+
+                        /* -------------------------------------
+                           JOB
+                        ------------------------------------- */
+
+                        const jobTitle =
+                            application.jobTitle ||
+                            application.jobName ||
+                            application.title ||
+                            "Job Not Available";
+
+
+                        /* -------------------------------------
+                           COMPANY
+                        ------------------------------------- */
+
+                        const companyName =
+                            application.companyName ||
+                            application.company ||
+                            "Company";
+
+
+                        /* -------------------------------------
+                           STATUS
+                        ------------------------------------- */
+
+                        const status =
+                            getStatus(
+                                application
+                            );
+
+
+                        /* -------------------------------------
+                           APPLIED DATE
+                        ------------------------------------- */
+
+                        const appliedAt =
+                            application.appliedAt ||
+                            application.createdAt ||
+                            application.applicationDate ||
+                            application.appliedDate ||
+                            null;
+
+
+                        return {
+
+                            ...application,
+
+                            profile,
+
+                            studentProfileId:
+                                profile?.id || null,
+
+                            studentName,
+
+                            email,
+
+                            studentEmail:
+                                email,
+
+                            college,
+
+                            degree,
+
+                            department,
+
+                            phone,
+
+                            profilePhoto,
+
+                            jobTitle,
+
+                            companyName,
+
+                            status,
+
+                            appliedAt
+
+                        };
+
+                    }
+                );
 
 
             /* =================================================
-               5. PROCESS APPLICATIONS
+               5. SORT NEWEST APPLICATION FIRST
             ================================================= */
 
-            const processedApplications = [];
+            mergedApplications.sort(
+                (a, b) => {
 
+                    return (
+                        getDateTime(
+                            b.appliedAt
+                        ) -
+                        getDateTime(
+                            a.appliedAt
+                        )
+                    );
 
-            for (
-                const application of applications
-            ) {
-
-                const status =
-                    String(
-                        application.status ||
-                        "pending"
-                    )
-                        .trim()
-                        .toLowerCase();
-
-
-                /* -----------------------------------------
-                   SELECTED
-                ----------------------------------------- */
-
-                const isSelected =
-                    status === "accepted" ||
-                    status === "selected";
-
-
-                /* -----------------------------------------
-                   PLACED
-                ----------------------------------------- */
-
-                const isPlaced =
-                    application.placedStudent === true ||
-                    status === "placed";
-
-
-                /* -----------------------------------------
-                   PENDING
-                ----------------------------------------- */
-
-                const isPending =
-                    status === "applied" ||
-                    status === "pending";
-
-
-                if (isSelected) {
-                    selectedCount++;
                 }
-
-
-                if (isPlaced) {
-                    placedCount++;
-                }
-
-
-                if (
-                    isPending &&
-                    !isSelected
-                ) {
-
-                    pendingCount++;
-
-                }
-
-
-                /* -----------------------------------------
-                   ONLY PROCESS SELECTED / PLACED
-                ----------------------------------------- */
-
-                if (
-                    !isSelected &&
-                    !isPlaced
-                ) {
-
-                    continue;
-
-                }
-
-
-                const profile =
-                    findStudentProfile(
-                        application
-                    );
-
-
-                /* =================================================
-                   STUDENT NAME
-                ================================================= */
-
-                const studentName =
-                    getFirstValue(
-                        profile,
-                        [
-                            "studentName",
-                            "name",
-                            "fullName",
-                            "displayName"
-                        ],
-                        application.studentName ||
-                        application.name ||
-                        "Student"
-                    );
-
-
-                /* =================================================
-                   EMAIL
-                ================================================= */
-
-                const email =
-                    getFirstValue(
-                        profile,
-                        [
-                            "email",
-                            "studentEmail",
-                            "emailAddress"
-                        ],
-                        application.studentEmail ||
-                        application.email ||
-                        "Not Available"
-                    );
-
-
-                /* =================================================
-                   COLLEGE
-                ================================================= */
-
-                const college =
-                    getFirstValue(
-                        profile,
-                        [
-                            "college",
-                            "collegeName",
-                            "college_name",
-                            "institute",
-                            "instituteName",
-                            "university",
-                            "universityName",
-                            "institution",
-                            "institutionName"
-                        ],
-                        application.college ||
-                        application.collegeName ||
-                        "Not Available"
-                    );
-
-
-                /* =================================================
-                   DEGREE
-                ================================================= */
-
-                const degree =
-                    getFirstValue(
-                        profile,
-                        [
-                            "degree",
-                            "course",
-                            "program",
-                            "qualification",
-                            "education",
-                            "highestQualification",
-                            "degreeName",
-                            "courseName",
-                            "programName"
-                        ],
-                        application.degree ||
-                        application.course ||
-                        "Not Available"
-                    );
-
-
-                /* =================================================
-                   DEPARTMENT
-                ================================================= */
-
-                const department =
-                    getFirstValue(
-                        profile,
-                        [
-                            "department",
-                            "branch",
-                            "stream",
-                            "specialization"
-                        ],
-                        application.department ||
-                        application.branch ||
-                        "Not Available"
-                    );
-
-
-                /* =================================================
-                   PHONE
-                ================================================= */
-
-                const phone =
-                    getFirstValue(
-                        profile,
-                        [
-                            "phone",
-                            "mobile",
-                            "mobileNumber",
-                            "phoneNumber",
-                            "contactNumber"
-                        ],
-                        application.phone ||
-                        "Not Available"
-                    );
-
-
-                /* =================================================
-                   PROFILE PHOTO
-                ================================================= */
-
-                const profilePhoto =
-                    getProfilePhoto(
-                        profile,
-                        application
-                    );
-
-
-                /* =================================================
-                   JOB
-                ================================================= */
-
-                const jobTitle =
-                    application.jobTitle ||
-                    application.jobName ||
-                    application.title ||
-                    "Job Not Available";
-
-
-                /* =================================================
-                   COMPANY
-                ================================================= */
-
-                const companyName =
-                    application.companyName ||
-                    application.company ||
-                    "Company";
-
-
-                /* =================================================
-                   FINAL STUDENT OBJECT
-                ================================================= */
-
-                processedApplications.push({
-
-                    ...application,
-
-                    profile,
-
-                    studentProfileId:
-                        profile?.id || null,
-
-                    studentName,
-
-                    email,
-
-                    studentEmail:
-                        email,
-
-                    college,
-
-                    degree,
-
-                    department,
-
-                    phone,
-
-                    profilePhoto,
-
-                    jobTitle,
-
-                    companyName,
-
-                    isSelected,
-
-                    isPlaced
-
-                });
-
-            }
-
-
-            /* =================================================
-               6. PLACEMENT RATE
-            ================================================= */
-
-            const calculatedPlacementRate =
-                selectedCount > 0
-                    ? Math.round(
-                        (
-                            placedCount /
-                            selectedCount
-                        ) * 100
-                    )
-                    : 0;
-
-
-            /* =================================================
-               7. SET COUNTERS
-            ================================================= */
-
-            setTotalApplicants(
-                applications.length
-            );
-
-            setSelected(
-                selectedCount
-            );
-
-            setPlaced(
-                placedCount
-            );
-
-            setPending(
-                pendingCount
-            );
-
-            setPlacementRate(
-                calculatedPlacementRate
             );
 
 
             /* =================================================
-               8. SELECTED STUDENTS
+               6. SAVE
             ================================================= */
 
-            const selectedList =
-                processedApplications
-                    .filter(
-                        (application) =>
-                            application.isSelected
-                    )
-                    .sort(
-                        (a, b) =>
-                            getDateTime(
-                                b.appliedAt ||
-                                b.createdAt
-                            ) -
-                            getDateTime(
-                                a.appliedAt ||
-                                a.createdAt
-                            )
-                    );
-
-
-            /* =================================================
-               9. PLACED STUDENTS
-            ================================================= */
-
-            const placedList =
-                processedApplications
-                    .filter(
-                        (application) =>
-                            application.isPlaced
-                    )
-                    .sort(
-                        (a, b) =>
-                            getDateTime(
-                                b.appliedAt ||
-                                b.createdAt
-                            ) -
-                            getDateTime(
-                                a.appliedAt ||
-                                a.createdAt
-                            )
-                    );
-
-
-            /* =================================================
-               10. SET RECENT STUDENTS
-            ================================================= */
-
-            setSelectedStudents(
-                selectedList.slice(0, 5)
-            );
-
-
-            setPlacedStudents(
-                placedList.slice(0, 5)
+            setApplications(
+                mergedApplications
             );
 
         }
-
         catch (error) {
 
             console.error(
-                "Admin dashboard error:",
+                "Applications fetch error:",
                 error
             );
 
-        }
+            setError(
+                "Unable to load applications. Please try again."
+            );
 
+        }
         finally {
 
             setLoading(false);
@@ -923,19 +788,139 @@ function AdminDashboard() {
 
 
     /* =====================================================
-       PROFILE AVATAR
+       REFRESH
+    ===================================================== */
 
-       UPDATED:
-       - Displays actual student photo
-       - Fallback initials
-       - Handles broken URLs
-       - Works in selected student table
-       - Works in placed student cards
+    const handleRefresh = async () => {
+
+        try {
+
+            setRefreshing(true);
+
+            await fetchApplications();
+
+        }
+        finally {
+
+            setRefreshing(false);
+
+        }
+
+    };
+
+
+    /* =====================================================
+       FILTER APPLICATIONS
+    ===================================================== */
+
+    const filteredApplications =
+        useMemo(() => {
+
+            const searchText =
+                search
+                    .trim()
+                    .toLowerCase();
+
+
+            return applications.filter(
+                (application) => {
+
+                    /* -----------------------------------------
+                       STATUS FILTER
+                    ----------------------------------------- */
+
+                    if (
+                        statusFilter !== "all" &&
+                        application.status !== statusFilter
+                    ) {
+
+                        return false;
+
+                    }
+
+
+                    /* -----------------------------------------
+                       SEARCH
+                    ----------------------------------------- */
+
+                    if (!searchText) {
+                        return true;
+                    }
+
+
+                    const searchableText = [
+
+                        application.studentName,
+
+                        application.email,
+
+                        application.college,
+
+                        application.degree,
+
+                        application.department,
+
+                        application.jobTitle,
+
+                        application.companyName,
+
+                        application.phone
+
+                    ]
+                        .filter(Boolean)
+                        .join(" ")
+                        .toLowerCase();
+
+
+                    return searchableText.includes(
+                        searchText
+                    );
+
+                }
+            );
+
+        }, [
+            applications,
+            search,
+            statusFilter
+        ]);
+
+
+    /* =====================================================
+       STATISTICS
+    ===================================================== */
+
+    const totalCount =
+        applications.length;
+
+
+    const pendingCount =
+        applications.filter(
+            (application) =>
+                application.status === "pending"
+        ).length;
+
+
+    const acceptedCount =
+        applications.filter(
+            (application) =>
+                application.status === "accepted"
+        ).length;
+
+
+    const rejectedCount =
+        applications.filter(
+            (application) =>
+                application.status === "rejected"
+        ).length;
+
+
+    /* =====================================================
+       STUDENT AVATAR
     ===================================================== */
 
     const StudentAvatar = ({
-        student,
-        placed = false
+        student
     }) => {
 
         const photo =
@@ -951,16 +936,17 @@ function AdminDashboard() {
             "Student";
 
 
-        const firstLetter =
+        const initials =
             name
-                .charAt(0)
+                .split(" ")
+                .filter(Boolean)
+                .slice(0, 2)
+                .map(
+                    (part) =>
+                        part.charAt(0)
+                )
+                .join("")
                 .toUpperCase();
-
-
-        const avatarClass =
-            placed
-                ? "placed-avatar"
-                : "student-avatar";
 
 
         /* ---------------------------------------------
@@ -972,16 +958,15 @@ function AdminDashboard() {
             return (
 
                 <div
-                    className={
-                        avatarClass
-                    }
-                    aria-label={
-                        `${name} profile`
-                    }
+                    className="student-avatar"
                     title={name}
                 >
 
-                    {firstLetter}
+                    <span className="student-avatar-fallback">
+
+                        {initials || "S"}
+
+                    </span>
 
                 </div>
 
@@ -997,34 +982,27 @@ function AdminDashboard() {
         return (
 
             <div
-                className={`${avatarClass} student-photo-container`}
+                className="student-avatar"
+                title={name}
             >
 
                 <img
                     src={photo}
                     alt={`${name} profile`}
-                    className="student-profile-photo"
+                    className="student-avatar-image"
                     loading="lazy"
                     referrerPolicy="no-referrer"
                     onError={(event) => {
-
-                        /*
-                         * Hide broken image
-                         */
 
                         event.currentTarget.style.display =
                             "none";
 
 
-                        /*
-                         * Show fallback
-                         */
-
                         const fallback =
                             event.currentTarget
                                 .parentElement
                                 ?.querySelector(
-                                    ".student-photo-fallback"
+                                    ".student-avatar-fallback"
                                 );
 
 
@@ -1040,13 +1018,13 @@ function AdminDashboard() {
 
 
                 <span
-                    className="student-photo-fallback"
+                    className="student-avatar-fallback"
                     style={{
                         display: "none"
                     }}
                 >
 
-                    {firstLetter}
+                    {initials || "S"}
 
                 </span>
 
@@ -1065,15 +1043,59 @@ function AdminDashboard() {
 
         return (
 
-            <div className="admin-dashboard">
+            <div className="admin-applications-page">
 
-                <div className="admin-loading">
+                <div className="applications-message">
 
-                    <div className="admin-spinner"></div>
+                    <div className="loading-spinner"></div>
+
+                    <h3>
+                        Loading Applications
+                    </h3>
 
                     <p>
-                        Loading admin dashboard...
+                        Fetching all student applications...
                     </p>
+
+                </div>
+
+            </div>
+
+        );
+
+    }
+
+
+    /* =====================================================
+       ERROR
+    ===================================================== */
+
+    if (error) {
+
+        return (
+
+            <div className="admin-applications-page">
+
+                <div className="applications-message error">
+
+                    <div className="empty-icon">
+                        <FaFileAlt />
+                    </div>
+
+                    <h3>
+                        Unable to Load Applications
+                    </h3>
+
+                    <p>
+                        {error}
+                    </p>
+
+                    <button
+                        type="button"
+                        onClick={fetchApplications}
+                    >
+                        Try Again
+                    </button>
 
                 </div>
 
@@ -1090,37 +1112,54 @@ function AdminDashboard() {
 
     return (
 
-        <div className="admin-dashboard">
+        <div className="admin-applications-page">
 
 
             {/* =================================================
                 HEADER
             ================================================= */}
 
-            <section className="admin-header">
+            <section className="applications-header">
 
-                <div className="admin-welcome">
+                <div>
 
-                    <div>
+                    <span className="page-label">
+                        APPLICATION MANAGEMENT
+                    </span>
 
-                        <span className="admin-label">
-                            ADMIN DASHBOARD
-                        </span>
+                    <h1>
+                        Student Applications
+                    </h1>
 
-                        <h1>
-                            Recruitment Overview 👋
-                        </h1>
-
-                        <p>
-                            Monitor jobs, applications,
-                            selected students and
-                            placement progress across
-                            all companies.
-                        </p>
-
-                    </div>
+                    <p>
+                        View all students who have applied
+                        for company job opportunities.
+                    </p>
 
                 </div>
+
+
+                <button
+                    type="button"
+                    className="refresh-button"
+                    onClick={handleRefresh}
+                    disabled={refreshing}
+                >
+
+                    <FaSyncAlt
+                        className={
+                            refreshing
+                                ? "refresh-spinning"
+                                : ""
+                        }
+                    />
+
+                    {refreshing
+                        ? "Refreshing..."
+                        : "Refresh"
+                    }
+
+                </button>
 
             </section>
 
@@ -1129,380 +1168,214 @@ function AdminDashboard() {
                 STATISTICS
             ================================================= */}
 
-            <section className="admin-cards">
+            <section className="application-stat-grid">
 
 
-                <div className="admin-card">
+                <div className="application-stat-card">
 
-                    <div className="admin-card-icon blue">
-                        <FaBriefcase />
-                    </div>
-
-                    <div className="admin-card-content">
-
-                        <span>
-                            Total Jobs
-                        </span>
-
-                        <h3>
-                            {totalJobs}
-                        </h3>
-
-                        <small>
-                            Job postings
-                        </small>
-
-                    </div>
-
-                </div>
-
-
-                <div className="admin-card">
-
-                    <div className="admin-card-icon purple">
+                    <div className="stat-icon total">
                         <FaUsers />
                     </div>
 
-                    <div className="admin-card-content">
+                    <div>
 
                         <span>
-                            Applicants
+                            Total Applicants
                         </span>
 
-                        <h3>
-                            {totalApplicants}
-                        </h3>
-
-                        <small>
-                            Total applications
-                        </small>
+                        <strong>
+                            {totalCount}
+                        </strong>
 
                     </div>
 
                 </div>
 
 
-                <div className="admin-card">
+                <div className="application-stat-card">
 
-                    <div className="admin-card-icon green">
-                        <FaUserCheck />
+                    <div className="stat-icon pending">
+                        <FaFileAlt />
                     </div>
 
-                    <div className="admin-card-content">
-
-                        <span>
-                            Selected
-                        </span>
-
-                        <h3>
-                            {selected}
-                        </h3>
-
-                        <small>
-                            Selected students
-                        </small>
-
-                    </div>
-
-                </div>
-
-
-                <div className="admin-card">
-
-                    <div className="admin-card-icon placed">
-                        <FaGraduationCap />
-                    </div>
-
-                    <div className="admin-card-content">
-
-                        <span>
-                            Placed
-                        </span>
-
-                        <h3>
-                            {placed}
-                        </h3>
-
-                        <small>
-                            Students placed
-                        </small>
-
-                    </div>
-
-                </div>
-
-
-                <div className="admin-card">
-
-                    <div className="admin-card-icon orange">
-                        <FaClock />
-                    </div>
-
-                    <div className="admin-card-content">
+                    <div>
 
                         <span>
                             Pending
                         </span>
 
-                        <h3>
-                            {pending}
-                        </h3>
-
-                        <small>
-                            Applications to review
-                        </small>
-
-                    </div>
-
-                </div>
-
-
-            </section>
-
-
-            {/* =================================================
-                PLACEMENT OVERVIEW
-            ================================================= */}
-
-            <section className="admin-placement-overview">
-
-                <div className="placement-overview-icon">
-
-                    <FaChartLine />
-
-                </div>
-
-
-                <div className="placement-overview-content">
-
-                    <span className="overview-label">
-                        PLACEMENT OVERVIEW
-                    </span>
-
-                    <h2>
-                        Placement Rate
-                    </h2>
-
-                    <p>
-                        Students placed from the
-                        selected student pool.
-                    </p>
-
-                </div>
-
-
-                <div className="placement-rate">
-
-                    <strong>
-                        {placementRate}%
-                    </strong>
-
-                    <span>
-                        Placement Rate
-                    </span>
-
-                </div>
-
-
-                <div className="placement-stat">
-
-                    <FaUserGraduate />
-
-                    <div>
-
                         <strong>
-                            {placed}
+                            {pendingCount}
                         </strong>
 
+                    </div>
+
+                </div>
+
+
+                <div className="application-stat-card">
+
+                    <div className="stat-icon accepted">
+                        <FaGraduationCap />
+                    </div>
+
+                    <div>
+
                         <span>
-                            Students Placed
+                            Selected
                         </span>
+
+                        <strong>
+                            {acceptedCount}
+                        </strong>
 
                     </div>
 
                 </div>
+
+
+                <div className="application-stat-card">
+
+                    <div className="stat-icon rejected">
+                        <FaUsers />
+                    </div>
+
+                    <div>
+
+                        <span>
+                            Rejected
+                        </span>
+
+                        <strong>
+                            {rejectedCount}
+                        </strong>
+
+                    </div>
+
+                </div>
+
 
             </section>
 
 
             {/* =================================================
-                PLACEMENT PIPELINE
+                TOOLBAR
             ================================================= */}
 
-            <section className="placement-pipeline">
-
-                <div className="pipeline-header">
-
-                    <div>
-
-                        <span className="section-label">
-                            PLACEMENT MANAGEMENT
-                        </span>
-
-                        <h2>
-                            Placement Pipeline
-                        </h2>
-
-                        <p>
-                            Track candidates from selection
-                            through final placement.
-                        </p>
-
-                    </div>
-
-                </div>
+            <section className="applications-toolbar">
 
 
-                <div className="pipeline-content">
+                <div className="search-container">
 
+                    <FaSearch className="search-icon" />
 
-                    <div className="pipeline-step">
-
-                        <div className="pipeline-icon selected-icon">
-                            <FaUserCheck />
-                        </div>
-
-                        <div>
-
-                            <strong>
-                                {selected}
-                            </strong>
-
-                            <span>
-                                Students Selected
-                            </span>
-
-                        </div>
-
-                    </div>
-
-
-                    <div className="pipeline-arrow">
-                        <FaArrowRight />
-                    </div>
-
-
-                    <div className="pipeline-step">
-
-                        <div className="pipeline-icon placed-icon">
-                            <FaGraduationCap />
-                        </div>
-
-                        <div>
-
-                            <strong>
-                                {placed}
-                            </strong>
-
-                            <span>
-                                Students Placed
-                            </span>
-
-                        </div>
-
-                    </div>
-
-
-                    <div className="pipeline-arrow">
-                        <FaArrowRight />
-                    </div>
-
-
-                    <div className="pipeline-step">
-
-                        <div className="pipeline-icon rate-icon">
-                            <FaCheckCircle />
-                        </div>
-
-                        <div>
-
-                            <strong>
-                                {placementRate}%
-                            </strong>
-
-                            <span>
-                                Placement Rate
-                            </span>
-
-                        </div>
-
-                    </div>
-
-
-                </div>
-
-            </section>
-
-
-            {/* =================================================
-                RECENT SELECTED STUDENTS
-            ================================================= */}
-
-            <section className="admin-students-section">
-
-                <div className="section-header">
-
-                    <div>
-
-                        <span className="section-label">
-                            SELECTIONS
-                        </span>
-
-                        <h2>
-                            Recent Selected Students
-                        </h2>
-
-                        <p>
-                            Recently selected candidates
-                            across all companies.
-                        </p>
-
-                    </div>
-
-
-                    <button
-                        type="button"
-                        className="view-all-btn"
-                        onClick={() =>
-                            navigate(
-                                "/admin/applications"
+                    <input
+                        type="text"
+                        placeholder="Search student, job, company, college..."
+                        value={search}
+                        onChange={(event) =>
+                            setSearch(
+                                event.target.value
                             )
                         }
-                    >
-
-                        View Applications
-
-                        <FaArrowRight />
-
-                    </button>
+                    />
 
                 </div>
 
 
-                {selectedStudents.length === 0 ? (
+                <select
+                    value={statusFilter}
+                    onChange={(event) =>
+                        setStatusFilter(
+                            event.target.value
+                        )
+                    }
+                >
 
-                    <div className="empty-students">
+                    <option value="all">
+                        All Applications
+                    </option>
 
-                        <div className="empty-student-icon">
-                            <FaUserCheck />
+                    <option value="pending">
+                        Pending
+                    </option>
+
+                    <option value="accepted">
+                        Selected
+                    </option>
+
+                    <option value="placed">
+                        Placed
+                    </option>
+
+                    <option value="rejected">
+                        Rejected
+                    </option>
+
+                </select>
+
+
+            </section>
+
+
+            {/* =================================================
+                RESULTS INFO
+            ================================================= */}
+
+            <div className="applications-results">
+
+                <span>
+
+                    Showing
+                    <strong>
+                        {" "}
+                        {filteredApplications.length}
+                        {" "}
+                    </strong>
+                    of
+                    <strong>
+                        {" "}
+                        {applications.length}
+                        {" "}
+                    </strong>
+                    applications
+
+                </span>
+
+            </div>
+
+
+            {/* =================================================
+                APPLICATION TABLE
+            ================================================= */}
+
+            <section className="applications-card">
+
+                {filteredApplications.length === 0 ? (
+
+                    <div className="applications-message">
+
+                        <div className="empty-icon">
+                            <FaUsers />
                         </div>
 
                         <h3>
-                            No Selected Students
+                            No Applications Found
                         </h3>
 
                         <p>
-                            Selected students will
-                            appear here.
+                            No student applications match
+                            your current search or filter.
                         </p>
 
                     </div>
 
                 ) : (
 
-                    <div className="students-table-wrapper">
+                    <div className="applications-table-wrapper">
 
-                        <table className="students-table">
+                        <table className="applications-table">
+
 
                             <thead>
 
@@ -1521,7 +1394,11 @@ function AdminDashboard() {
                                     </th>
 
                                     <th>
-                                        College
+                                        Education
+                                    </th>
+
+                                    <th>
+                                        Applied
                                     </th>
 
                                     <th>
@@ -1535,46 +1412,47 @@ function AdminDashboard() {
 
                             <tbody>
 
-                                {selectedStudents.map(
-                                    (student) => (
+                                {filteredApplications.map(
+                                    (application) => (
 
                                         <tr
                                             key={
-                                                student.id
+                                                application.id
                                             }
                                         >
 
+
+                                            {/* =================================
+                                                STUDENT
+                                            ================================= */}
+
                                             <td>
 
-                                                <div className="student-info">
+                                                <div className="student-cell">
 
-                                                    {/* =================================
-                                                        STUDENT PHOTO
-                                                    ================================= */}
-
-                                                    <div className="student-avatar-wrapper">
-
-                                                        <StudentAvatar
-                                                            student={
-                                                                student
-                                                            }
-                                                        />
-
-                                                    </div>
+                                                    <StudentAvatar
+                                                        student={
+                                                            application
+                                                        }
+                                                    />
 
 
-                                                    <div className="student-text">
+                                                    <div className="student-info">
 
                                                         <strong>
                                                             {
-                                                                student.studentName
+                                                                application.studentName
                                                             }
                                                         </strong>
 
                                                         <span>
+
+                                                            <FaEnvelope />
+
                                                             {
-                                                                student.email
+                                                                application.email
                                                             }
+
                                                         </span>
 
                                                     </div>
@@ -1584,29 +1462,41 @@ function AdminDashboard() {
                                             </td>
 
 
+                                            {/* =================================
+                                                JOB
+                                            ================================= */}
+
                                             <td>
 
-                                                <span className="table-job">
+                                                <div className="job-cell">
 
-                                                    <FaBriefcase />
+                                                    <span className="job-name">
 
-                                                    {
-                                                        student.jobTitle
-                                                    }
+                                                        <FaBriefcase />
 
-                                                </span>
+                                                        {
+                                                            application.jobTitle
+                                                        }
+
+                                                    </span>
+
+                                                </div>
 
                                             </td>
 
 
+                                            {/* =================================
+                                                COMPANY
+                                            ================================= */}
+
                                             <td>
 
-                                                <span className="table-company">
+                                                <span className="company-name">
 
                                                     <FaBuilding />
 
                                                     {
-                                                        student.companyName
+                                                        application.companyName
                                                     }
 
                                                 </span>
@@ -1614,446 +1504,89 @@ function AdminDashboard() {
                                             </td>
 
 
+                                            {/* =================================
+                                                EDUCATION
+                                            ================================= */}
+
                                             <td>
 
-                                                {
-                                                    student.college
-                                                }
+                                                <div className="education-cell">
+
+                                                    <strong>
+
+                                                        <FaGraduationCap />
+
+                                                        {
+                                                            application.degree
+                                                        }
+
+                                                    </strong>
+
+                                                    <span>
+
+                                                        <FaUniversity />
+
+                                                        {
+                                                            application.college
+                                                        }
+
+                                                    </span>
+
+                                                </div>
 
                                             </td>
 
 
+                                            {/* =================================
+                                                APPLIED DATE
+                                            ================================= */}
+
                                             <td>
 
-                                                {student.isPlaced ? (
+                                                <span className="applied-date">
 
-                                                    <span className="student-status placed-status">
+                                                    <FaCalendarAlt />
 
-                                                        <span className="status-dot"></span>
+                                                    {
+                                                        formatDate(
+                                                            application.appliedAt
+                                                        )
+                                                    }
 
-                                                        Placed
-
-                                                    </span>
-
-                                                ) : (
-
-                                                    <span className="student-status selected-status">
-
-                                                        <span className="status-dot"></span>
-
-                                                        Selected
-
-                                                    </span>
-
-                                                )}
+                                                </span>
 
                                             </td>
+
+
+                                            {/* =================================
+                                                STATUS
+                                            ================================= */}
+
+                                            <td>
+
+                                                <span
+                                                    className={
+                                                        `application-status ${application.status}`
+                                                    }
+                                                >
+
+                                                    <span className="status-dot"></span>
+
+                                                    {
+                                                        getStatusLabel(
+                                                            application.status
+                                                        )
+                                                    }
+
+                                                </span>
+
+                                            </td>
+
 
                                         </tr>
 
                                     )
                                 )}
-
-                            </tbody>
-
-                        </table>
-
-                    </div>
-
-                )}
-
-            </section>
-
-
-            {/* =================================================
-                RECENT PLACED STUDENTS
-            ================================================= */}
-
-            <section className="admin-students-section placed-section">
-
-                <div className="section-header">
-
-                    <div>
-
-                        <span className="section-label">
-                            PLACEMENT
-                        </span>
-
-                        <h2>
-                            Recent Placed Students
-                        </h2>
-
-                        <p>
-                            Students recently marked as
-                            officially placed.
-                        </p>
-
-                    </div>
-
-
-                    <button
-                        type="button"
-                        className="view-all-btn"
-                        onClick={() =>
-                            navigate(
-                                "/admin/placements"
-                            )
-                        }
-                    >
-
-                        View Placements
-
-                        <FaArrowRight />
-
-                    </button>
-
-                </div>
-
-
-                {placedStudents.length === 0 ? (
-
-                    <div className="empty-students">
-
-                        <div className="empty-student-icon">
-                            <FaGraduationCap />
-                        </div>
-
-                        <h3>
-                            No Placed Students
-                        </h3>
-
-                        <p>
-                            Students marked as placed
-                            will appear here.
-                        </p>
-
-                    </div>
-
-                ) : (
-
-                    <div className="placed-students-grid">
-
-                        {placedStudents.map(
-                            (student) => (
-
-                                <div
-                                    className="placed-student-card"
-                                    key={
-                                        student.id
-                                    }
-                                >
-
-                                    <div className="placed-card-top">
-
-
-                                        <StudentAvatar
-                                            student={
-                                                student
-                                            }
-                                            placed
-                                        />
-
-
-                                        <div className="placed-card-name">
-
-                                            <h3>
-                                                {
-                                                    student.studentName
-                                                }
-                                            </h3>
-
-                                            <span>
-                                                {
-                                                    student.email
-                                                }
-                                            </span>
-
-                                        </div>
-
-
-                                        <div className="placed-check">
-
-                                            <FaCheckCircle />
-
-                                        </div>
-
-                                    </div>
-
-
-                                    <div className="placed-card-job">
-
-                                        <span>
-                                            Job
-                                        </span>
-
-                                        <strong>
-                                            {
-                                                student.jobTitle
-                                            }
-                                        </strong>
-
-                                    </div>
-
-
-                                    <div className="placed-card-company">
-
-                                        <FaBuilding />
-
-                                        <span>
-                                            {
-                                                student.companyName
-                                            }
-                                        </span>
-
-                                    </div>
-
-
-                                    <div className="placed-card-college">
-
-                                        <span>
-                                            College
-                                        </span>
-
-                                        <strong>
-                                            {
-                                                student.college
-                                            }
-                                        </strong>
-
-                                    </div>
-
-
-                                    <div className="placed-badge">
-
-                                        <FaGraduationCap />
-
-                                        Student Placed
-
-                                    </div>
-
-                                </div>
-
-                            )
-                        )}
-
-                    </div>
-
-                )}
-
-            </section>
-
-
-            {/* =================================================
-                RECENT JOBS
-            ================================================= */}
-
-            <section className="admin-jobs-section">
-
-                <div className="section-header">
-
-                    <div>
-
-                        <span className="section-label">
-                            JOB MANAGEMENT
-                        </span>
-
-                        <h2>
-                            Recent Job Posts
-                        </h2>
-
-                        <p>
-                            Latest recruitment
-                            opportunities from companies.
-                        </p>
-
-                    </div>
-
-
-                    <button
-                        type="button"
-                        className="view-all-btn"
-                        onClick={() =>
-                            navigate(
-                                "/admin/jobs"
-                            )
-                        }
-                    >
-
-                        View All Jobs
-
-                        <FaArrowRight />
-
-                    </button>
-
-                </div>
-
-
-                {jobs.length === 0 ? (
-
-                    <div className="empty-students">
-
-                        <div className="empty-student-icon">
-
-                            <FaBriefcase />
-
-                        </div>
-
-                        <h3>
-                            No Job Posts
-                        </h3>
-
-                        <p>
-                            Company job postings will
-                            appear here.
-                        </p>
-
-                    </div>
-
-                ) : (
-
-                    <div className="jobs-table-wrapper">
-
-                        <table className="jobs-table">
-
-                            <thead>
-
-                                <tr>
-
-                                    <th>
-                                        Job
-                                    </th>
-
-                                    <th>
-                                        Location
-                                    </th>
-
-                                    <th>
-                                        Salary
-                                    </th>
-
-                                    <th>
-                                        Deadline
-                                    </th>
-
-                                    <th>
-                                        Status
-                                    </th>
-
-                                </tr>
-
-                            </thead>
-
-
-                            <tbody>
-
-                                {jobs
-                                    .slice(0, 5)
-                                    .map(
-                                        (job) => (
-
-                                            <tr
-                                                key={
-                                                    job.id
-                                                }
-                                            >
-
-                                                <td>
-
-                                                    <div className="job-info">
-
-                                                        <div className="job-icon">
-
-                                                            <FaBriefcase />
-
-                                                        </div>
-
-                                                        <div>
-
-                                                            <strong>
-                                                                {
-                                                                    job.jobTitle ||
-                                                                    job.title ||
-                                                                    "Untitled Job"
-                                                                }
-                                                            </strong>
-
-                                                            <span>
-                                                                {
-                                                                    job.companyName ||
-                                                                    "Company"
-                                                                }
-                                                            </span>
-
-                                                        </div>
-
-                                                    </div>
-
-                                                </td>
-
-
-                                                <td>
-
-                                                    <span className="table-detail">
-
-                                                        <FaMapMarkerAlt />
-
-                                                        {
-                                                            job.location ||
-                                                            "Not specified"
-                                                        }
-
-                                                    </span>
-
-                                                </td>
-
-
-                                                <td>
-
-                                                    <span className="table-detail">
-
-                                                        <FaMoneyBillWave />
-
-                                                        {
-                                                            job.salary ||
-                                                            "Not specified"
-                                                        }
-
-                                                    </span>
-
-                                                </td>
-
-
-                                                <td>
-
-                                                    <span className="table-detail">
-
-                                                        <FaCalendarAlt />
-
-                                                        {
-                                                            formatDate(
-                                                                job.deadline
-                                                            )
-                                                        }
-
-                                                    </span>
-
-                                                </td>
-
-
-                                                <td>
-
-                                                    <span className="job-status">
-
-                                                        Active
-
-                                                    </span>
-
-                                                </td>
-
-                                            </tr>
-
-                                        )
-                                    )}
 
                             </tbody>
 
@@ -2073,4 +1606,4 @@ function AdminDashboard() {
 }
 
 
-export default AdminDashboard;
+export default Applications;

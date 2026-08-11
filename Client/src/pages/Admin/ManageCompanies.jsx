@@ -20,12 +20,14 @@ import {
     FaTimes,
     FaCheckCircle,
     FaAlignLeft,
-    FaSyncAlt
+    FaSyncAlt,
+    FaExternalLinkAlt
 } from "react-icons/fa";
 
 import { db } from "../../firebase/firebaseConfig";
 
 import "./ManageCompanies.css";
+
 
 function ManageCompanies() {
 
@@ -78,6 +80,20 @@ function ManageCompanies() {
 
 
     /* =========================================================
+       WEBSITE DISPLAY
+    ========================================================= */
+
+    const getWebsiteDisplay = (website) => {
+
+        const value = normalize(website)
+            .replace(/^https?:\/\//, "")
+            .replace(/\/$/, "");
+
+        return value;
+    };
+
+
+    /* =========================================================
        COMPANY INITIAL
     ========================================================= */
 
@@ -118,6 +134,7 @@ function ManageCompanies() {
                     const data = item.data() || {};
 
                     return {
+
                         id: item.id,
 
                         companyName:
@@ -177,6 +194,38 @@ function ManageCompanies() {
 
 
     /* =========================================================
+       CLOSE MODAL WITH ESCAPE
+    ========================================================= */
+
+    useEffect(() => {
+
+        const handleEscape = (event) => {
+
+            if (event.key === "Escape") {
+                setSelectedCompany(null);
+            }
+        };
+
+        if (selectedCompany) {
+
+            document.addEventListener(
+                "keydown",
+                handleEscape
+            );
+        }
+
+        return () => {
+
+            document.removeEventListener(
+                "keydown",
+                handleEscape
+            );
+        };
+
+    }, [selectedCompany]);
+
+
+    /* =========================================================
        FILTER COMPANIES
     ========================================================= */
 
@@ -198,8 +247,7 @@ function ManageCompanies() {
                 company.industry,
                 company.website,
                 company.location,
-                company.description,
-                company.id
+                company.description
 
             ]
                 .map(normalize)
@@ -258,10 +306,6 @@ function ManageCompanies() {
                 setSelectedCompany(null);
             }
 
-            alert(
-                "Company deleted successfully."
-            );
-
         } catch (error) {
 
             console.error(
@@ -286,7 +330,6 @@ function ManageCompanies() {
     ========================================================= */
 
     const viewCompany = (company) => {
-
         setSelectedCompany(company);
     };
 
@@ -296,41 +339,8 @@ function ManageCompanies() {
     ========================================================= */
 
     const closeModal = () => {
-
         setSelectedCompany(null);
     };
-
-
-    /* =========================================================
-       CLOSE MODAL ON ESC
-    ========================================================= */
-
-    useEffect(() => {
-
-        const handleEscape = (event) => {
-
-            if (event.key === "Escape") {
-                setSelectedCompany(null);
-            }
-        };
-
-        if (selectedCompany) {
-
-            document.addEventListener(
-                "keydown",
-                handleEscape
-            );
-        }
-
-        return () => {
-
-            document.removeEventListener(
-                "keydown",
-                handleEscape
-            );
-        };
-
-    }, [selectedCompany]);
 
 
     /* =========================================================
@@ -343,9 +353,9 @@ function ManageCompanies() {
 
             <div className="manage-companies-page">
 
-                <div className="companies-state">
+                <div className="companies-loading-state">
 
-                    <div className="loading-spinner"></div>
+                    <div className="companies-loading-spinner"></div>
 
                     <h3>
                         Loading Companies
@@ -370,16 +380,15 @@ function ManageCompanies() {
 
         <div className="manage-companies-page">
 
+            {/* =====================================================
+                HEADER
+            ===================================================== */}
 
-            {/* =================================================
-                PAGE HEADER
-            ================================================= */}
+            <header className="companies-page-header">
 
-            <div className="manage-companies-header">
+                <div className="companies-header-content">
 
-                <div className="manage-companies-heading">
-
-                    <span className="admin-page-label">
+                    <span className="companies-page-eyebrow">
                         TPO / ADMIN
                     </span>
 
@@ -388,20 +397,20 @@ function ManageCompanies() {
                     </h1>
 
                     <p>
-                        View and manage all registered
+                        View, search and manage all registered
                         company profiles.
                     </p>
 
                 </div>
 
 
-                <div className="company-total-card">
+                <div className="companies-total-card">
 
-                    <div className="company-total-icon">
+                    <div className="companies-total-icon">
                         <FaBuilding />
                     </div>
 
-                    <div>
+                    <div className="companies-total-content">
 
                         <span>
                             Total Companies
@@ -415,27 +424,25 @@ function ManageCompanies() {
 
                 </div>
 
-            </div>
+            </header>
 
 
-            {/* =================================================
-                TOOLBAR
-            ================================================= */}
+            {/* =====================================================
+                SEARCH / TOOLBAR
+            ===================================================== */}
 
-            <div className="company-toolbar">
+            <section className="companies-toolbar">
 
-                <div className="company-search">
+                <div className="companies-search-box">
 
-                    <FaSearch className="search-icon" />
+                    <FaSearch className="companies-search-icon" />
 
                     <input
                         type="text"
-                        placeholder="Search company, email, industry, location..."
                         value={search}
+                        placeholder="Search by company, email, industry, location..."
                         onChange={(event) =>
-                            setSearch(
-                                event.target.value
-                            )
+                            setSearch(event.target.value)
                         }
                     />
 
@@ -443,7 +450,7 @@ function ManageCompanies() {
 
                         <button
                             type="button"
-                            className="clear-search-btn"
+                            className="companies-clear-search"
                             onClick={() => setSearch("")}
                             aria-label="Clear search"
                         >
@@ -455,9 +462,9 @@ function ManageCompanies() {
                 </div>
 
 
-                <div className="toolbar-right">
+                <div className="companies-toolbar-right">
 
-                    <div className="company-result-count">
+                    <span className="companies-result-text">
 
                         Showing{" "}
 
@@ -473,36 +480,38 @@ function ManageCompanies() {
 
                         {" "}companies
 
-                    </div>
+                    </span>
 
 
                     <button
                         type="button"
-                        className="refresh-company-btn"
+                        className="companies-refresh-btn"
                         onClick={fetchCompanies}
                         disabled={loading}
                     >
 
                         <FaSyncAlt />
 
-                        Refresh
+                        <span>
+                            Refresh
+                        </span>
 
                     </button>
 
                 </div>
 
-            </div>
+            </section>
 
 
-            {/* =================================================
+            {/* =====================================================
                 EMPTY STATE
-            ================================================= */}
+            ===================================================== */}
 
             {filteredCompanies.length === 0 && (
 
-                <div className="companies-state">
+                <div className="companies-empty-state">
 
-                    <div className="empty-icon">
+                    <div className="companies-empty-icon">
                         <FaBuilding />
                     </div>
 
@@ -523,7 +532,7 @@ function ManageCompanies() {
 
                         <button
                             type="button"
-                            className="empty-clear-btn"
+                            className="companies-empty-clear"
                             onClick={() => setSearch("")}
                         >
                             Clear Search
@@ -532,51 +541,50 @@ function ManageCompanies() {
                     )}
 
                 </div>
-
             )}
 
 
-            {/* =================================================
-                COMPANY TABLE
-            ================================================= */}
+            {/* =====================================================
+                DESKTOP TABLE
+            ===================================================== */}
 
             {filteredCompanies.length > 0 && (
 
-                <div className="companies-table-card">
+                <section className="companies-table-card">
 
-                    <div className="table-wrapper">
+                    <div className="companies-table-scroll">
 
-                        <table>
+                        <table className="companies-table">
 
                             <thead>
 
                                 <tr>
 
-                                    <th>
+                                    <th className="company-column">
                                         Company
                                     </th>
 
-                                    <th>
+                                    <th className="contact-column">
                                         Contact
                                     </th>
 
-                                    <th>
+                                    <th className="industry-column">
                                         Industry
                                     </th>
 
-                                    <th>
+                                    <th className="location-column">
                                         Location
                                     </th>
 
-                                    <th>
+                                    <th className="website-column">
                                         Website
                                     </th>
 
-                                    <th>
+                                    <th className="status-column">
                                         Status
                                     </th>
 
-                                    <th className="actions-heading">
+                                    <th className="actions-column">
                                         Actions
                                     </th>
 
@@ -590,43 +598,36 @@ function ManageCompanies() {
                                 {filteredCompanies.map(
                                     (company) => (
 
-                                        <tr
-                                            key={company.id}
-                                        >
+                                        <tr key={company.id}>
 
                                             {/* COMPANY */}
 
-                                            <td>
+                                            <td className="company-column">
 
-                                                <div className="company-info">
+                                                <div className="company-table-profile">
 
-                                                    <div className="company-avatar">
-
+                                                    <div className="company-table-avatar">
                                                         {getCompanyInitial(
                                                             company.companyName
                                                         )}
-
                                                     </div>
 
-                                                    <div className="company-name-wrapper">
+                                                    <div className="company-table-name">
 
-                                                        <strong>
-
+                                                        <strong
+                                                            title={
+                                                                company.companyName
+                                                            }
+                                                        >
                                                             {
-                                                                normalize(
-                                                                    company.companyName
-                                                                ) ||
+                                                                company.companyName ||
                                                                 "Unnamed Company"
                                                             }
-
                                                         </strong>
 
-                                                        <small>
-
-                                                            ID:{" "}
-                                                            {company.id}
-
-                                                        </small>
+                                                        <span>
+                                                            Registered company
+                                                        </span>
 
                                                     </div>
 
@@ -637,103 +638,128 @@ function ManageCompanies() {
 
                                             {/* CONTACT */}
 
-                                            <td>
+                                            <td className="contact-column">
 
-                                                <div
-                                                    className="table-contact"
-                                                    title={company.email}
-                                                >
+                                                <div className="company-contact-list">
 
-                                                    <FaEnvelope />
+                                                    {company.email && (
 
-                                                    <span>
+                                                        <div
+                                                            className="company-contact-item"
+                                                            title={company.email}
+                                                        >
 
-                                                        {
-                                                            normalize(
-                                                                company.email
-                                                            ) ||
-                                                            "Email unavailable"
-                                                        }
+                                                            <span className="contact-icon">
+                                                                <FaEnvelope />
+                                                            </span>
 
-                                                    </span>
+                                                            <span className="contact-value">
+                                                                {company.email}
+                                                            </span>
+
+                                                        </div>
+
+                                                    )}
+
+
+                                                    {company.phone && (
+
+                                                        <div
+                                                            className="company-contact-item"
+                                                            title={company.phone}
+                                                        >
+
+                                                            <span className="contact-icon">
+                                                                <FaPhone />
+                                                            </span>
+
+                                                            <span className="contact-value">
+                                                                {company.phone}
+                                                            </span>
+
+                                                        </div>
+
+                                                    )}
+
+
+                                                    {!company.email &&
+                                                        !company.phone && (
+
+                                                            <span className="company-not-available">
+                                                                Contact unavailable
+                                                            </span>
+
+                                                        )}
 
                                                 </div>
-
-
-                                                {company.phone && (
-
-                                                    <div
-                                                        className="table-contact"
-                                                        title={company.phone}
-                                                    >
-
-                                                        <FaPhone />
-
-                                                        <span>
-                                                            {company.phone}
-                                                        </span>
-
-                                                    </div>
-
-                                                )}
 
                                             </td>
 
 
                                             {/* INDUSTRY */}
 
-                                            <td>
+                                            <td className="industry-column">
 
-                                                <span className="industry-badge">
+                                                {company.industry ? (
 
-                                                    <FaIndustry />
+                                                    <span className="company-industry-badge">
 
-                                                    <span>
+                                                        <FaIndustry />
 
-                                                        {
-                                                            normalize(
+                                                        <span
+                                                            title={
                                                                 company.industry
-                                                            ) ||
-                                                            "Not Specified"
-                                                        }
+                                                            }
+                                                        >
+                                                            {company.industry}
+                                                        </span>
 
                                                     </span>
 
-                                                </span>
+                                                ) : (
+
+                                                    <span className="company-muted-text">
+                                                        Not specified
+                                                    </span>
+
+                                                )}
 
                                             </td>
 
 
                                             {/* LOCATION */}
 
-                                            <td>
+                                            <td className="location-column">
 
-                                                <div
-                                                    className="table-contact"
-                                                    title={company.location}
-                                                >
+                                                {company.location ? (
 
-                                                    <FaMapMarkerAlt />
+                                                    <div
+                                                        className="company-location"
+                                                        title={company.location}
+                                                    >
 
-                                                    <span>
+                                                        <FaMapMarkerAlt />
 
-                                                        {
-                                                            normalize(
-                                                                company.location
-                                                            ) ||
-                                                            "Not Available"
-                                                        }
+                                                        <span>
+                                                            {company.location}
+                                                        </span>
 
+                                                    </div>
+
+                                                ) : (
+
+                                                    <span className="company-muted-text">
+                                                        Not available
                                                     </span>
 
-                                                </div>
+                                                )}
 
                                             </td>
 
 
                                             {/* WEBSITE */}
 
-                                            <td>
+                                            <td className="website-column">
 
                                                 {company.website ? (
 
@@ -743,21 +769,28 @@ function ManageCompanies() {
                                                         )}
                                                         target="_blank"
                                                         rel="noopener noreferrer"
-                                                        className="table-website"
+                                                        className="company-website"
+                                                        title={
+                                                            company.website
+                                                        }
                                                     >
 
                                                         <FaGlobe />
 
                                                         <span>
-                                                            Visit Website
+                                                            {getWebsiteDisplay(
+                                                                company.website
+                                                            )}
                                                         </span>
+
+                                                        <FaExternalLinkAlt className="website-external-icon" />
 
                                                     </a>
 
                                                 ) : (
 
-                                                    <span className="not-available">
-                                                        Not Available
+                                                    <span className="company-muted-text">
+                                                        Not available
                                                     </span>
 
                                                 )}
@@ -767,9 +800,9 @@ function ManageCompanies() {
 
                                             {/* STATUS */}
 
-                                            <td>
+                                            <td className="status-column">
 
-                                                <span className="company-status">
+                                                <span className="company-status-badge">
 
                                                     <FaCheckCircle />
 
@@ -782,13 +815,13 @@ function ManageCompanies() {
 
                                             {/* ACTIONS */}
 
-                                            <td className="actions-cell">
+                                            <td className="actions-column">
 
-                                                <div className="company-actions">
+                                                <div className="company-action-buttons">
 
                                                     <button
                                                         type="button"
-                                                        className="view-company-btn"
+                                                        className="company-view-btn"
                                                         onClick={() =>
                                                             viewCompany(
                                                                 company
@@ -798,14 +831,16 @@ function ManageCompanies() {
 
                                                         <FaEye />
 
-                                                        View
+                                                        <span>
+                                                            View
+                                                        </span>
 
                                                     </button>
 
 
                                                     <button
                                                         type="button"
-                                                        className="delete-company-btn"
+                                                        className="company-delete-btn"
                                                         onClick={() =>
                                                             deleteCompany(
                                                                 company.id
@@ -819,11 +854,13 @@ function ManageCompanies() {
 
                                                         <FaTrash />
 
-                                                        {deletingId ===
-                                                        company.id
-                                                            ? "Deleting..."
-                                                            : "Delete"
-                                                        }
+                                                        <span>
+                                                            {deletingId ===
+                                                            company.id
+                                                                ? "Deleting"
+                                                                : "Delete"
+                                                            }
+                                                        </span>
 
                                                     </button>
 
@@ -842,14 +879,209 @@ function ManageCompanies() {
 
                     </div>
 
-                </div>
+                </section>
+            )}
+
+
+            {/* =====================================================
+                MOBILE COMPANY CARDS
+            ===================================================== */}
+
+            {filteredCompanies.length > 0 && (
+
+                <section className="companies-mobile-list">
+
+                    {filteredCompanies.map(
+                        (company) => (
+
+                            <article
+                                className="company-mobile-card"
+                                key={company.id}
+                            >
+
+                                <div className="company-mobile-top">
+
+                                    <div className="company-mobile-profile">
+
+                                        <div className="company-mobile-avatar">
+                                            {getCompanyInitial(
+                                                company.companyName
+                                            )}
+                                        </div>
+
+                                        <div>
+
+                                            <h3>
+                                                {
+                                                    company.companyName ||
+                                                    "Unnamed Company"
+                                                }
+                                            </h3>
+
+                                            <span>
+                                                Registered company
+                                            </span>
+
+                                        </div>
+
+                                    </div>
+
+
+                                    <span className="company-status-badge">
+                                        <FaCheckCircle />
+                                        Registered
+                                    </span>
+
+                                </div>
+
+
+                                <div className="company-mobile-details">
+
+                                    <div className="mobile-detail-item">
+
+                                        <span className="mobile-detail-label">
+                                            <FaEnvelope />
+                                            Email
+                                        </span>
+
+                                        <strong>
+                                            {company.email ||
+                                                "Not available"}
+                                        </strong>
+
+                                    </div>
+
+
+                                    <div className="mobile-detail-item">
+
+                                        <span className="mobile-detail-label">
+                                            <FaPhone />
+                                            Phone
+                                        </span>
+
+                                        <strong>
+                                            {company.phone ||
+                                                "Not available"}
+                                        </strong>
+
+                                    </div>
+
+
+                                    <div className="mobile-detail-item">
+
+                                        <span className="mobile-detail-label">
+                                            <FaIndustry />
+                                            Industry
+                                        </span>
+
+                                        <strong>
+                                            {company.industry ||
+                                                "Not specified"}
+                                        </strong>
+
+                                    </div>
+
+
+                                    <div className="mobile-detail-item">
+
+                                        <span className="mobile-detail-label">
+                                            <FaMapMarkerAlt />
+                                            Location
+                                        </span>
+
+                                        <strong>
+                                            {company.location ||
+                                                "Not available"}
+                                        </strong>
+
+                                    </div>
+
+
+                                    {company.website && (
+
+                                        <div className="mobile-detail-item mobile-website-item">
+
+                                            <span className="mobile-detail-label">
+                                                <FaGlobe />
+                                                Website
+                                            </span>
+
+                                            <a
+                                                href={getWebsiteUrl(
+                                                    company.website
+                                                )}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                            >
+                                                {getWebsiteDisplay(
+                                                    company.website
+                                                )}
+                                            </a>
+
+                                        </div>
+
+                                    )}
+
+                                </div>
+
+
+                                <div className="company-mobile-actions">
+
+                                    <button
+                                        type="button"
+                                        className="company-view-btn"
+                                        onClick={() =>
+                                            viewCompany(
+                                                company
+                                            )
+                                        }
+                                    >
+
+                                        <FaEye />
+
+                                        View Details
+
+                                    </button>
+
+
+                                    <button
+                                        type="button"
+                                        className="company-delete-btn"
+                                        onClick={() =>
+                                            deleteCompany(
+                                                company.id
+                                            )
+                                        }
+                                        disabled={
+                                            deletingId ===
+                                            company.id
+                                        }
+                                    >
+
+                                        <FaTrash />
+
+                                        {deletingId === company.id
+                                            ? "Deleting..."
+                                            : "Delete"
+                                        }
+
+                                    </button>
+
+                                </div>
+
+                            </article>
+
+                        )
+                    )}
+
+                </section>
 
             )}
 
 
-            {/* =================================================
+            {/* =====================================================
                 COMPANY DETAILS MODAL
-            ================================================= */}
+            ===================================================== */}
 
             {selectedCompany && (
 
@@ -865,39 +1097,32 @@ function ManageCompanies() {
                         }
                     >
 
-
-                        {/* =================================================
-                            DARK HEADER
-                        ================================================= */}
+                        {/* HEADER */}
 
                         <div className="company-modal-header">
 
-                            <div className="company-modal-header-icon">
-
-                                <FaBuilding />
-
+                            <div className="company-modal-avatar">
+                                {getCompanyInitial(
+                                    selectedCompany.companyName
+                                )}
                             </div>
 
 
-                            <div className="modal-title-area">
+                            <div className="company-modal-title">
 
-                                <span className="modal-eyebrow">
-                                    COMPANY DETAILS
+                                <span>
+                                    COMPANY PROFILE
                                 </span>
 
                                 <h2>
-
                                     {
-                                        normalize(
-                                            selectedCompany.companyName
-                                        ) ||
+                                        selectedCompany.companyName ||
                                         "Unnamed Company"
                                     }
-
                                 </h2>
 
                                 <p>
-                                    Registered company profile
+                                    Registered company information
                                 </p>
 
                             </div>
@@ -905,37 +1130,28 @@ function ManageCompanies() {
 
                             <button
                                 type="button"
-                                className="close-modal-btn"
+                                className="company-modal-close"
                                 onClick={closeModal}
-                                aria-label="Close"
+                                aria-label="Close company details"
                             >
-
                                 <FaTimes />
-
                             </button>
 
                         </div>
 
 
-                        {/* =================================================
-                            MODAL BODY
-                        ================================================= */}
+                        {/* BODY */}
 
                         <div className="company-modal-body">
 
+                            {/* BASIC INFORMATION */}
 
-                            {/* =================================================
-                                COMPANY INFORMATION
-                            ================================================= */}
+                            <section className="company-modal-section">
 
-                            <section className="company-detail-section">
+                                <div className="company-modal-section-heading">
 
-                                <div className="company-section-heading">
-
-                                    <div className="section-heading-icon">
-
+                                    <div className="company-section-icon">
                                         <FaBuilding />
-
                                     </div>
 
                                     <div>
@@ -945,7 +1161,7 @@ function ManageCompanies() {
                                         </h3>
 
                                         <p>
-                                            Basic details about the company.
+                                            Basic information about this company.
                                         </p>
 
                                     </div>
@@ -955,10 +1171,7 @@ function ManageCompanies() {
 
                                 <div className="company-detail-grid">
 
-
-                                    {/* COMPANY NAME */}
-
-                                    <div className="company-detail-card">
+                                    <div className="company-detail-item">
 
                                         <span>
                                             <FaBuilding />
@@ -966,68 +1179,16 @@ function ManageCompanies() {
                                         </span>
 
                                         <strong>
-
                                             {
-                                                normalize(
-                                                    selectedCompany.companyName
-                                                ) ||
-                                                "Not Available"
+                                                selectedCompany.companyName ||
+                                                "Not available"
                                             }
-
                                         </strong>
 
                                     </div>
 
 
-                                    {/* EMAIL */}
-
-                                    <div className="company-detail-card">
-
-                                        <span>
-                                            <FaEnvelope />
-                                            Email
-                                        </span>
-
-                                        <strong className="break-anywhere">
-
-                                            {
-                                                normalize(
-                                                    selectedCompany.email
-                                                ) ||
-                                                "Not Available"
-                                            }
-
-                                        </strong>
-
-                                    </div>
-
-
-                                    {/* PHONE */}
-
-                                    <div className="company-detail-card">
-
-                                        <span>
-                                            <FaPhone />
-                                            Phone
-                                        </span>
-
-                                        <strong>
-
-                                            {
-                                                normalize(
-                                                    selectedCompany.phone
-                                                ) ||
-                                                "Not Available"
-                                            }
-
-                                        </strong>
-
-                                    </div>
-
-
-                                    {/* INDUSTRY */}
-
-                                    <div className="company-detail-card">
+                                    <div className="company-detail-item">
 
                                         <span>
                                             <FaIndustry />
@@ -1035,22 +1196,50 @@ function ManageCompanies() {
                                         </span>
 
                                         <strong>
-
                                             {
-                                                normalize(
-                                                    selectedCompany.industry
-                                                ) ||
-                                                "Not Available"
+                                                selectedCompany.industry ||
+                                                "Not specified"
                                             }
-
                                         </strong>
 
                                     </div>
 
 
-                                    {/* LOCATION */}
+                                    <div className="company-detail-item">
 
-                                    <div className="company-detail-card">
+                                        <span>
+                                            <FaEnvelope />
+                                            Email
+                                        </span>
+
+                                        <strong className="long-value">
+                                            {
+                                                selectedCompany.email ||
+                                                "Not available"
+                                            }
+                                        </strong>
+
+                                    </div>
+
+
+                                    <div className="company-detail-item">
+
+                                        <span>
+                                            <FaPhone />
+                                            Phone
+                                        </span>
+
+                                        <strong>
+                                            {
+                                                selectedCompany.phone ||
+                                                "Not available"
+                                            }
+                                        </strong>
+
+                                    </div>
+
+
+                                    <div className="company-detail-item full-width">
 
                                         <span>
                                             <FaMapMarkerAlt />
@@ -1058,14 +1247,10 @@ function ManageCompanies() {
                                         </span>
 
                                         <strong>
-
                                             {
-                                                normalize(
-                                                    selectedCompany.location
-                                                ) ||
-                                                "Not Available"
+                                                selectedCompany.location ||
+                                                "Not available"
                                             }
-
                                         </strong>
 
                                     </div>
@@ -1075,26 +1260,24 @@ function ManageCompanies() {
                             </section>
 
 
-                            {/* =================================================
-                                WEBSITE
-                            ================================================= */}
+                            {/* WEBSITE */}
 
-                            <section className="company-detail-section">
+                            <section className="company-modal-section">
 
-                                <div className="company-section-heading">
+                                <div className="company-modal-section-heading">
 
-                                    <div className="section-heading-icon">
+                                    <div className="company-section-icon">
                                         <FaGlobe />
                                     </div>
 
                                     <div>
 
                                         <h3>
-                                            Website
+                                            Company Website
                                         </h3>
 
                                         <p>
-                                            Company website.
+                                            Official website of the company.
                                         </p>
 
                                     </div>
@@ -1102,12 +1285,17 @@ function ManageCompanies() {
                                 </div>
 
 
-                                <div className="company-single-detail">
+                                <div className="company-website-box">
 
-                                    <span>
+                                    <div className="company-website-label">
+
                                         <FaGlobe />
-                                        Website
-                                    </span>
+
+                                        <span>
+                                            Website
+                                        </span>
+
+                                    </div>
 
 
                                     {selectedCompany.website ? (
@@ -1118,21 +1306,23 @@ function ManageCompanies() {
                                             )}
                                             target="_blank"
                                             rel="noopener noreferrer"
-                                            className="company-website-link"
+                                            className="company-modal-website-link"
                                         >
 
-                                            <FaGlobe />
+                                            <span>
+                                                {getWebsiteDisplay(
+                                                    selectedCompany.website
+                                                )}
+                                            </span>
 
-                                            {
-                                                selectedCompany.website
-                                            }
+                                            <FaExternalLinkAlt />
 
                                         </a>
 
                                     ) : (
 
                                         <strong>
-                                            Not Available
+                                            Website not available
                                         </strong>
 
                                     )}
@@ -1142,26 +1332,24 @@ function ManageCompanies() {
                             </section>
 
 
-                            {/* =================================================
-                                DESCRIPTION
-                            ================================================= */}
+                            {/* DESCRIPTION */}
 
-                            <section className="company-detail-section">
+                            <section className="company-modal-section">
 
-                                <div className="company-section-heading">
+                                <div className="company-modal-section-heading">
 
-                                    <div className="section-heading-icon">
+                                    <div className="company-section-icon">
                                         <FaAlignLeft />
                                     </div>
 
                                     <div>
 
                                         <h3>
-                                            Description
+                                            About Company
                                         </h3>
 
                                         <p>
-                                            About the company.
+                                            Company description and overview.
                                         </p>
 
                                     </div>
@@ -1169,16 +1357,14 @@ function ManageCompanies() {
                                 </div>
 
 
-                                <div className="company-description-box">
+                                <div className="company-description">
 
                                     <FaAlignLeft />
 
                                     <p>
 
                                         {
-                                            normalize(
-                                                selectedCompany.description
-                                            ) ||
+                                            selectedCompany.description ||
                                             "No company description has been added."
                                         }
 
@@ -1188,78 +1374,29 @@ function ManageCompanies() {
 
                             </section>
 
-
-                            {/* =================================================
-                                LOCATION
-                            ================================================= */}
-
-                            <section className="company-detail-section">
-
-                                <div className="company-section-heading">
-
-                                    <div className="section-heading-icon">
-                                        <FaMapMarkerAlt />
-                                    </div>
-
-                                    <div>
-
-                                        <h3>
-                                            Location
-                                        </h3>
-
-                                        <p>
-                                            Registered company location.
-                                        </p>
-
-                                    </div>
-
-                                </div>
-
-
-                                <div className="company-description-box location-box">
-
-                                    <FaMapMarkerAlt />
-
-                                    <span>
-
-                                        {
-                                            normalize(
-                                                selectedCompany.location
-                                            ) ||
-                                            "Location not available."
-                                        }
-
-                                    </span>
-
-                                </div>
-
-                            </section>
-
                         </div>
 
 
-                        {/* =================================================
-                            MODAL FOOTER
-                        ================================================= */}
+                        {/* FOOTER */}
 
                         <div className="company-modal-footer">
 
-                            <div className="modal-footer-note">
+                            <div className="company-modal-status">
 
                                 <FaCheckCircle />
 
                                 <span>
-                                    Admin / TPO can view company information.
+                                    Registered company
                                 </span>
 
                             </div>
 
 
-                            <div className="modal-footer-actions">
+                            <div className="company-modal-actions">
 
                                 <button
                                     type="button"
-                                    className="modal-delete-btn"
+                                    className="company-modal-delete"
                                     onClick={() =>
                                         deleteCompany(
                                             selectedCompany.id
@@ -1273,11 +1410,10 @@ function ManageCompanies() {
 
                                     <FaTrash />
 
-                                    {
-                                        deletingId ===
-                                        selectedCompany.id
-                                            ? "Deleting..."
-                                            : "Delete"
+                                    {deletingId ===
+                                    selectedCompany.id
+                                        ? "Deleting..."
+                                        : "Delete Company"
                                     }
 
                                 </button>
@@ -1285,12 +1421,10 @@ function ManageCompanies() {
 
                                 <button
                                     type="button"
-                                    className="close-details-btn"
+                                    className="company-modal-close-btn"
                                     onClick={closeModal}
                                 >
-
                                     Close
-
                                 </button>
 
                             </div>
@@ -1306,5 +1440,6 @@ function ManageCompanies() {
         </div>
     );
 }
+
 
 export default ManageCompanies;
