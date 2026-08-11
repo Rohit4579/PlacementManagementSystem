@@ -46,14 +46,17 @@ import Applicants from "../pages/Company/Applicants";
 // ========================================
 // Admin / TPO Pages
 // ========================================
+// IMPORTANT:
+// The actual folder name is "Admin" with capital A.
+// Linux/Vercel is case-sensitive.
 
-import AdminDashboard from "../pages/admin/AdminDashboard";
-import ManageStudents from "../pages/admin/ManageStudents";
-import ManageCompanies from "../pages/admin/ManageCompanies";
-import AdminManageJobs from "../pages/admin/ManageJobs";
-import AdminApplications from "../pages/admin/AdminApplications";
-import PlacementReports from "../pages/admin/PlacementReports";
-import Placements from "../pages/admin/Placements";
+import AdminDashboard from "../pages/Admin/AdminDashboard";
+import ManageStudents from "../pages/Admin/ManageStudents";
+import ManageCompanies from "../pages/Admin/ManageCompanies";
+import AdminManageJobs from "../pages/Admin/ManageJobs";
+import AdminApplications from "../pages/Admin/AdminApplications";
+import PlacementReports from "../pages/Admin/PlacementReports";
+import Placements from "../pages/Admin/Placements";
 
 // ========================================
 // APP ROUTES
@@ -433,7 +436,6 @@ function AppRoutes() {
         </Routes>
 
     );
-
 }
 
 export default AppRoutes;
