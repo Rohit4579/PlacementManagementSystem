@@ -1,13 +1,16 @@
 const API_URL =
     import.meta.env.VITE_API_URL ||
-    "https://placement-management-system-b46b7p6o9-rohit4579s-projects.vercel.app";
+    "https://placement-management-system-u3q3-mjetbvzb0-rohit4579s-projects.vercel.app";
 
 const sendEmail = async ({ to, subject, message }) => {
     try {
+        console.log("=================================");
         console.log("Sending email...");
         console.log("API URL:", API_URL);
         console.log("To:", to);
         console.log("Subject:", subject);
+        console.log("Message:", message);
+        console.log("=================================");
 
         const response = await fetch(
             `${API_URL}/api/email/send`,
@@ -39,11 +42,7 @@ const sendEmail = async ({ to, subject, message }) => {
         return data;
 
     } catch (error) {
-        console.error(
-            "Email Service Error:",
-            error
-        );
-
+        console.error("Email Service Error:", error);
         throw error;
     }
 };
