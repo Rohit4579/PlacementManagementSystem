@@ -1,6 +1,6 @@
 const API_URL =
     import.meta.env.VITE_API_URL ||
-    "https://placement-management-system-u3q3-mjetbvzb0-rohit4579s-projects.vercel.app";
+    "https://placement-management-system-u3q3.vercel.app";
 
 const sendEmail = async ({ to, subject, message }) => {
     try {
@@ -16,11 +16,9 @@ const sendEmail = async ({ to, subject, message }) => {
             `${API_URL}/api/email/send`,
             {
                 method: "POST",
-
                 headers: {
                     "Content-Type": "application/json",
                 },
-
                 body: JSON.stringify({
                     to,
                     subject,
@@ -40,7 +38,6 @@ const sendEmail = async ({ to, subject, message }) => {
         }
 
         return data;
-
     } catch (error) {
         console.error("Email Service Error:", error);
         throw error;
