@@ -19,6 +19,8 @@ import {
 import { db } from "../../firebase/firebaseConfig";
 import { useAuth } from "../../context/AuthContext";
 
+import sendEmail from "../../services/emailService";
+
 import "./Applicants.css";
 
 /* =========================================================
@@ -38,8 +40,8 @@ function Applicants() {
     const [updatingId, setUpdatingId] = useState(null);
     const [deletingId, setDeletingId] = useState(null);
 
-    /* Selected applicant for overlay */
-    const [selectedApplicant, setSelectedApplicant] = useState(null);
+    const [selectedApplicant, setSelectedApplicant] =
+        useState(null);
 
     /* =========================================================
        FIREBASE STORAGE
@@ -87,10 +89,6 @@ function Applicants() {
             return "";
         }
 
-        /* ---------------------------------------------
-           STRING
-        --------------------------------------------- */
-
         if (typeof value === "string") {
 
             const cleanValue = value.trim();
@@ -101,10 +99,6 @@ function Applicants() {
 
             return cleanValue;
         }
-
-        /* ---------------------------------------------
-           OBJECT
-        --------------------------------------------- */
 
         if (
             typeof value === "object" &&
@@ -137,8 +131,7 @@ function Applicants() {
 
             for (const key of possibleKeys) {
 
-                const nestedValue =
-                    value?.[key];
+                const nestedValue = value?.[key];
 
                 if (
                     nestedValue !== undefined &&
@@ -146,9 +139,7 @@ function Applicants() {
                     String(nestedValue).trim() !== ""
                 ) {
 
-                    return String(
-                        nestedValue
-                    ).trim();
+                    return String(nestedValue).trim();
                 }
             }
         }
@@ -164,36 +155,28 @@ function Applicants() {
         "photoURL",
         "photoUrl",
         "photo",
-
         "profilePhoto",
         "profilePhotoURL",
         "profilePhotoUrl",
-
         "profileImage",
         "profileImageURL",
         "profileImageUrl",
-
         "profilePicture",
         "profilePictureURL",
         "profilePictureUrl",
-
         "avatar",
         "avatarURL",
         "avatarUrl",
-
         "image",
         "imageURL",
         "imageUrl",
-
         "picture",
         "pictureURL",
         "pictureUrl",
-
         "photoPath",
         "profilePhotoPath",
         "profileImagePath",
         "profilePicturePath",
-
         "storagePath",
         "imagePath"
     ];
@@ -208,7 +191,6 @@ function Applicants() {
             return "";
         }
 
-        /* Direct fields */
         for (const field of photoFields) {
 
             const result =
@@ -221,7 +203,6 @@ function Applicants() {
             }
         }
 
-        /* Nested objects */
         const nestedObjects = [
             object.profile,
             object.personalInfo,
@@ -268,10 +249,6 @@ function Applicants() {
         userProfile
     ) => {
 
-        /* ---------------------------------------------
-           STUDENT PROFILE
-        --------------------------------------------- */
-
         const profilePhoto =
             searchPhotoInObject(profile);
 
@@ -279,20 +256,12 @@ function Applicants() {
             return profilePhoto;
         }
 
-        /* ---------------------------------------------
-           USER PROFILE
-        --------------------------------------------- */
-
         const userPhoto =
             searchPhotoInObject(userProfile);
 
         if (userPhoto) {
             return userPhoto;
         }
-
-        /* ---------------------------------------------
-           APPLICATION
-        --------------------------------------------- */
 
         const applicationPhoto =
             searchPhotoInObject(application);
@@ -323,19 +292,11 @@ function Applicants() {
             return "";
         }
 
-        /* ---------------------------------------------
-           DATA URL
-        --------------------------------------------- */
-
         if (
             value.startsWith("data:image/")
         ) {
             return value;
         }
-
-        /* ---------------------------------------------
-           NORMAL URL
-        --------------------------------------------- */
 
         if (
             value.startsWith("http://") ||
@@ -343,10 +304,6 @@ function Applicants() {
         ) {
             return value;
         }
-
-        /* ---------------------------------------------
-           FIREBASE STORAGE
-        --------------------------------------------- */
 
         try {
 
@@ -398,11 +355,9 @@ function Applicants() {
             application.userUID
         ]
             .filter(Boolean)
-            .map(value => String(value).trim());
-
-        /* ---------------------------------------------
-           DOCUMENT ID
-        --------------------------------------------- */
+            .map(value =>
+                String(value).trim()
+            );
 
         for (const id of possibleIds) {
 
@@ -411,20 +366,12 @@ function Applicants() {
             }
         }
 
-        /* ---------------------------------------------
-           UID
-        --------------------------------------------- */
-
         for (const id of possibleIds) {
 
             if (profilesByUid[id]) {
                 return profilesByUid[id];
             }
         }
-
-        /* ---------------------------------------------
-           STUDENT ID FIELD
-        --------------------------------------------- */
 
         for (const id of possibleIds) {
 
@@ -433,20 +380,12 @@ function Applicants() {
             }
         }
 
-        /* ---------------------------------------------
-           USER ID FIELD
-        --------------------------------------------- */
-
         for (const id of possibleIds) {
 
             if (profilesByUserId[id]) {
                 return profilesByUserId[id];
             }
         }
-
-        /* ---------------------------------------------
-           EMAIL
-        --------------------------------------------- */
 
         const possibleEmails = [
             application.email,
@@ -472,7 +411,7 @@ function Applicants() {
     };
 
     /* =========================================================
-       LOAD APPLICANTS
+       FETCH ON USER CHANGE
     ========================================================= */
 
     useEffect(() => {
@@ -548,6 +487,10 @@ function Applicants() {
 
     /* =========================================================
        FETCH APPLICANTS
+       
+       IMPORTANT:
+       Only applications belonging to the logged-in
+       company are queried.
     ========================================================= */
 
     const fetchApplicants = async () => {
@@ -565,7 +508,7 @@ function Applicants() {
             setLoading(true);
 
             /* =================================================
-               1. GET COMPANY APPLICATIONS
+               1. GET ONLY THIS COMPANY'S APPLICATIONS
             ================================================= */
 
             const applicationsQuery =
@@ -615,13 +558,9 @@ function Applicants() {
                         ...profile
                     };
 
-                    /* Document ID */
-
                     profilesById[
                         profileDocument.id
                     ] = profileData;
-
-                    /* UID */
 
                     const uid =
                         profile.uid ||
@@ -634,8 +573,6 @@ function Applicants() {
                             String(uid)
                         ] = profileData;
                     }
-
-                    /* Email */
 
                     const email =
                         profile.email ||
@@ -651,8 +588,6 @@ function Applicants() {
                         ] = profileData;
                     }
 
-                    /* Student ID */
-
                     const studentId =
                         profile.studentId ||
                         profile.studentID;
@@ -663,8 +598,6 @@ function Applicants() {
                             String(studentId)
                         ] = profileData;
                     }
-
-                    /* User ID */
 
                     const userId =
                         profile.userId ||
@@ -680,10 +613,7 @@ function Applicants() {
             );
 
             /* =================================================
-               3. ALSO LOAD USERS
-               
-               This helps when profile photo is stored
-               in users/{uid} instead of studentProfiles.
+               3. LOAD USERS
             ================================================= */
 
             let usersById = {};
@@ -750,9 +680,20 @@ function Applicants() {
                     ...item.data()
                 };
 
-                /* =================================================
-                   DEFAULT VALUES
-                ================================================= */
+                /*
+                 * Extra ownership protection.
+                 *
+                 * Even though the Firestore query already uses
+                 * companyId == user.uid, do not place an
+                 * incorrectly owned document into local state.
+                 */
+
+                if (
+                    application.companyId !==
+                    user.uid
+                ) {
+                    continue;
+                }
 
                 application.phone =
                     application.phone ||
@@ -1093,7 +1034,7 @@ function Applicants() {
                 }
 
                 /* =================================================
-                   USER PROFILE FALLBACK DATA
+                   USER PROFILE FALLBACK
                 ================================================= */
 
                 if (userProfile) {
@@ -1277,7 +1218,686 @@ function Applicants() {
     };
 
     /* =========================================================
+       EMAIL HELPER
+    ========================================================= */
+
+    const getStudentEmail = (application) => {
+
+        return String(
+            application?.studentEmail ||
+            application?.email ||
+            ""
+        )
+            .trim()
+            .toLowerCase();
+    };
+
+    /* =========================================================
+       ESCAPE HTML
+       
+       Prevent student/company/job names from injecting HTML
+       into the email body.
+    ========================================================= */
+
+    const escapeHtml = (value) => {
+
+        return String(value ?? "")
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+    };
+
+    /* =========================================================
+       SEND SELECTED EMAIL
+    ========================================================= */
+
+    const sendSelectedEmail = async (
+        application
+    ) => {
+
+        const studentEmail =
+            getStudentEmail(application);
+
+        if (!studentEmail) {
+
+            console.warn(
+                "Selection email not sent because student email is missing."
+            );
+
+            return {
+                success: false,
+                reason: "missing-email"
+            };
+        }
+
+        const studentName =
+            escapeHtml(
+                application?.studentName ||
+                "Student"
+            );
+
+        const jobTitle =
+            escapeHtml(
+                application?.jobTitle ||
+                "the position"
+            );
+
+        const companyName =
+            escapeHtml(
+                application?.companyName ||
+                application?.company ||
+                "the company"
+            );
+
+        const subject =
+            "Application Update - Selected for Placement Activity";
+
+        const htmlMessage = `
+            <div style="
+                font-family:Arial,Helvetica,sans-serif;
+                background:#f4f7fb;
+                padding:35px 15px;
+                color:#1f2937;
+            ">
+
+                <div style="
+                    max-width:650px;
+                    margin:0 auto;
+                    background:#ffffff;
+                    border-radius:16px;
+                    overflow:hidden;
+                    box-shadow:0 8px 30px rgba(0,0,0,0.08);
+                ">
+
+                    <div style="
+                        background:#667eea;
+                        padding:30px;
+                        color:#ffffff;
+                    ">
+
+                        <h1 style="
+                            margin:0;
+                            font-size:26px;
+                        ">
+                            Application Update
+                        </h1>
+
+                        <p style="
+                            margin:8px 0 0;
+                            font-size:14px;
+                        ">
+                            Placement Management System
+                        </p>
+
+                    </div>
+
+                    <div style="padding:30px;">
+
+                        <h2 style="
+                            margin-top:0;
+                            color:#111827;
+                        ">
+                            Congratulations, ${studentName}!
+                        </h2>
+
+                        <p style="
+                            font-size:16px;
+                            line-height:1.7;
+                        ">
+                            We are pleased to inform you that your
+                            application for
+                            <strong>${jobTitle}</strong>
+                            at
+                            <strong>${companyName}</strong>
+                            has been selected for the next
+                            placement activity.
+                        </p>
+
+                        <div style="
+                            margin:25px 0;
+                            padding:20px;
+                            background:#f0fdf4;
+                            border:1px solid #bbf7d0;
+                            border-radius:12px;
+                        ">
+
+                            <p style="
+                                margin:0;
+                                color:#166534;
+                                font-size:15px;
+                                line-height:1.6;
+                            ">
+                                <strong>Status:</strong>
+                                Selected for Placement Activity
+                            </p>
+
+                        </div>
+
+                        <p style="
+                            font-size:15px;
+                            line-height:1.7;
+                        ">
+                            Please log in to the Placement Management
+                            System regularly for further updates,
+                            instructions and placement-related
+                            activities.
+                        </p>
+
+                        <p style="
+                            margin-top:28px;
+                            color:#6b7280;
+                            font-size:13px;
+                            line-height:1.6;
+                        ">
+                            This is an automated email from the
+                            Placement Management System.
+                        </p>
+
+                    </div>
+
+                </div>
+
+            </div>
+        `;
+
+        try {
+
+            await sendEmail({
+                to: studentEmail,
+                subject,
+                message: htmlMessage
+            });
+
+            console.log(
+                "Selected email sent:",
+                studentEmail
+            );
+
+            return {
+                success: true,
+                email: studentEmail
+            };
+
+        } catch (error) {
+
+            console.error(
+                "Selected email failed:",
+                error
+            );
+
+            return {
+                success: false,
+                email: studentEmail,
+                error
+            };
+        }
+    };
+
+    /* =========================================================
+       SEND REJECTED EMAIL
+    ========================================================= */
+
+    const sendRejectedEmail = async (
+        application
+    ) => {
+
+        const studentEmail =
+            getStudentEmail(application);
+
+        if (!studentEmail) {
+
+            console.warn(
+                "Rejected email not sent because student email is missing."
+            );
+
+            return {
+                success: false,
+                reason: "missing-email"
+            };
+        }
+
+        const studentName =
+            escapeHtml(
+                application?.studentName ||
+                "Student"
+            );
+
+        const jobTitle =
+            escapeHtml(
+                application?.jobTitle ||
+                "the position"
+            );
+
+        const companyName =
+            escapeHtml(
+                application?.companyName ||
+                application?.company ||
+                "the company"
+            );
+
+        const subject =
+            "Application Update - Application Status";
+
+        const htmlMessage = `
+            <div style="
+                font-family:Arial,Helvetica,sans-serif;
+                background:#f4f7fb;
+                padding:35px 15px;
+                color:#1f2937;
+            ">
+
+                <div style="
+                    max-width:650px;
+                    margin:0 auto;
+                    background:#ffffff;
+                    border-radius:16px;
+                    overflow:hidden;
+                    box-shadow:0 8px 30px rgba(0,0,0,0.08);
+                ">
+
+                    <div style="
+                        background:#dc2626;
+                        padding:30px;
+                        color:#ffffff;
+                    ">
+
+                        <h1 style="
+                            margin:0;
+                            font-size:26px;
+                        ">
+                            Application Update
+                        </h1>
+
+                        <p style="
+                            margin:8px 0 0;
+                            font-size:14px;
+                        ">
+                            Placement Management System
+                        </p>
+
+                    </div>
+
+                    <div style="padding:30px;">
+
+                        <h2 style="
+                            margin-top:0;
+                            color:#111827;
+                        ">
+                            Dear ${studentName},
+                        </h2>
+
+                        <p style="
+                            font-size:16px;
+                            line-height:1.7;
+                        ">
+                            Thank you for your interest in the
+                            <strong>${jobTitle}</strong> position at
+                            <strong>${companyName}</strong>.
+                        </p>
+
+                        <p style="
+                            font-size:16px;
+                            line-height:1.7;
+                        ">
+                            After careful consideration, we regret
+                            to inform you that your application has
+                            not been selected for this opportunity.
+                        </p>
+
+                        <div style="
+                            margin:25px 0;
+                            padding:20px;
+                            background:#fef2f2;
+                            border:1px solid #fecaca;
+                            border-radius:12px;
+                        ">
+
+                            <p style="
+                                margin:0;
+                                color:#991b1b;
+                                font-size:15px;
+                                line-height:1.6;
+                            ">
+                                <strong>Application Status:</strong>
+                                Not Selected
+                            </p>
+
+                        </div>
+
+                        <p style="
+                            font-size:15px;
+                            line-height:1.7;
+                        ">
+                            Please do not be discouraged. We encourage
+                            you to continue exploring other placement
+                            opportunities available through the
+                            Placement Management System.
+                        </p>
+
+                        <p style="
+                            font-size:15px;
+                            line-height:1.7;
+                        ">
+                            We wish you all the best in your future
+                            career opportunities.
+                        </p>
+
+                        <div style="
+                            margin-top:30px;
+                            padding-top:20px;
+                            border-top:1px solid #e5e7eb;
+                        ">
+
+                            <p style="
+                                margin:0;
+                                color:#6b7280;
+                                font-size:13px;
+                                line-height:1.6;
+                            ">
+                                This is an automated email from the
+                                Placement Management System.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+        `;
+
+        try {
+
+            await sendEmail({
+                to: studentEmail,
+                subject,
+                message: htmlMessage
+            });
+
+            console.log(
+                "Rejected email sent:",
+                studentEmail
+            );
+
+            return {
+                success: true,
+                email: studentEmail
+            };
+
+        } catch (error) {
+
+            console.error(
+                "Rejected email failed:",
+                error
+            );
+
+            return {
+                success: false,
+                email: studentEmail,
+                error
+            };
+        }
+    };
+
+    /* =========================================================
+       SEND PLACED EMAIL
+    ========================================================= */
+
+    const sendPlacedEmail = async (
+        application
+    ) => {
+
+        const studentEmail =
+            getStudentEmail(application);
+
+        if (!studentEmail) {
+
+            console.warn(
+                "Placed email not sent because student email is missing."
+            );
+
+            return {
+                success: false,
+                reason: "missing-email"
+            };
+        }
+
+        const studentName =
+            escapeHtml(
+                application?.studentName ||
+                "Student"
+            );
+
+        const jobTitle =
+            escapeHtml(
+                application?.jobTitle ||
+                "the position"
+            );
+
+        const companyName =
+            escapeHtml(
+                application?.companyName ||
+                application?.company ||
+                "the company"
+            );
+
+        const subject =
+            "Congratulations! You Have Been Placed";
+
+        const htmlMessage = `
+            <div style="
+                font-family:Arial,Helvetica,sans-serif;
+                background:#f4f7fb;
+                padding:35px 15px;
+                color:#1f2937;
+            ">
+
+                <div style="
+                    max-width:650px;
+                    margin:0 auto;
+                    background:#ffffff;
+                    border-radius:16px;
+                    overflow:hidden;
+                    box-shadow:0 8px 30px rgba(0,0,0,0.08);
+                ">
+
+                    <div style="
+                        background:#16a34a;
+                        padding:32px;
+                        color:#ffffff;
+                        text-align:center;
+                    ">
+
+                        <div style="
+                            font-size:42px;
+                            margin-bottom:10px;
+                        ">
+                            🎉
+                        </div>
+
+                        <h1 style="
+                            margin:0;
+                            font-size:28px;
+                        ">
+                            Congratulations!
+                        </h1>
+
+                        <p style="
+                            margin:8px 0 0;
+                            font-size:15px;
+                        ">
+                            Placement Confirmation
+                        </p>
+
+                    </div>
+
+                    <div style="padding:32px;">
+
+                        <h2 style="
+                            margin-top:0;
+                            color:#111827;
+                        ">
+                            Dear ${studentName},
+                        </h2>
+
+                        <p style="
+                            font-size:16px;
+                            line-height:1.7;
+                        ">
+                            We are delighted to inform you that
+                            you have been
+                            <strong>officially placed</strong>
+                            for
+                            <strong>${jobTitle}</strong>
+                            at
+                            <strong>${companyName}</strong>.
+                        </p>
+
+                        <div style="
+                            margin:28px 0;
+                            padding:22px;
+                            background:#f0fdf4;
+                            border:1px solid #86efac;
+                            border-radius:12px;
+                            text-align:center;
+                        ">
+
+                            <div style="
+                                color:#15803d;
+                                font-size:14px;
+                                margin-bottom:8px;
+                            ">
+                                PLACEMENT STATUS
+                            </div>
+
+                            <div style="
+                                color:#166534;
+                                font-size:24px;
+                                font-weight:700;
+                            ">
+                                ✓ PLACED
+                            </div>
+
+                        </div>
+
+                        <p style="
+                            font-size:15px;
+                            line-height:1.7;
+                        ">
+                            Please keep checking the Placement
+                            Management System for further
+                            instructions and important information
+                            regarding your placement.
+                        </p>
+
+                        <p style="
+                            font-size:15px;
+                            line-height:1.7;
+                        ">
+                            We wish you great success in your
+                            professional journey!
+                        </p>
+
+                        <div style="
+                            margin-top:30px;
+                            padding-top:20px;
+                            border-top:1px solid #e5e7eb;
+                        ">
+
+                            <p style="
+                                margin:0;
+                                color:#6b7280;
+                                font-size:13px;
+                                line-height:1.6;
+                            ">
+                                This is an automated email from the
+                                Placement Management System.
+                            </p>
+
+                        </div>
+
+                    </div>
+
+                </div>
+
+            </div>
+        `;
+
+        try {
+
+            await sendEmail({
+                to: studentEmail,
+                subject,
+                message: htmlMessage
+            });
+
+            console.log(
+                "Placed email sent:",
+                studentEmail
+            );
+
+            return {
+                success: true,
+                email: studentEmail
+            };
+
+        } catch (error) {
+
+            console.error(
+                "Placed email failed:",
+                error
+            );
+
+            return {
+                success: false,
+                email: studentEmail,
+                error
+            };
+        }
+    };
+
+    /* =========================================================
+       VERIFY COMPANY OWNERSHIP
+       
+       This is an additional client-side protection.
+       Firestore rules are still required for real security.
+    ========================================================= */
+
+    const verifyApplicationOwnership = (
+        application
+    ) => {
+
+        if (!user?.uid) {
+            return false;
+        }
+
+        if (!application) {
+            return false;
+        }
+
+        return (
+            application.companyId ===
+            user.uid
+        );
+    };
+
+    /* =========================================================
        UPDATE APPLICATION STATUS
+       
+       ACCEPT:
+       1. Verify ownership
+       2. Update Firestore
+       3. Send selection email
+       4. Email failure does NOT rollback
+
+       REJECT:
+       1. Verify ownership
+       2. Update Firestore
+       3. Send rejection email
+       4. Email failure does NOT rollback
     ========================================================= */
 
     const updateStatus = async (
@@ -1294,6 +1914,50 @@ function Applicants() {
             return;
         }
 
+        const currentApplication =
+            applications.find(
+                item =>
+                    item.id === id
+            );
+
+        if (!currentApplication) {
+
+            alert(
+                "Application could not be found."
+            );
+
+            return;
+        }
+
+        /* =====================================================
+           OWNERSHIP CHECK
+        ===================================================== */
+
+        if (
+            !verifyApplicationOwnership(
+                currentApplication
+            )
+        ) {
+
+            alert(
+                "You cannot manage an application belonging to another company."
+            );
+
+            return;
+        }
+
+        if (
+            status !== "Accepted" &&
+            status !== "Rejected"
+        ) {
+
+            alert(
+                "Invalid application status."
+            );
+
+            return;
+        }
+
         try {
 
             setUpdatingId(id);
@@ -1305,9 +1969,18 @@ function Applicants() {
                     id
                 );
 
+            /* =================================================
+               ACCEPT
+            ================================================= */
+
             if (
                 status === "Accepted"
             ) {
+
+                /*
+                 * IMPORTANT:
+                 * Firestore is updated BEFORE sending email.
+                 */
 
                 await updateDoc(
                     applicationReference,
@@ -1319,7 +1992,51 @@ function Applicants() {
                     }
                 );
 
-            } else {
+                /*
+                 * Email is deliberately isolated.
+                 *
+                 * If email fails, the Firestore status remains
+                 * Accepted.
+                 */
+
+                try {
+
+                    const emailResult =
+                        await sendSelectedEmail(
+                            currentApplication
+                        );
+
+                    if (
+                        !emailResult.success
+                    ) {
+
+                        console.warn(
+                            "Application accepted, but selection email could not be sent.",
+                            emailResult
+                        );
+                    }
+
+                } catch (emailError) {
+
+                    console.error(
+                        "Selection email error after successful Firestore update:",
+                        emailError
+                    );
+                }
+            }
+
+            /* =================================================
+               REJECT
+            ================================================= */
+
+            if (
+                status === "Rejected"
+            ) {
+
+                /*
+                 * IMPORTANT:
+                 * Firestore rejection happens FIRST.
+                 */
 
                 await updateDoc(
                     applicationReference,
@@ -1329,24 +2046,58 @@ function Applicants() {
                         placementActivity: ""
                     }
                 );
+
+                /*
+                 * Rejection email cannot undo the Firestore
+                 * rejection if sending fails.
+                 */
+
+                try {
+
+                    const emailResult =
+                        await sendRejectedEmail(
+                            currentApplication
+                        );
+
+                    if (
+                        !emailResult.success
+                    ) {
+
+                        console.warn(
+                            "Application rejected, but rejection email could not be sent.",
+                            emailResult
+                        );
+                    }
+
+                } catch (emailError) {
+
+                    console.error(
+                        "Rejection email error after successful Firestore update:",
+                        emailError
+                    );
+                }
             }
+
+            /* =================================================
+               UPDATE LOCAL STATE
+            ================================================= */
+
+            const updatedApplication = {
+                ...currentApplication,
+                status,
+                placedStudent: false,
+                placementActivity:
+                    status === "Accepted"
+                        ? "Shortlisted"
+                        : ""
+            };
 
             setApplications(
                 previous =>
                     previous.map(
                         item =>
                             item.id === id
-                                ? {
-                                    ...item,
-                                    status,
-                                    placedStudent:
-                                        false,
-                                    placementActivity:
-                                        status ===
-                                        "Accepted"
-                                            ? "Shortlisted"
-                                            : ""
-                                }
+                                ? updatedApplication
                                 : item
                     )
             );
@@ -1355,16 +2106,7 @@ function Applicants() {
                 previous =>
                     previous &&
                     previous.id === id
-                        ? {
-                            ...previous,
-                            status,
-                            placedStudent: false,
-                            placementActivity:
-                                status ===
-                                "Accepted"
-                                    ? "Shortlisted"
-                                    : ""
-                        }
+                        ? updatedApplication
                         : previous
             );
 
@@ -1399,6 +2141,16 @@ function Applicants() {
 
     /* =========================================================
        DELETE APPLICATION
+       
+       REQUIREMENT:
+       Delete still works AND sends rejection email.
+
+       IMPORTANT:
+       1. Verify company ownership
+       2. Delete Firestore document
+       3. Send rejection email
+       
+       Email failure does NOT restore the deleted document.
     ========================================================= */
 
     const deleteApplication = async (
@@ -1414,9 +2166,14 @@ function Applicants() {
             return;
         }
 
+        /* =====================================================
+           OWNERSHIP CHECK
+        ===================================================== */
+
         if (
-            application.companyId &&
-            application.companyId !== user.uid
+            !verifyApplicationOwnership(
+                application
+            )
         ) {
 
             alert(
@@ -1432,7 +2189,7 @@ function Applicants() {
 
         const confirmed =
             window.confirm(
-                `Delete the application from ${studentName}?\n\nThis action cannot be undone.`
+                `Delete the application from ${studentName}?\n\nThe student will receive a rejection email.\n\nThis action cannot be undone.`
             );
 
         if (!confirmed) {
@@ -1445,6 +2202,10 @@ function Applicants() {
                 application.id
             );
 
+            /* =================================================
+               DELETE FIRST
+            ================================================= */
+
             await deleteDoc(
                 doc(
                     db,
@@ -1452,6 +2213,10 @@ function Applicants() {
                     application.id
                 )
             );
+
+            /* =================================================
+               UPDATE LOCAL STATE IMMEDIATELY
+            ================================================= */
 
             setApplications(
                 previous =>
@@ -1468,6 +2233,39 @@ function Applicants() {
             ) {
 
                 setSelectedApplicant(null);
+            }
+
+            /* =================================================
+               SEND REJECTION EMAIL AFTER DELETE
+               
+               The deleted application object is still available
+               in memory, so its email/name/job information can
+               be used.
+            ================================================= */
+
+            try {
+
+                const emailResult =
+                    await sendRejectedEmail(
+                        application
+                    );
+
+                if (
+                    !emailResult.success
+                ) {
+
+                    console.warn(
+                        "Application deleted, but rejection email could not be sent.",
+                        emailResult
+                    );
+                }
+
+            } catch (emailError) {
+
+                console.error(
+                    "Rejection email failed after application deletion:",
+                    emailError
+                );
             }
 
         } catch (error) {
@@ -1501,12 +2299,44 @@ function Applicants() {
 
     /* =========================================================
        UPDATE PLACED STUDENT
+       
+       REQUIREMENT:
+       Mark as Placed
+       → Firestore first
+       → placement email
+       → email failure does NOT rollback
     ========================================================= */
 
     const updatePlacedStudent = async (
         application,
         placed
     ) => {
+
+        if (!user?.uid) {
+
+            alert(
+                "You must be logged in."
+            );
+
+            return;
+        }
+
+        /* =====================================================
+           OWNERSHIP CHECK
+        ===================================================== */
+
+        if (
+            !verifyApplicationOwnership(
+                application
+            )
+        ) {
+
+            alert(
+                "You cannot manage an application belonging to another company."
+            );
+
+            return;
+        }
 
         try {
 
@@ -1533,6 +2363,10 @@ function Applicants() {
                 return;
             }
 
+            /* =================================================
+               FIRESTORE UPDATE FIRST
+            ================================================= */
+
             await updateDoc(
                 doc(
                     db,
@@ -1552,23 +2386,61 @@ function Applicants() {
                 }
             );
 
+            /* =================================================
+               SEND PLACEMENT EMAIL ONLY WHEN PLACED
+               
+               Firestore update has already succeeded.
+            ================================================= */
+
+            if (placed) {
+
+                try {
+
+                    const emailResult =
+                        await sendPlacedEmail(
+                            application
+                        );
+
+                    if (
+                        !emailResult.success
+                    ) {
+
+                        console.warn(
+                            "Student was marked placed but placement email could not be sent.",
+                            emailResult
+                        );
+                    }
+
+                } catch (emailError) {
+
+                    console.error(
+                        "Placement email failed after successful Firestore update:",
+                        emailError
+                    );
+                }
+            }
+
+            /* =================================================
+               UPDATE LOCAL STATE
+            ================================================= */
+
+            const updatedApplication = {
+                ...application,
+                status: "Accepted",
+                placedStudent: placed,
+                placementActivity:
+                    placed
+                        ? "Placed"
+                        : "Shortlisted"
+            };
+
             setApplications(
                 previous =>
                     previous.map(
                         item =>
                             item.id ===
                             application.id
-                                ? {
-                                    ...item,
-                                    status:
-                                        "Accepted",
-                                    placedStudent:
-                                        placed,
-                                    placementActivity:
-                                        placed
-                                            ? "Placed"
-                                            : "Shortlisted"
-                                }
+                                ? updatedApplication
                                 : item
                     )
             );
@@ -1578,17 +2450,7 @@ function Applicants() {
                     previous &&
                     previous.id ===
                         application.id
-                        ? {
-                            ...previous,
-                            status:
-                                "Accepted",
-                            placedStudent:
-                                placed,
-                            placementActivity:
-                                placed
-                                    ? "Placed"
-                                    : "Shortlisted"
-                        }
+                        ? updatedApplication
                         : previous
             );
 
@@ -1959,9 +2821,7 @@ function Applicants() {
                                     }}
                                 >
 
-                                    {/* =================================================
-                                        TOP
-                                    ================================================= */}
+                                    {/* TOP */}
 
                                     <div className="applicant-top">
 
@@ -2006,9 +2866,7 @@ function Applicants() {
 
                                     </div>
 
-                                    {/* =================================================
-                                        JOB
-                                    ================================================= */}
+                                    {/* JOB */}
 
                                     <div className="applicant-job">
 
@@ -2033,9 +2891,7 @@ function Applicants() {
 
                                     </div>
 
-                                    {/* =================================================
-                                        INFORMATION
-                                    ================================================= */}
+                                    {/* INFORMATION */}
 
                                     <div className="applicant-info">
 
@@ -2150,9 +3006,7 @@ function Applicants() {
 
                                     </div>
 
-                                    {/* =================================================
-                                        SKILLS
-                                    ================================================= */}
+                                    {/* SKILLS */}
 
                                     <div className="applicant-skills">
 
@@ -2169,9 +3023,7 @@ function Applicants() {
 
                                     </div>
 
-                                    {/* =================================================
-                                        EMAIL
-                                    ================================================= */}
+                                    {/* EMAIL */}
 
                                     <div className="applicant-skills">
 
@@ -2189,9 +3041,7 @@ function Applicants() {
 
                                     </div>
 
-                                    {/* =================================================
-                                        RESUME
-                                    ================================================= */}
+                                    {/* RESUME */}
 
                                     {app.resumeURL && (
 
@@ -2217,9 +3067,7 @@ function Applicants() {
 
                                     )}
 
-                                    {/* =================================================
-                                        PLACEMENT
-                                    ================================================= */}
+                                    {/* PLACEMENT */}
 
                                     {isAccepted && (
 
@@ -2356,9 +3204,7 @@ function Applicants() {
                                         </div>
                                     )}
 
-                                    {/* =================================================
-                                        ACTION BUTTONS
-                                    ================================================= */}
+                                    {/* ACTION BUTTONS */}
 
                                     <div
                                         className="action-buttons"
@@ -2490,9 +3336,7 @@ function Applicants() {
                         }
                     >
 
-                        {/* =================================================
-                            MODAL HEADER
-                        ================================================= */}
+                        {/* MODAL HEADER */}
 
                         <div className="applicant-modal-header">
 
@@ -2523,9 +3367,7 @@ function Applicants() {
 
                         </div>
 
-                        {/* =================================================
-                            PROFILE HERO
-                        ================================================= */}
+                        {/* PROFILE HERO */}
 
                         <div className="applicant-modal-hero">
 
@@ -2535,7 +3377,6 @@ function Applicants() {
                                     application={
                                         selectedApplicant
                                     }
-
                                 />
 
                                 <div className="modal-photo-ring"></div>
@@ -2606,9 +3447,7 @@ function Applicants() {
 
                         </div>
 
-                        {/* =================================================
-                            MODAL CONTENT
-                        ================================================= */}
+                        {/* MODAL CONTENT */}
 
                         <div className="applicant-modal-content">
 
@@ -2908,9 +3747,7 @@ function Applicants() {
 
                         </div>
 
-                        {/* =================================================
-                            MODAL FOOTER
-                        ================================================= */}
+                        {/* MODAL FOOTER */}
 
                         <div className="applicant-modal-footer">
 

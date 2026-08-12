@@ -15,6 +15,8 @@ import {
 import { db } from "../../firebase/firebaseConfig";
 import { useAuth } from "../../context/AuthContext";
 
+import sendEmail from "../../services/emailService";
+
 import {
     FaSearch,
     FaMapMarkerAlt,
@@ -28,9 +30,11 @@ import {
 
 import "./AvailableJobs.css";
 
+
 function AvailableJobs() {
 
     const { user } = useAuth();
+
 
     /* =========================================================
        STATES
@@ -61,126 +65,235 @@ function AvailableJobs() {
             return 0;
         }
 
-        if (typeof value.toDate === "function") {
-            return value.toDate().getTime();
+
+        try {
+
+            if (
+                value &&
+                typeof value.toDate === "function"
+            ) {
+
+                return value
+                    .toDate()
+                    .getTime();
+
+            }
+
+
+            if (value instanceof Date) {
+
+                return value.getTime();
+
+            }
+
+
+            const date =
+                new Date(value);
+
+
+            return isNaN(
+                date.getTime()
+            )
+                ? 0
+                : date.getTime();
+
         }
 
-        if (value instanceof Date) {
-            return value.getTime();
+        catch {
+
+            return 0;
+
         }
-
-        const date = new Date(value);
-
-        return isNaN(date.getTime())
-            ? 0
-            : date.getTime();
 
     };
 
 
     /* =========================================================
-       LOAD JOBS
+       CHECK JOB STATUS
+    ========================================================= */
+
+    const isJobActive = (job) => {
+
+        if (!job) {
+            return false;
+        }
+
+
+        /*
+         * Jobs without a status are treated as active.
+         *
+         * This keeps compatibility with your existing
+         * Firestore documents.
+         */
+
+        if (!job.status) {
+            return true;
+        }
+
+
+        return (
+            String(job.status)
+                .toLowerCase()
+                .trim() === "active"
+        );
+
+    };
+
+
+    /* =========================================================
+       LOAD AVAILABLE JOBS - REAL TIME
+       
+       THIS IS THE IMPORTANT PART.
+       
+       Firestore onSnapshot() listens continuously.
+       
+       If company executes:
+       
+           deleteDoc(
+               doc(db, "jobs", jobId)
+           )
+       
+       the deleted document disappears from
+       snapshot.docs automatically.
+       
+       We then REPLACE the entire jobs state.
+       
+       We do NOT merge with the previous state.
     ========================================================= */
 
     useEffect(() => {
 
         setLoading(true);
+
         setError("");
 
-        const jobsRef = collection(
-            db,
-            "jobs"
-        );
 
-        const unsubscribe = onSnapshot(
-
-            jobsRef,
-
-            (snapshot) => {
-
-                const jobData = snapshot.docs.map(
-                    (document) => ({
-                        id: document.id,
-                        ...document.data()
-                    })
-                );
+        const jobsRef =
+            collection(
+                db,
+                "jobs"
+            );
 
 
-                /*
-                -------------------------------------------------
-                ONLY SHOW ACTIVE JOBS
-                -------------------------------------------------
-                */
+        const unsubscribe =
+            onSnapshot(
 
-                const activeJobs = jobData.filter(
-                    (job) => {
+                jobsRef,
 
-                        return (
-                            !job.status ||
-                            job.status === "active"
-                        );
+                (snapshot) => {
 
-                    }
-                );
+                    /*
+                     * Build the job list ONLY from the
+                     * CURRENT Firestore snapshot.
+                     */
 
+                    const currentJobs =
+                        snapshot.docs
+                            .map(
+                                (document) => ({
 
-                /*
-                -------------------------------------------------
-                NEWEST JOBS FIRST
-                -------------------------------------------------
-                */
+                                    id:
+                                        document.id,
 
-                activeJobs.sort(
-                    (a, b) => {
+                                    ...document.data()
 
-                        const dateA =
-                            getDateValue(
-                                a.createdAt
+                                })
+                            )
+                            .filter(
+                                (job) =>
+                                    isJobActive(job)
                             );
 
-                        const dateB =
-                            getDateValue(
-                                b.createdAt
+
+                    /*
+                     * Sort newest jobs first.
+                     */
+
+                    currentJobs.sort(
+                        (a, b) => {
+
+                            const dateA =
+                                getDateValue(
+                                    a.createdAt ||
+                                    a.postedAt
+                                );
+
+
+                            const dateB =
+                                getDateValue(
+                                    b.createdAt ||
+                                    b.postedAt
+                                );
+
+
+                            return (
+                                dateB -
+                                dateA
                             );
 
-                        return dateB - dateA;
-
-                    }
-                );
+                        }
+                    );
 
 
-                setJobs(activeJobs);
+                    /*
+                     * CRITICAL:
+                     *
+                     * Replace the entire array.
+                     *
+                     * Do NOT do:
+                     *
+                     * setJobs(previous => [...previous, ...newJobs])
+                     *
+                     * because that can keep deleted jobs.
+                     */
 
-                setLoading(false);
+                    setJobs(
+                        currentJobs
+                    );
 
-            },
 
-            (firebaseError) => {
+                    setLoading(false);
 
-                console.error(
-                    "Jobs listener error:",
-                    firebaseError
-                );
+                    setError("");
 
-                setError(
-                    "Unable to load available jobs."
-                );
+                },
 
-                setLoading(false);
+                (firebaseError) => {
 
-            }
+                    console.error(
+                        "Jobs listener error:",
+                        firebaseError
+                    );
 
-        );
+
+                    setError(
+                        "Unable to load available jobs."
+                    );
+
+
+                    setLoading(false);
+
+                }
+
+            );
+
+
+        /*
+         * Remove Firestore listener when component
+         * unmounts.
+         */
 
         return () => {
+
             unsubscribe();
+
         };
 
     }, []);
 
 
     /* =========================================================
-       LOAD STUDENT APPLICATIONS
+       LOAD STUDENT APPLICATIONS - REAL TIME
     ========================================================= */
 
     useEffect(() => {
@@ -193,21 +306,27 @@ function AvailableJobs() {
 
         }
 
+
         const applicationsRef =
             collection(
                 db,
                 "applications"
             );
 
+
         const applicationsQuery =
             query(
+
                 applicationsRef,
+
                 where(
                     "studentId",
                     "==",
                     user.uid
                 )
+
             );
+
 
         const unsubscribe =
             onSnapshot(
@@ -224,9 +343,12 @@ function AvailableJobs() {
                             )
                             .filter(Boolean);
 
+
                     setAppliedJobs(
                         [
-                            ...new Set(jobIds)
+                            ...new Set(
+                                jobIds
+                            )
                         ]
                     );
 
@@ -243,11 +365,14 @@ function AvailableJobs() {
 
             );
 
+
         return () => {
+
             unsubscribe();
+
         };
 
-    }, [user]);
+    }, [user?.uid]);
 
 
     /* =========================================================
@@ -261,13 +386,17 @@ function AvailableJobs() {
                 .toLowerCase()
                 .trim();
 
+
         if (!searchValue) {
 
-            setFilteredJobs(jobs);
+            setFilteredJobs(
+                jobs
+            );
 
             return;
 
         }
+
 
         const filtered =
             jobs.filter(
@@ -279,17 +408,26 @@ function AvailableJobs() {
                             ""
                         ).toLowerCase();
 
+
                     const title =
                         String(
                             job.jobTitle ||
                             ""
                         ).toLowerCase();
 
+
                     const skills =
-                        String(
-                            job.skills ||
-                            ""
-                        ).toLowerCase();
+                        Array.isArray(
+                            job.skills
+                        )
+                            ? job.skills
+                                .join(" ")
+                                .toLowerCase()
+                            : String(
+                                job.skills ||
+                                ""
+                            ).toLowerCase();
+
 
                     const location =
                         String(
@@ -297,11 +435,13 @@ function AvailableJobs() {
                             ""
                         ).toLowerCase();
 
+
                     const description =
                         String(
                             job.jobDescription ||
                             ""
                         ).toLowerCase();
+
 
                     return (
 
@@ -330,27 +470,16 @@ function AvailableJobs() {
                 }
             );
 
-        setFilteredJobs(filtered);
+
+        setFilteredJobs(
+            filtered
+        );
 
     }, [jobs, search]);
 
 
     /* =========================================================
-       CHECK STUDENT PROFILE COMPLETION
-       
-       IMPORTANT:
-       Student must complete the profile before applying.
-       
-       Required fields:
-       - phone
-       - collegeName
-       - degree
-       - department
-       - tenthPercentage
-       - twelfthPercentage
-       - cgpa
-       - graduationYear
-       - skills
+       CHECK STUDENT PROFILE
     ========================================================= */
 
     const checkStudentProfileCompletion =
@@ -361,8 +490,11 @@ function AvailableJobs() {
                 if (!user?.uid) {
 
                     return {
+
                         complete: false,
+
                         reason: "login"
+
                     };
 
                 }
@@ -382,19 +514,17 @@ function AvailableJobs() {
                     );
 
 
-                /*
-                -------------------------------------------------
-                PROFILE DOCUMENT DOES NOT EXIST
-                -------------------------------------------------
-                */
-
                 if (
                     !profileSnapshot.exists()
                 ) {
 
                     return {
+
                         complete: false,
-                        reason: "missing_profile"
+
+                        reason:
+                            "missing_profile"
+
                     };
 
                 }
@@ -403,12 +533,6 @@ function AvailableJobs() {
                 const profile =
                     profileSnapshot.data();
 
-
-                /*
-                -------------------------------------------------
-                REQUIRED PROFILE FIELDS
-                -------------------------------------------------
-                */
 
                 const requiredFields = [
 
@@ -460,12 +584,6 @@ function AvailableJobs() {
                 ];
 
 
-                /*
-                -------------------------------------------------
-                FIND MISSING FIELDS
-                -------------------------------------------------
-                */
-
                 const missingFields =
                     requiredFields
                         .filter(
@@ -476,12 +594,19 @@ function AvailableJobs() {
                                         field.key
                                     ];
 
+
                                 return (
-                                    value === undefined ||
-                                    value === null ||
+
+                                    value ===
+                                        undefined ||
+
+                                    value ===
+                                        null ||
+
                                     String(
                                         value
                                     ).trim() === ""
+
                                 );
 
                             }
@@ -491,12 +616,6 @@ function AvailableJobs() {
                                 field.label
                         );
 
-
-                /*
-                -------------------------------------------------
-                PROFILE INCOMPLETE
-                -------------------------------------------------
-                */
 
                 if (
                     missingFields.length > 0
@@ -516,14 +635,10 @@ function AvailableJobs() {
                 }
 
 
-                /*
-                -------------------------------------------------
-                PROFILE COMPLETE
-                -------------------------------------------------
-                */
-
                 return {
+
                     complete: true
+
                 };
 
             }
@@ -534,6 +649,7 @@ function AvailableJobs() {
                     "Student profile check error:",
                     error
                 );
+
 
                 return {
 
@@ -559,14 +675,9 @@ function AvailableJobs() {
             try {
 
                 if (!user?.uid) {
-
-                    console.warn(
-                        "Student notification skipped: student UID missing."
-                    );
-
                     return;
-
                 }
+
 
                 const notificationData = {
 
@@ -606,19 +717,20 @@ function AvailableJobs() {
 
                 };
 
+
                 await addDoc(
+
                     collection(
                         db,
                         "notifications"
                     ),
-                    notificationData
-                );
 
-                console.log(
-                    "Student notification created successfully."
+                    notificationData
+
                 );
 
             }
+
             catch (error) {
 
                 console.error(
@@ -641,25 +753,21 @@ function AvailableJobs() {
             try {
 
                 if (!user?.uid) {
-
-                    console.warn(
-                        "Company notification skipped: student UID missing."
-                    );
-
                     return;
-
                 }
+
 
                 if (!job?.companyId) {
 
                     console.error(
-                        "Company notification skipped: job.companyId is missing.",
+                        "Company notification skipped: companyId missing.",
                         job
                     );
 
                     return;
 
                 }
+
 
                 const notificationData = {
 
@@ -710,19 +818,20 @@ function AvailableJobs() {
 
                 };
 
+
                 await addDoc(
+
                     collection(
                         db,
                         "notifications"
                     ),
-                    notificationData
-                );
 
-                console.log(
-                    "Company notification created successfully."
+                    notificationData
+
                 );
 
             }
+
             catch (error) {
 
                 console.error(
@@ -736,17 +845,147 @@ function AvailableJobs() {
 
 
     /* =========================================================
+       SEND APPLICATION EMAIL
+    ========================================================= */
+
+    const sendApplicationEmailToCompany =
+        async (job) => {
+
+            try {
+
+                const companyEmail =
+                    String(
+                        job?.companyEmail ||
+                        ""
+                    ).trim();
+
+
+                if (!companyEmail) {
+
+                    console.warn(
+                        "Application email skipped: company email not available."
+                    );
+
+
+                    return {
+
+                        success: false,
+
+                        skipped: true
+
+                    };
+
+                }
+
+
+                const studentName =
+                    user?.name ||
+                    user?.displayName ||
+                    "Student";
+
+
+                const studentEmail =
+                    user?.email ||
+                    "Not available";
+
+
+                const subject =
+                    `New Job Application - ${job.jobTitle || "Job Application"}`;
+
+
+                const message = `
+A new student has applied for your job.
+
+Student Details
+
+Name: ${studentName}
+Email: ${studentEmail}
+
+Job Title: ${job.jobTitle || "Not specified"}
+Company: ${job.companyName || "Your Company"}
+Location: ${job.location || "Not specified"}
+Salary / Package: ${job.salary || "Not specified"}
+Application Deadline: ${job.deadline || "Not specified"}
+
+The student has successfully submitted an application through the Placement Management System.
+
+Please login to your company dashboard to review the student's application.
+
+Placement Management System
+`.trim();
+
+
+                const result =
+                    await sendEmail({
+
+                        to:
+                            companyEmail,
+
+                        subject:
+                            subject,
+
+                        message:
+                            message
+
+                    });
+
+
+                return {
+
+                    success: true,
+
+                    result
+
+                };
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "Application email could not be sent:",
+                    error
+                );
+
+
+                return {
+
+                    success: false,
+
+                    error
+
+                };
+
+            }
+
+        };
+
+
+    /* =========================================================
        APPLY FOR JOB
+       
+       IMPORTANT:
+       
+       Before creating an application:
+       
+       1. Fetch the job directly from Firestore.
+       2. Make sure the document still exists.
+       3. Make sure it is still active.
+       4. Then create the application.
+       
+       This protects against:
+       
+       Student opens page
+       ->
+       Company deletes job
+       ->
+       Student clicks Apply
+       
+       The application will NOT be created.
     ========================================================= */
 
     const applyJob =
-        async (job) => {
-
-            /*
-            -----------------------------------------------------
-            LOGIN CHECK
-            -----------------------------------------------------
-            */
+        async (selectedJob) => {
 
             if (!user?.uid) {
 
@@ -759,15 +998,10 @@ function AvailableJobs() {
             }
 
 
-            /*
-            -----------------------------------------------------
-            ROLE CHECK
-            -----------------------------------------------------
-            */
-
             if (
                 user.role &&
-                user.role.toLowerCase() !==
+                String(user.role)
+                    .toLowerCase() !==
                 "student"
             ) {
 
@@ -780,168 +1014,20 @@ function AvailableJobs() {
             }
 
 
-            /*
-            -----------------------------------------------------
-            PROFILE COMPLETION CHECK
-             
-            THIS IS THE NEW CHECK.
-            
-            It happens BEFORE company/job/application
-            processing so an incomplete student can never
-            submit an application.
-            -----------------------------------------------------
-            */
-
-            const profileCheck =
-                await checkStudentProfileCompletion();
-
-
-            /*
-            -----------------------------------------------------
-            PROFILE CHECK FAILED
-            -----------------------------------------------------
-            */
-
-            if (
-                !profileCheck.complete
-            ) {
-
-                if (
-                    profileCheck.reason ===
-                    "login"
-                ) {
-
-                    alert(
-                        "Please login as a student before applying."
-                    );
-
-                    return;
-
-                }
-
-
-                if (
-                    profileCheck.reason ===
-                    "missing_profile"
-                ) {
-
-                    alert(
-                        "Please complete your Student Profile before applying for any company job.\n\nGo to Student Profile and complete all required information first."
-                    );
-
-                    return;
-
-                }
-
-
-                if (
-                    profileCheck.reason ===
-                    "incomplete_profile"
-                ) {
-
-                    const missingText =
-                        profileCheck.missingFields
-                            ?.join(", ") ||
-                        "required profile information";
-
-
-                    alert(
-                        `Please complete your Student Profile before applying.\n\nMissing information:\n${missingText}\n\nGo to Student Profile, save your complete profile, and then apply for the job.`
-                    );
-
-                    return;
-
-                }
-
-
-                if (
-                    profileCheck.reason ===
-                    "profile_check_error"
-                ) {
-
-                    alert(
-                        "Unable to verify your Student Profile right now.\n\nPlease try again. If the problem continues, open your Student Profile and save it again before applying."
-                    );
-
-                    return;
-
-                }
-
-
-                return;
-
-            }
-
-
-            /*
-            -----------------------------------------------------
-            COMPANY CHECK
-            -----------------------------------------------------
-            */
-
-            if (!job?.companyId) {
+            if (!selectedJob?.id) {
 
                 alert(
-                    "This job does not have a valid company."
-                );
-
-                console.error(
-                    "Job companyId missing:",
-                    job
+                    "This job is invalid or has already been deleted."
                 );
 
                 return;
 
             }
 
-
-            /*
-            -----------------------------------------------------
-            JOB ID CHECK
-            -----------------------------------------------------
-            */
-
-            if (!job?.id) {
-
-                alert(
-                    "This job is invalid."
-                );
-
-                return;
-
-            }
-
-
-            /*
-            -----------------------------------------------------
-            ALREADY APPLIED
-            -----------------------------------------------------
-            */
-
-            if (
-                appliedJobs.includes(
-                    job.id
-                )
-            ) {
-
-                alert(
-                    "You have already applied for this job."
-                );
-
-                return;
-
-            }
-
-
-            /*
-            -----------------------------------------------------
-            PREVENT DOUBLE CLICK
-            -----------------------------------------------------
-            */
 
             if (
                 applyingJobId ===
-                job.id
+                selectedJob.id
             ) {
 
                 return;
@@ -952,15 +1038,263 @@ function AvailableJobs() {
             try {
 
                 setApplyingJobId(
-                    job.id
+                    selectedJob.id
                 );
 
 
+                /* =================================================
+                   STEP 1
+                   FETCH LATEST JOB
+                ================================================= */
+
+                const jobReference =
+                    doc(
+                        db,
+                        "jobs",
+                        selectedJob.id
+                    );
+
+
+                const latestJobSnapshot =
+                    await getDoc(
+                        jobReference
+                    );
+
+
+                /* =================================================
+                   STEP 2
+                   JOB WAS DELETED
+                ================================================= */
+
+                if (
+                    !latestJobSnapshot.exists()
+                ) {
+
+                    /*
+                     * Remove stale job immediately from
+                     * the student's UI.
+                     */
+
+                    setJobs(
+                        (previous) =>
+                            previous.filter(
+                                (item) =>
+                                    item.id !==
+                                    selectedJob.id
+                            )
+                    );
+
+
+                    setFilteredJobs(
+                        (previous) =>
+                            previous.filter(
+                                (item) =>
+                                    item.id !==
+                                    selectedJob.id
+                            )
+                    );
+
+
+                    alert(
+                        "This job is no longer available. The company has deleted it."
+                    );
+
+
+                    return;
+
+                }
+
+
+                /* =================================================
+                   STEP 3
+                   USE LATEST JOB DATA
+                ================================================= */
+
+                const latestJob = {
+
+                    id:
+                        latestJobSnapshot.id,
+
+                    ...latestJobSnapshot.data()
+
+                };
+
+
+                /* =================================================
+                   STEP 4
+                   CHECK STATUS
+                ================================================= */
+
+                if (
+                    !isJobActive(
+                        latestJob
+                    )
+                ) {
+
+                    setJobs(
+                        (previous) =>
+                            previous.filter(
+                                (item) =>
+                                    item.id !==
+                                    selectedJob.id
+                            )
+                    );
+
+
+                    setFilteredJobs(
+                        (previous) =>
+                            previous.filter(
+                                (item) =>
+                                    item.id !==
+                                    selectedJob.id
+                            )
+                    );
+
+
+                    alert(
+                        "This job is no longer available."
+                    );
+
+
+                    return;
+
+                }
+
+
                 /*
-                =================================================
-                CHECK FIRESTORE FOR DUPLICATE
-                =================================================
-                */
+                 * From this point onward always use the
+                 * latest Firestore version.
+                 */
+
+                const job =
+                    latestJob;
+
+
+                /* =================================================
+                   STEP 5
+                   CHECK PROFILE
+                ================================================= */
+
+                const profileCheck =
+                    await checkStudentProfileCompletion();
+
+
+                if (
+                    !profileCheck.complete
+                ) {
+
+                    if (
+                        profileCheck.reason ===
+                        "login"
+                    ) {
+
+                        alert(
+                            "Please login as a student before applying."
+                        );
+
+                        return;
+
+                    }
+
+
+                    if (
+                        profileCheck.reason ===
+                        "missing_profile"
+                    ) {
+
+                        alert(
+                            "Please complete your Student Profile before applying for any company job.\n\nGo to Student Profile and complete all required information first."
+                        );
+
+                        return;
+
+                    }
+
+
+                    if (
+                        profileCheck.reason ===
+                        "incomplete_profile"
+                    ) {
+
+                        const missingText =
+                            profileCheck.missingFields
+                                ?.join(", ") ||
+                            "required profile information";
+
+
+                        alert(
+                            `Please complete your Student Profile before applying.\n\nMissing information:\n${missingText}\n\nGo to Student Profile, save your complete profile, and then apply for the job.`
+                        );
+
+
+                        return;
+
+                    }
+
+
+                    if (
+                        profileCheck.reason ===
+                        "profile_check_error"
+                    ) {
+
+                        alert(
+                            "Unable to verify your Student Profile right now.\n\nPlease try again."
+                        );
+
+
+                        return;
+
+                    }
+
+
+                    return;
+
+                }
+
+
+                /* =================================================
+                   STEP 6
+                   COMPANY VALIDATION
+                ================================================= */
+
+                if (!job.companyId) {
+
+                    alert(
+                        "This job does not have a valid company."
+                    );
+
+
+                    console.error(
+                        "Job companyId missing:",
+                        job
+                    );
+
+
+                    return;
+
+                }
+
+
+                /* =================================================
+                   STEP 7
+                   DUPLICATE APPLICATION CHECK
+                ================================================= */
+
+                if (
+                    appliedJobs.includes(
+                        job.id
+                    )
+                ) {
+
+                    alert(
+                        "You have already applied for this job."
+                    );
+
+
+                    return;
+
+                }
+
 
                 const applicationsQuery =
                     query(
@@ -1008,34 +1342,35 @@ function AvailableJobs() {
 
                             }
 
+
                             return [
+
                                 ...previous,
+
                                 job.id
+
                             ];
 
                         }
                     );
 
+
                     alert(
                         "You have already applied for this job."
                     );
+
 
                     return;
 
                 }
 
 
-                /*
-                =================================================
-                CREATE APPLICATION
-                =================================================
-                */
+                /* =================================================
+                   STEP 8
+                   CREATE APPLICATION
+                ================================================= */
 
                 const applicationData = {
-
-                    /*
-                    STUDENT
-                    */
 
                     studentId:
                         user.uid,
@@ -1049,11 +1384,6 @@ function AvailableJobs() {
                         user.email ||
                         "",
 
-
-                    /*
-                    COMPANY
-                    */
-
                     companyId:
                         job.companyId,
 
@@ -1064,11 +1394,6 @@ function AvailableJobs() {
                     companyEmail:
                         job.companyEmail ||
                         "",
-
-
-                    /*
-                    JOB
-                    */
 
                     jobId:
                         job.id,
@@ -1097,27 +1422,12 @@ function AvailableJobs() {
                         job.deadline ||
                         "",
 
-
-                    /*
-                    ELIGIBILITY
-                    */
-
                     eligibility:
                         job.eligibility ||
                         null,
 
-
-                    /*
-                    STATUS
-                    */
-
                     status:
                         "Applied",
-
-
-                    /*
-                    TIMESTAMPS
-                    */
 
                     appliedAt:
                         serverTimestamp(),
@@ -1150,27 +1460,22 @@ function AvailableJobs() {
                 );
 
 
-                /*
-                =================================================
-                UPDATE UI
-                =================================================
-                */
-
                 setAppliedJobs(
                     (previous) => [
 
-                        ...previous,
-                        job.id
+                        ...new Set([
+                            ...previous,
+                            job.id
+                        ])
 
                     ]
                 );
 
 
-                /*
-                =================================================
-                CREATE NOTIFICATIONS
-                =================================================
-                */
+                /* =================================================
+                   STEP 9
+                   NOTIFICATIONS
+                ================================================= */
 
                 await Promise.all([
 
@@ -1185,17 +1490,37 @@ function AvailableJobs() {
                 ]);
 
 
-                /*
-                =================================================
-                SUCCESS
-                =================================================
-                */
+                /* =================================================
+                   STEP 10
+                   EMAIL
+                ================================================= */
 
-                alert(
-                    "Application submitted successfully!"
-                );
+                const emailResult =
+                    await sendApplicationEmailToCompany(
+                        job
+                    );
+
+
+                if (
+                    emailResult?.success
+                ) {
+
+                    alert(
+                        "Application submitted successfully!\n\nThe company has also been notified by email."
+                    );
+
+                }
+
+                else {
+
+                    alert(
+                        "Application submitted successfully!\n\nThe application was saved and the company was notified in the system, but the email could not be sent."
+                    );
+
+                }
 
             }
+
             catch (error) {
 
                 console.error(
@@ -1203,12 +1528,14 @@ function AvailableJobs() {
                     error
                 );
 
+
                 alert(
-                    error.message ||
+                    error?.message ||
                     "Unable to submit application."
                 );
 
             }
+
             finally {
 
                 setApplyingJobId(
@@ -1224,12 +1551,11 @@ function AvailableJobs() {
        RETRY
     ========================================================= */
 
-    const retryJobs =
-        () => {
+    const retryJobs = () => {
 
-            window.location.reload();
+        window.location.reload();
 
-        };
+    };
 
 
     /* =========================================================
@@ -1295,10 +1621,19 @@ function AvailableJobs() {
 
             <div className="jobs-search-box">
 
-                <FaSearch className="search-icon" />
+                <span
+                    className="search-icon-wrapper"
+                    aria-hidden="true"
+                >
+
+                    <FaSearch className="search-icon" />
+
+                </span>
+
 
                 <input
                     type="text"
+                    className="jobs-search-input"
                     placeholder="Search by company, job, skill or location..."
                     value={search}
                     onChange={(e) =>
@@ -1306,7 +1641,10 @@ function AvailableJobs() {
                             e.target.value
                         )
                     }
+                    aria-label="Search available jobs"
+                    autoComplete="off"
                 />
+
 
                 {search && (
 
@@ -1316,6 +1654,7 @@ function AvailableJobs() {
                         onClick={() =>
                             setSearch("")
                         }
+                        aria-label="Clear search"
                     >
                         ×
                     </button>
@@ -1409,6 +1748,7 @@ function AvailableJobs() {
 
                     </p>
 
+
                     {search && (
 
                         <button
@@ -1452,40 +1792,9 @@ function AvailableJobs() {
                                     job.id;
 
 
-                                /*
-                                =================================================
-                                ELIGIBILITY
-                                =================================================
-
-                                Supports these Firebase field names:
-
-                                10th:
-                                tenthPercentage
-                                tenth
-                                minimum10th
-                                minimumTenth
-
-                                12th:
-                                twelfthPercentage
-                                twelfth
-                                minimum12th
-                                minimumTwelfth
-
-                                CGPA:
-                                minimumCGPA
-
-                                Education:
-                                education
-
-                                Experience:
-                                experience
-
-                                Branches:
-                                branches
-                                */
-
                                 const eligibility =
-                                    job.eligibility || {};
+                                    job.eligibility ||
+                                    {};
 
 
                                 const minimumTenth =
@@ -1532,15 +1841,16 @@ function AvailableJobs() {
                                     >
 
 
-                                        {/* ==========================
-                                            COMPANY
-                                        ========================== */}
+                                        {/* COMPANY */}
 
                                         <div className="job-company">
 
                                             <div className="company-icon">
+
                                                 <FaBuilding />
+
                                             </div>
+
 
                                             <div className="company-info">
 
@@ -1562,9 +1872,7 @@ function AvailableJobs() {
                                         </div>
 
 
-                                        {/* ==========================
-                                            JOB TITLE
-                                        ========================== */}
+                                        {/* JOB TITLE */}
 
                                         <h2>
 
@@ -1576,9 +1884,7 @@ function AvailableJobs() {
                                         </h2>
 
 
-                                        {/* ==========================
-                                            DESCRIPTION
-                                        ========================== */}
+                                        {/* DESCRIPTION */}
 
                                         <p className="job-description">
 
@@ -1590,14 +1896,10 @@ function AvailableJobs() {
                                         </p>
 
 
-                                        {/* ==========================
-                                            DETAILS
-                                        ========================== */}
+                                        {/* DETAILS */}
 
                                         <div className="job-details">
 
-
-                                            {/* SALARY */}
 
                                             <div className="job-detail">
 
@@ -1619,8 +1921,6 @@ function AvailableJobs() {
                                             </div>
 
 
-                                            {/* LOCATION */}
-
                                             <div className="job-detail">
 
                                                 <FaMapMarkerAlt />
@@ -1640,8 +1940,6 @@ function AvailableJobs() {
 
                                             </div>
 
-
-                                            {/* EDUCATION */}
 
                                             <div className="job-detail">
 
@@ -1663,8 +1961,6 @@ function AvailableJobs() {
                                             </div>
 
 
-                                            {/* DEADLINE */}
-
                                             <div className="job-detail">
 
                                                 <FaCalendarAlt />
@@ -1684,12 +1980,11 @@ function AvailableJobs() {
 
                                             </div>
 
+
                                         </div>
 
 
-                                        {/* ==================================================
-                                            ELIGIBILITY
-                                        ================================================== */}
+                                        {/* ELIGIBILITY */}
 
                                         <div className="job-eligibility">
 
@@ -1700,8 +1995,6 @@ function AvailableJobs() {
 
                                             <div className="eligibility-items">
 
-
-                                                {/* 10TH */}
 
                                                 {
                                                     minimumTenth !== "" &&
@@ -1716,8 +2009,6 @@ function AvailableJobs() {
                                                 }
 
 
-                                                {/* 12TH */}
-
                                                 {
                                                     minimumTwelfth !== "" &&
                                                     minimumTwelfth !== null &&
@@ -1730,8 +2021,6 @@ function AvailableJobs() {
                                                     )
                                                 }
 
-
-                                                {/* CGPA */}
 
                                                 {
                                                     minimumCGPA !== "" &&
@@ -1746,8 +2035,6 @@ function AvailableJobs() {
                                                 }
 
 
-                                                {/* EDUCATION */}
-
                                                 {
                                                     minimumEducation && (
 
@@ -1758,8 +2045,6 @@ function AvailableJobs() {
                                                     )
                                                 }
 
-
-                                                {/* EXPERIENCE */}
 
                                                 {
                                                     experience && (
@@ -1772,8 +2057,6 @@ function AvailableJobs() {
                                                 }
 
 
-                                                {/* BRANCHES */}
-
                                                 {
                                                     branches && (
 
@@ -1784,8 +2067,6 @@ function AvailableJobs() {
                                                     )
                                                 }
 
-
-                                                {/* NOTHING AVAILABLE */}
 
                                                 {
                                                     !minimumTenth &&
@@ -1802,14 +2083,13 @@ function AvailableJobs() {
                                                     )
                                                 }
 
+
                                             </div>
 
                                         </div>
 
 
-                                        {/* ==================================================
-                                            SKILLS
-                                        ================================================== */}
+                                        {/* SKILLS */}
 
                                         {job.skills && (
 
@@ -1819,13 +2099,19 @@ function AvailableJobs() {
                                                     Skills
                                                 </strong>
 
+
                                                 <div>
 
                                                     {
-                                                        String(
-                                                            job.skills
+                                                        (
+                                                            Array.isArray(
+                                                                job.skills
+                                                            )
+                                                                ? job.skills
+                                                                : String(
+                                                                    job.skills
+                                                                ).split(",")
                                                         )
-                                                            .split(",")
                                                             .map(
                                                                 (
                                                                     skill,
@@ -1833,20 +2119,30 @@ function AvailableJobs() {
                                                                 ) => {
 
                                                                     const cleanSkill =
-                                                                        skill.trim();
+                                                                        String(
+                                                                            skill
+                                                                        ).trim();
 
-                                                                    if (!cleanSkill) {
+
+                                                                    if (
+                                                                        !cleanSkill
+                                                                    ) {
+
                                                                         return null;
+
                                                                     }
+
 
                                                                     return (
 
                                                                         <span
                                                                             key={`${cleanSkill}-${index}`}
                                                                         >
+
                                                                             {
                                                                                 cleanSkill
                                                                             }
+
                                                                         </span>
 
                                                                     );
@@ -1862,9 +2158,7 @@ function AvailableJobs() {
                                         )}
 
 
-                                        {/* ==================================================
-                                            APPLY BUTTON
-                                        ================================================== */}
+                                        {/* APPLY BUTTON */}
 
                                         <button
                                             type="button"
@@ -1912,6 +2206,7 @@ function AvailableJobs() {
 
                                         </button>
 
+
                                     </article>
 
                                 );
@@ -1924,10 +2219,12 @@ function AvailableJobs() {
 
             )}
 
+
         </div>
 
     );
 
 }
+
 
 export default AvailableJobs;

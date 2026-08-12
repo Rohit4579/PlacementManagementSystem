@@ -1,8 +1,16 @@
-import { useEffect, useMemo, useState } from "react";
+
+import {
+    useEffect,
+    useMemo,
+    useState
+} from "react";
 
 import {
     collection,
-    getDocs
+    deleteDoc,
+    doc,
+    getDocs,
+    writeBatch
 } from "firebase/firestore";
 
 import {
@@ -15,7 +23,8 @@ import {
     FaBuilding,
     FaCalendarAlt,
     FaSyncAlt,
-    FaFileAlt
+    FaFileAlt,
+    FaTrash
 } from "react-icons/fa";
 
 import { db } from "../../firebase/firebaseConfig";
@@ -23,20 +32,26 @@ import { db } from "../../firebase/firebaseConfig";
 import "./AdminApplications.css";
 
 
-/* =========================================================
-   ADMIN APPLICATIONS
-   ---------------------------------------------------------
-   Fetches ALL applicants from:
-   1. applications
-   2. studentProfiles
+/*
+ * IMPORTANT
+ *
+ * If your actual company collection has a different name,
+ * change COMPANY_COLLECTIONS below.
+ *
+ * The same applies to JOB_COLLECTIONS.
+ */
 
-   This page does NOT:
-   - fetch jobs
-   - fetch placement statistics
-   - update applications
-   - delete applications
-   - modify Firebase data
-========================================================= */
+const COMPANY_COLLECTIONS = [
+    "companies",
+    "companyProfiles"
+];
+
+const JOB_COLLECTIONS = [
+    "jobs",
+    "jobPosts",
+    "jobOpportunities"
+];
+
 
 function Applications() {
 
@@ -44,17 +59,26 @@ function Applications() {
        STATES
     ===================================================== */
 
-    const [applications, setApplications] = useState([]);
+    const [applications, setApplications] =
+        useState([]);
 
-    const [loading, setLoading] = useState(true);
+    const [loading, setLoading] =
+        useState(true);
 
-    const [refreshing, setRefreshing] = useState(false);
+    const [refreshing, setRefreshing] =
+        useState(false);
 
-    const [error, setError] = useState("");
+    const [deletingId, setDeletingId] =
+        useState(null);
 
-    const [search, setSearch] = useState("");
+    const [error, setError] =
+        useState("");
 
-    const [statusFilter, setStatusFilter] = useState("all");
+    const [search, setSearch] =
+        useState("");
+
+    const [statusFilter, setStatusFilter] =
+        useState("all");
 
 
     /* =====================================================
@@ -73,7 +97,8 @@ function Applications() {
 
         for (const field of fields) {
 
-            const value = profile[field];
+            const value =
+                profile[field];
 
             if (
                 value !== undefined &&
@@ -93,6 +118,28 @@ function Applications() {
 
 
     /* =====================================================
+       NORMALIZE
+    ===================================================== */
+
+    const normalize = (
+        value
+    ) => {
+
+        if (
+            value === undefined ||
+            value === null
+        ) {
+
+            return "";
+
+        }
+
+        return String(value).trim();
+
+    };
+
+
+    /* =====================================================
        PROFILE PHOTO
     ===================================================== */
 
@@ -105,36 +152,28 @@ function Applications() {
 
             "photoURL",
             "photoUrl",
-
             "profilePhoto",
             "profilePhotoURL",
             "profilePhotoUrl",
-
             "profileImage",
             "profileImageURL",
             "profileImageUrl",
-
             "photo",
-
             "image",
             "imageURL",
             "imageUrl",
-
             "avatar",
             "avatarUrl"
 
         ];
 
 
-        /* -------------------------------------------------
-           FIRST: STUDENT PROFILE
-        ------------------------------------------------- */
-
-        const profilePhoto = getFirstValue(
-            profile,
-            photoFields,
-            ""
-        );
+        const profilePhoto =
+            getFirstValue(
+                profile,
+                photoFields,
+                ""
+            );
 
 
         if (profilePhoto) {
@@ -146,15 +185,12 @@ function Applications() {
         }
 
 
-        /* -------------------------------------------------
-           SECOND: APPLICATION
-        ------------------------------------------------- */
-
-        const applicationPhoto = getFirstValue(
-            application,
-            photoFields,
-            ""
-        );
+        const applicationPhoto =
+            getFirstValue(
+                application,
+                photoFields,
+                ""
+            );
 
 
         if (applicationPhoto) {
@@ -175,7 +211,9 @@ function Applications() {
        DATE VALUE
     ===================================================== */
 
-    const getDateTime = (value) => {
+    const getDateTime = (
+        value
+    ) => {
 
         if (!value) {
             return 0;
@@ -185,7 +223,8 @@ function Applications() {
 
             if (
                 value &&
-                typeof value.toDate === "function"
+                typeof value.toDate ===
+                    "function"
             ) {
 
                 return value
@@ -194,15 +233,23 @@ function Applications() {
 
             }
 
-            const date = new Date(value);
+            const date =
+                new Date(value);
 
-            if (isNaN(date.getTime())) {
+            if (
+                isNaN(
+                    date.getTime()
+                )
+            ) {
+
                 return 0;
+
             }
 
             return date.getTime();
 
         }
+
         catch {
 
             return 0;
@@ -216,7 +263,9 @@ function Applications() {
        FORMAT DATE
     ===================================================== */
 
-    const formatDate = (value) => {
+    const formatDate = (
+        value
+    ) => {
 
         if (!value) {
             return "Not Available";
@@ -226,7 +275,8 @@ function Applications() {
 
             if (
                 value &&
-                typeof value.toDate === "function"
+                typeof value.toDate ===
+                    "function"
             ) {
 
                 return value
@@ -242,22 +292,31 @@ function Applications() {
 
             }
 
-            const date = new Date(value);
+            const date =
+                new Date(value);
 
-            if (isNaN(date.getTime())) {
+            if (
+                isNaN(
+                    date.getTime()
+                )
+            ) {
+
                 return "Not Available";
+
             }
 
-            return date.toLocaleDateString(
-                "en-IN",
-                {
-                    day: "2-digit",
-                    month: "short",
-                    year: "numeric"
-                }
-            );
+            return date
+                .toLocaleDateString(
+                    "en-IN",
+                    {
+                        day: "2-digit",
+                        month: "short",
+                        year: "numeric"
+                    }
+                );
 
         }
+
         catch {
 
             return "Not Available";
@@ -271,7 +330,9 @@ function Applications() {
        NORMALIZE STATUS
     ===================================================== */
 
-    const getStatus = (application) => {
+    const getStatus = (
+        application
+    ) => {
 
         const rawStatus =
             application?.status ||
@@ -293,14 +354,18 @@ function Applications() {
         }
 
 
-        if (status === "rejected") {
+        if (
+            status === "rejected"
+        ) {
 
             return "rejected";
 
         }
 
 
-        if (status === "placed") {
+        if (
+            status === "placed"
+        ) {
 
             return "placed";
 
@@ -316,7 +381,9 @@ function Applications() {
        STATUS LABEL
     ===================================================== */
 
-    const getStatusLabel = (status) => {
+    const getStatusLabel = (
+        status
+    ) => {
 
         switch (status) {
 
@@ -338,7 +405,338 @@ function Applications() {
 
 
     /* =====================================================
-       LOAD ALL APPLICATIONS
+       GET RELATION ID
+    ===================================================== */
+
+    const getStudentIds = (
+        application
+    ) => {
+
+        return [
+
+            application?.studentId,
+            application?.uid,
+            application?.userId,
+            application?.studentUid,
+            application?.studentUID,
+            application?.studentProfileId
+
+        ]
+            .map(normalize)
+            .filter(Boolean);
+
+    };
+
+
+    const getCompanyIds = (
+        application
+    ) => {
+
+        return [
+
+            application?.companyId,
+            application?.companyID,
+            application?.companyUid,
+            application?.companyUID,
+            application?.employerId,
+            application?.employerID
+
+        ]
+            .map(normalize)
+            .filter(Boolean);
+
+    };
+
+
+    const getJobIds = (
+        application
+    ) => {
+
+        return [
+
+            application?.jobId,
+            application?.jobID,
+            application?.jobUid,
+            application?.jobUID,
+            application?.jobPostId,
+            application?.jobPostID,
+            application?.opportunityId,
+            application?.opportunityID
+
+        ]
+            .map(normalize)
+            .filter(Boolean);
+
+    };
+
+
+    /* =====================================================
+       FETCH EXISTING RELATED RECORDS
+    ===================================================== */
+
+    const fetchExistingRecords = async (
+        collectionNames
+    ) => {
+
+        const records = [];
+
+        for (
+            const collectionName
+            of collectionNames
+        ) {
+
+            try {
+
+                const snapshot =
+                    await getDocs(
+                        collection(
+                            db,
+                            collectionName
+                        )
+                    );
+
+
+                snapshot.docs.forEach(
+                    (recordDoc) => {
+
+                        records.push({
+
+                            id:
+                                recordDoc.id,
+
+                            data:
+                                recordDoc.data() ||
+                                {},
+
+                            collectionName
+
+                        });
+
+                    }
+                );
+
+            }
+
+            catch (collectionError) {
+
+                /*
+                 * A collection may not exist in this
+                 * project. Ignore that collection and
+                 * continue checking the others.
+                 */
+
+                console.warn(
+                    `Unable to read ${collectionName}:`,
+                    collectionError
+                );
+
+            }
+
+        }
+
+        return records;
+
+    };
+
+
+    /* =====================================================
+       CHECK APPLICATION RELATIONSHIPS
+    ===================================================== */
+
+    const isApplicationValid = (
+        application,
+        existingStudents,
+        existingCompanies,
+        existingJobs
+    ) => {
+
+        /* -------------------------------------------------
+           STUDENT CHECK
+        ------------------------------------------------- */
+
+        const studentIds =
+            getStudentIds(
+                application
+            );
+
+
+        if (
+            studentIds.length > 0
+        ) {
+
+            const studentExists =
+                existingStudents.some(
+                    (student) => {
+
+                        const studentData =
+                            student.data ||
+                            {};
+
+
+                        const identifiers = [
+
+                            student.id,
+                            studentData.uid
+
+                        ]
+                            .map(normalize)
+                            .filter(Boolean);
+
+
+                        return identifiers.some(
+                            (identifier) =>
+                                studentIds.includes(
+                                    identifier
+                                )
+                        );
+
+                    }
+                );
+
+
+            if (
+                !studentExists
+            ) {
+
+                return false;
+
+            }
+
+        }
+
+
+        /* -------------------------------------------------
+           COMPANY CHECK
+           
+           Only perform this check when the application
+           actually contains a company ID.
+           
+           This avoids incorrectly deleting/hiding old
+           applications that only contain companyName.
+        ------------------------------------------------- */
+
+        const companyIds =
+            getCompanyIds(
+                application
+            );
+
+
+        if (
+            companyIds.length > 0
+        ) {
+
+            const companyExists =
+                existingCompanies.some(
+                    (company) => {
+
+                        const companyData =
+                            company.data ||
+                            {};
+
+
+                        const identifiers = [
+
+                            company.id,
+
+                            companyData.uid,
+                            companyData.companyId,
+                            companyData.companyID
+
+                        ]
+                            .map(normalize)
+                            .filter(Boolean);
+
+
+                        return identifiers.some(
+                            (identifier) =>
+                                companyIds.includes(
+                                    identifier
+                                )
+                        );
+
+                    }
+                );
+
+
+            if (
+                !companyExists
+            ) {
+
+                return false;
+
+            }
+
+        }
+
+
+        /* -------------------------------------------------
+           JOB CHECK
+           
+           If the application contains a job ID and that
+           job no longer exists, the application is stale.
+        ------------------------------------------------- */
+
+        const jobIds =
+            getJobIds(
+                application
+            );
+
+
+        if (
+            jobIds.length > 0
+        ) {
+
+            const jobExists =
+                existingJobs.some(
+                    (job) => {
+
+                        const jobData =
+                            job.data ||
+                            {};
+
+
+                        const identifiers = [
+
+                            job.id,
+
+                            jobData.uid,
+                            jobData.jobId,
+                            jobData.jobID
+
+                        ]
+                            .map(normalize)
+                            .filter(Boolean);
+
+
+                        return identifiers.some(
+                            (identifier) =>
+                                jobIds.includes(
+                                    identifier
+                                )
+                        );
+
+                    }
+                );
+
+
+            if (
+                !jobExists
+            ) {
+
+                return false;
+
+            }
+
+        }
+
+
+        return true;
+
+    };
+
+
+    /* =====================================================
+       LOAD APPLICATIONS
     ===================================================== */
 
     useEffect(() => {
@@ -352,538 +750,663 @@ function Applications() {
        FETCH APPLICATIONS
     ===================================================== */
 
-    const fetchApplications = async () => {
+    const fetchApplications =
+        async () => {
 
-        try {
+            try {
 
-            setError("");
+                setError("");
 
-            setLoading(true);
-
-
-            /* =================================================
-               1. FETCH ALL APPLICATIONS
-            ================================================= */
-
-            const applicationsSnapshot =
-                await getDocs(
-                    collection(
-                        db,
-                        "applications"
-                    )
-                );
+                setLoading(true);
 
 
-            const applicationList =
-                applicationsSnapshot.docs.map(
-                    (document) => ({
+                /* =========================================
+                   1. APPLICATIONS
+                ========================================= */
 
-                        id: document.id,
-
-                        ...document.data()
-
-                    })
-                );
-
-
-            /* =================================================
-               2. FETCH ALL STUDENT PROFILES
-            ================================================= */
-
-            const profilesSnapshot =
-                await getDocs(
-                    collection(
-                        db,
-                        "studentProfiles"
-                    )
-                );
+                const applicationsSnapshot =
+                    await getDocs(
+                        collection(
+                            db,
+                            "applications"
+                        )
+                    );
 
 
-            const profilesById = {};
+                const applicationList =
+                    applicationsSnapshot.docs.map(
+                        (document) => ({
 
-            const profilesByUid = {};
+                            id:
+                                document.id,
 
+                            ...document.data()
 
-            profilesSnapshot.docs.forEach(
-                (document) => {
-
-                    const profile =
-                        document.data();
-
-
-                    /* -----------------------------------------
-                       STORE USING DOCUMENT ID
-                    ----------------------------------------- */
-
-                    profilesById[
-                        document.id
-                    ] = {
-
-                        id: document.id,
-
-                        ...profile
-
-                    };
+                        })
+                    );
 
 
-                    /* -----------------------------------------
-                       STORE USING UID
-                    ----------------------------------------- */
+                /* =========================================
+                   2. STUDENT PROFILES
+                ========================================= */
 
-                    if (profile.uid) {
+                const profilesSnapshot =
+                    await getDocs(
+                        collection(
+                            db,
+                            "studentProfiles"
+                        )
+                    );
 
-                        profilesByUid[
-                            profile.uid
+
+                const profilesById = {};
+
+                const profilesByUid = {};
+
+
+                profilesSnapshot.docs.forEach(
+                    (document) => {
+
+                        const profile =
+                            document.data() ||
+                            {};
+
+
+                        profilesById[
+                            document.id
                         ] = {
 
-                            id: document.id,
+                            id:
+                                document.id,
 
                             ...profile
 
                         };
 
-                    }
 
-                }
-            );
+                        if (
+                            profile.uid
+                        ) {
 
+                            profilesByUid[
+                                profile.uid
+                            ] = {
 
-            /* =================================================
-               3. FIND STUDENT PROFILE
-            ================================================= */
+                                id:
+                                    document.id,
 
-            const findStudentProfile = (
-                application
-            ) => {
+                                ...profile
 
-                const studentId =
-                    application.studentId ||
-                    application.uid ||
-                    application.userId;
+                            };
 
-
-                if (!studentId) {
-                    return null;
-                }
-
-
-                /* -----------------------------------------
-                   FIRST: DOCUMENT ID
-                ----------------------------------------- */
-
-                if (
-                    profilesById[
-                        studentId
-                    ]
-                ) {
-
-                    return profilesById[
-                        studentId
-                    ];
-
-                }
-
-
-                /* -----------------------------------------
-                   SECOND: UID
-                ----------------------------------------- */
-
-                if (
-                    profilesByUid[
-                        studentId
-                    ]
-                ) {
-
-                    return profilesByUid[
-                        studentId
-                    ];
-
-                }
-
-
-                return null;
-
-            };
-
-
-            /* =================================================
-               4. MERGE APPLICATION + STUDENT PROFILE
-            ================================================= */
-
-            const mergedApplications =
-                applicationList.map(
-                    (application) => {
-
-                        const profile =
-                            findStudentProfile(
-                                application
-                            );
-
-
-                        /* -------------------------------------
-                           STUDENT NAME
-                        ------------------------------------- */
-
-                        const studentName =
-                            getFirstValue(
-                                profile,
-                                [
-                                    "studentName",
-                                    "name",
-                                    "fullName",
-                                    "displayName"
-                                ],
-                                application.studentName ||
-                                application.name ||
-                                "Student"
-                            );
-
-
-                        /* -------------------------------------
-                           EMAIL
-                        ------------------------------------- */
-
-                        const email =
-                            getFirstValue(
-                                profile,
-                                [
-                                    "email",
-                                    "studentEmail",
-                                    "emailAddress"
-                                ],
-                                application.studentEmail ||
-                                application.email ||
-                                "Not Available"
-                            );
-
-
-                        /* -------------------------------------
-                           COLLEGE
-                        ------------------------------------- */
-
-                        const college =
-                            getFirstValue(
-                                profile,
-                                [
-                                    "college",
-                                    "collegeName",
-                                    "college_name",
-                                    "institute",
-                                    "instituteName",
-                                    "university",
-                                    "universityName",
-                                    "institution",
-                                    "institutionName"
-                                ],
-                                application.college ||
-                                application.collegeName ||
-                                "Not Available"
-                            );
-
-
-                        /* -------------------------------------
-                           DEGREE
-                        ------------------------------------- */
-
-                        const degree =
-                            getFirstValue(
-                                profile,
-                                [
-                                    "degree",
-                                    "course",
-                                    "program",
-                                    "qualification",
-                                    "education",
-                                    "highestQualification",
-                                    "degreeName",
-                                    "courseName",
-                                    "programName"
-                                ],
-                                application.degree ||
-                                application.course ||
-                                "Not Available"
-                            );
-
-
-                        /* -------------------------------------
-                           DEPARTMENT
-                        ------------------------------------- */
-
-                        const department =
-                            getFirstValue(
-                                profile,
-                                [
-                                    "department",
-                                    "branch",
-                                    "stream",
-                                    "specialization"
-                                ],
-                                application.department ||
-                                application.branch ||
-                                "Not Available"
-                            );
-
-
-                        /* -------------------------------------
-                           PHONE
-                        ------------------------------------- */
-
-                        const phone =
-                            getFirstValue(
-                                profile,
-                                [
-                                    "phone",
-                                    "mobile",
-                                    "mobileNumber",
-                                    "phoneNumber",
-                                    "contactNumber"
-                                ],
-                                application.phone ||
-                                "Not Available"
-                            );
-
-
-                        /* -------------------------------------
-                           PHOTO
-                        ------------------------------------- */
-
-                        const profilePhoto =
-                            getProfilePhoto(
-                                profile,
-                                application
-                            );
-
-
-                        /* -------------------------------------
-                           JOB
-                        ------------------------------------- */
-
-                        const jobTitle =
-                            application.jobTitle ||
-                            application.jobName ||
-                            application.title ||
-                            "Job Not Available";
-
-
-                        /* -------------------------------------
-                           COMPANY
-                        ------------------------------------- */
-
-                        const companyName =
-                            application.companyName ||
-                            application.company ||
-                            "Company";
-
-
-                        /* -------------------------------------
-                           STATUS
-                        ------------------------------------- */
-
-                        const status =
-                            getStatus(
-                                application
-                            );
-
-
-                        /* -------------------------------------
-                           APPLIED DATE
-                        ------------------------------------- */
-
-                        const appliedAt =
-                            application.appliedAt ||
-                            application.createdAt ||
-                            application.applicationDate ||
-                            application.appliedDate ||
-                            null;
-
-
-                        return {
-
-                            ...application,
-
-                            profile,
-
-                            studentProfileId:
-                                profile?.id || null,
-
-                            studentName,
-
-                            email,
-
-                            studentEmail:
-                                email,
-
-                            college,
-
-                            degree,
-
-                            department,
-
-                            phone,
-
-                            profilePhoto,
-
-                            jobTitle,
-
-                            companyName,
-
-                            status,
-
-                            appliedAt
-
-                        };
+                        }
 
                     }
                 );
 
 
-            /* =================================================
-               5. SORT NEWEST APPLICATION FIRST
-            ================================================= */
+                /* =========================================
+                   3. USERS
+                   
+                   Used to make sure applications belonging
+                   to deleted students are not displayed,
+                   even if a stale application document
+                   somehow remains.
+                ========================================= */
 
-            mergedApplications.sort(
-                (a, b) => {
+                const usersSnapshot =
+                    await getDocs(
+                        collection(
+                            db,
+                            "users"
+                        )
+                    );
 
-                    return (
+
+                const existingStudents =
+                    usersSnapshot.docs
+                        .filter(
+                            (studentDoc) => {
+
+                                const data =
+                                    studentDoc.data() ||
+                                    {};
+
+                                const role =
+                                    normalize(
+                                        data.role
+                                    ).toLowerCase();
+
+                                return (
+                                    !role ||
+                                    role === "student"
+                                );
+
+                            }
+                        )
+                        .map(
+                            (studentDoc) => ({
+
+                                id:
+                                    studentDoc.id,
+
+                                data:
+                                    studentDoc.data() ||
+                                    {}
+
+                            })
+                        );
+
+
+                /* =========================================
+                   4. COMPANIES
+                ========================================= */
+
+                const existingCompanies =
+                    await fetchExistingRecords(
+                        COMPANY_COLLECTIONS
+                    );
+
+
+                /* =========================================
+                   5. JOBS
+                ========================================= */
+
+                const existingJobs =
+                    await fetchExistingRecords(
+                        JOB_COLLECTIONS
+                    );
+
+
+                /* =========================================
+                   6. FIND STUDENT PROFILE
+                ========================================= */
+
+                const findStudentProfile =
+                    (
+                        application
+                    ) => {
+
+                        const studentIds =
+                            getStudentIds(
+                                application
+                            );
+
+
+                        for (
+                            const studentId
+                            of studentIds
+                        ) {
+
+                            if (
+                                profilesById[
+                                    studentId
+                                ]
+                            ) {
+
+                                return profilesById[
+                                    studentId
+                                ];
+
+                            }
+
+
+                            if (
+                                profilesByUid[
+                                    studentId
+                                ]
+                            ) {
+
+                                return profilesByUid[
+                                    studentId
+                                ];
+
+                            }
+
+                        }
+
+
+                        return null;
+
+                    };
+
+
+                /* =========================================
+                   7. FILTER ORPHANED APPLICATIONS
+                ========================================= */
+
+                const validApplications =
+                    applicationList.filter(
+                        (application) =>
+                            isApplicationValid(
+                                application,
+                                existingStudents,
+                                existingCompanies,
+                                existingJobs
+                            )
+                    );
+
+
+                /* =========================================
+                   8. MERGE PROFILE DATA
+                ========================================= */
+
+                const mergedApplications =
+                    validApplications.map(
+                        (application) => {
+
+                            const profile =
+                                findStudentProfile(
+                                    application
+                                );
+
+
+                            const studentName =
+                                getFirstValue(
+                                    profile,
+                                    [
+                                        "studentName",
+                                        "name",
+                                        "fullName",
+                                        "displayName"
+                                    ],
+                                    application.studentName ||
+                                    application.name ||
+                                    "Student"
+                                );
+
+
+                            const email =
+                                getFirstValue(
+                                    profile,
+                                    [
+                                        "email",
+                                        "studentEmail",
+                                        "emailAddress"
+                                    ],
+                                    application.studentEmail ||
+                                    application.email ||
+                                    "Not Available"
+                                );
+
+
+                            const college =
+                                getFirstValue(
+                                    profile,
+                                    [
+                                        "college",
+                                        "collegeName",
+                                        "college_name",
+                                        "institute",
+                                        "instituteName",
+                                        "university",
+                                        "universityName",
+                                        "institution",
+                                        "institutionName"
+                                    ],
+                                    application.college ||
+                                    application.collegeName ||
+                                    "Not Available"
+                                );
+
+
+                            const degree =
+                                getFirstValue(
+                                    profile,
+                                    [
+                                        "degree",
+                                        "course",
+                                        "program",
+                                        "qualification",
+                                        "education",
+                                        "highestQualification",
+                                        "degreeName",
+                                        "courseName",
+                                        "programName"
+                                    ],
+                                    application.degree ||
+                                    application.course ||
+                                    "Not Available"
+                                );
+
+
+                            const department =
+                                getFirstValue(
+                                    profile,
+                                    [
+                                        "department",
+                                        "branch",
+                                        "stream",
+                                        "specialization"
+                                    ],
+                                    application.department ||
+                                    application.branch ||
+                                    "Not Available"
+                                );
+
+
+                            const phone =
+                                getFirstValue(
+                                    profile,
+                                    [
+                                        "phone",
+                                        "mobile",
+                                        "mobileNumber",
+                                        "phoneNumber",
+                                        "contactNumber"
+                                    ],
+                                    application.phone ||
+                                    "Not Available"
+                                );
+
+
+                            const profilePhoto =
+                                getProfilePhoto(
+                                    profile,
+                                    application
+                                );
+
+
+                            const jobTitle =
+                                application.jobTitle ||
+                                application.jobName ||
+                                application.title ||
+                                "Job Not Available";
+
+
+                            const companyName =
+                                application.companyName ||
+                                application.company ||
+                                "Company";
+
+
+                            const status =
+                                getStatus(
+                                    application
+                                );
+
+
+                            const appliedAt =
+                                application.appliedAt ||
+                                application.createdAt ||
+                                application.applicationDate ||
+                                application.appliedDate ||
+                                null;
+
+
+                            return {
+
+                                ...application,
+
+                                profile,
+
+                                studentProfileId:
+                                    profile?.id ||
+                                    null,
+
+                                studentName,
+
+                                email,
+
+                                studentEmail:
+                                    email,
+
+                                college,
+
+                                degree,
+
+                                department,
+
+                                phone,
+
+                                profilePhoto,
+
+                                jobTitle,
+
+                                companyName,
+
+                                status,
+
+                                appliedAt
+
+                            };
+
+                        }
+                    );
+
+
+                /* =========================================
+                   9. SORT
+                ========================================= */
+
+                mergedApplications.sort(
+                    (a, b) =>
                         getDateTime(
                             b.appliedAt
                         ) -
                         getDateTime(
                             a.appliedAt
                         )
-                    );
-
-                }
-            );
+                );
 
 
-            /* =================================================
-               6. SAVE
-            ================================================= */
+                setApplications(
+                    mergedApplications
+                );
 
-            setApplications(
-                mergedApplications
-            );
+            }
 
-        }
-        catch (error) {
+            catch (error) {
 
-            console.error(
-                "Applications fetch error:",
-                error
-            );
+                console.error(
+                    "Applications fetch error:",
+                    error
+                );
 
-            setError(
-                "Unable to load applications. Please try again."
-            );
+                setError(
+                    "Unable to load applications. Please try again."
+                );
 
-        }
-        finally {
+            }
 
-            setLoading(false);
+            finally {
 
-        }
+                setLoading(false);
 
-    };
+            }
+
+        };
+
+
+    /* =====================================================
+       DELETE SINGLE APPLICATION
+    ===================================================== */
+
+    const deleteApplication =
+        async (
+            application
+        ) => {
+
+            if (
+                !application?.id
+            ) {
+
+                return;
+
+            }
+
+
+            const confirmed =
+                window.confirm(
+
+                    `Are you sure you want to delete the application of ` +
+                    `${application.studentName || "this student"}?\n\n` +
+
+                    `Job: ${application.jobTitle || "Job Not Available"}\n` +
+
+                    `Company: ${application.companyName || "Company"}\n\n` +
+
+                    "This application will be permanently deleted."
+
+                );
+
+
+            if (!confirmed) {
+
+                return;
+
+            }
+
+
+            try {
+
+                setDeletingId(
+                    application.id
+                );
+
+
+                await deleteDoc(
+                    doc(
+                        db,
+                        "applications",
+                        application.id
+                    )
+                );
+
+
+                setApplications(
+                    previous =>
+                        previous.filter(
+                            item =>
+                                item.id !==
+                                application.id
+                        )
+                );
+
+
+                alert(
+                    "Application deleted successfully."
+                );
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "Delete application error:",
+                    error
+                );
+
+                alert(
+                    "Unable to delete this application. " +
+                    "Please check your Firebase permissions."
+                );
+
+            }
+
+            finally {
+
+                setDeletingId(
+                    null
+                );
+
+            }
+
+        };
 
 
     /* =====================================================
        REFRESH
     ===================================================== */
 
-    const handleRefresh = async () => {
+    const handleRefresh =
+        async () => {
 
-        try {
+            try {
 
-            setRefreshing(true);
+                setRefreshing(true);
 
-            await fetchApplications();
+                await fetchApplications();
 
-        }
-        finally {
+            }
 
-            setRefreshing(false);
+            finally {
 
-        }
+                setRefreshing(false);
 
-    };
+            }
+
+        };
 
 
     /* =====================================================
-       FILTER APPLICATIONS
+       FILTER
     ===================================================== */
 
     const filteredApplications =
-        useMemo(() => {
+        useMemo(
+            () => {
 
-            const searchText =
-                search
-                    .trim()
-                    .toLowerCase();
-
-
-            return applications.filter(
-                (application) => {
-
-                    /* -----------------------------------------
-                       STATUS FILTER
-                    ----------------------------------------- */
-
-                    if (
-                        statusFilter !== "all" &&
-                        application.status !== statusFilter
-                    ) {
-
-                        return false;
-
-                    }
-
-
-                    /* -----------------------------------------
-                       SEARCH
-                    ----------------------------------------- */
-
-                    if (!searchText) {
-                        return true;
-                    }
-
-
-                    const searchableText = [
-
-                        application.studentName,
-
-                        application.email,
-
-                        application.college,
-
-                        application.degree,
-
-                        application.department,
-
-                        application.jobTitle,
-
-                        application.companyName,
-
-                        application.phone
-
-                    ]
-                        .filter(Boolean)
-                        .join(" ")
+                const searchText =
+                    search
+                        .trim()
                         .toLowerCase();
 
 
-                    return searchableText.includes(
-                        searchText
-                    );
+                return applications.filter(
+                    (application) => {
 
-                }
-            );
+                        if (
+                            statusFilter !== "all" &&
+                            application.status !==
+                                statusFilter
+                        ) {
 
-        }, [
-            applications,
-            search,
-            statusFilter
-        ]);
+                            return false;
+
+                        }
+
+
+                        if (
+                            !searchText
+                        ) {
+
+                            return true;
+
+                        }
+
+
+                        const searchableText = [
+
+                            application.studentName,
+                            application.email,
+                            application.college,
+                            application.degree,
+                            application.department,
+                            application.jobTitle,
+                            application.companyName,
+                            application.phone
+
+                        ]
+                            .filter(Boolean)
+                            .join(" ")
+                            .toLowerCase();
+
+
+                        return searchableText.includes(
+                            searchText
+                        );
+
+                    }
+                );
+
+            },
+            [
+                applications,
+                search,
+                statusFilter
+            ]
+        );
 
 
     /* =====================================================
@@ -896,22 +1419,25 @@ function Applications() {
 
     const pendingCount =
         applications.filter(
-            (application) =>
-                application.status === "pending"
+            application =>
+                application.status ===
+                "pending"
         ).length;
 
 
     const acceptedCount =
         applications.filter(
-            (application) =>
-                application.status === "accepted"
+            application =>
+                application.status ===
+                "accepted"
         ).length;
 
 
     const rejectedCount =
         applications.filter(
-            (application) =>
-                application.status === "rejected"
+            application =>
+                application.status ===
+                "rejected"
         ).length;
 
 
@@ -942,16 +1468,12 @@ function Applications() {
                 .filter(Boolean)
                 .slice(0, 2)
                 .map(
-                    (part) =>
+                    part =>
                         part.charAt(0)
                 )
                 .join("")
                 .toUpperCase();
 
-
-        /* ---------------------------------------------
-           NO PHOTO
-        --------------------------------------------- */
 
         if (!photo) {
 
@@ -963,9 +1485,7 @@ function Applications() {
                 >
 
                     <span className="student-avatar-fallback">
-
                         {initials || "S"}
-
                     </span>
 
                 </div>
@@ -974,10 +1494,6 @@ function Applications() {
 
         }
 
-
-        /* ---------------------------------------------
-           PHOTO
-        --------------------------------------------- */
 
         return (
 
@@ -997,14 +1513,12 @@ function Applications() {
                         event.currentTarget.style.display =
                             "none";
 
-
                         const fallback =
                             event.currentTarget
                                 .parentElement
                                 ?.querySelector(
                                     ".student-avatar-fallback"
                                 );
-
 
                         if (fallback) {
 
@@ -1054,7 +1568,7 @@ function Applications() {
                     </h3>
 
                     <p>
-                        Fetching all student applications...
+                        Checking student, company and job records...
                     </p>
 
                 </div>
@@ -1092,7 +1606,9 @@ function Applications() {
 
                     <button
                         type="button"
-                        onClick={fetchApplications}
+                        onClick={
+                            fetchApplications
+                        }
                     >
                         Try Again
                     </button>
@@ -1114,11 +1630,6 @@ function Applications() {
 
         <div className="admin-applications-page">
 
-
-            {/* =================================================
-                HEADER
-            ================================================= */}
-
             <section className="applications-header">
 
                 <div>
@@ -1132,7 +1643,7 @@ function Applications() {
                     </h1>
 
                     <p>
-                        View all students who have applied
+                        View all valid student applications
                         for company job opportunities.
                     </p>
 
@@ -1142,8 +1653,12 @@ function Applications() {
                 <button
                     type="button"
                     className="refresh-button"
-                    onClick={handleRefresh}
-                    disabled={refreshing}
+                    onClick={
+                        handleRefresh
+                    }
+                    disabled={
+                        refreshing
+                    }
                 >
 
                     <FaSyncAlt
@@ -1164,12 +1679,7 @@ function Applications() {
             </section>
 
 
-            {/* =================================================
-                STATISTICS
-            ================================================= */}
-
             <section className="application-stat-grid">
-
 
                 <div className="application-stat-card">
 
@@ -1254,16 +1764,10 @@ function Applications() {
 
                 </div>
 
-
             </section>
 
 
-            {/* =================================================
-                TOOLBAR
-            ================================================= */}
-
             <section className="applications-toolbar">
-
 
                 <div className="search-container">
 
@@ -1272,7 +1776,9 @@ function Applications() {
                     <input
                         type="text"
                         placeholder="Search student, job, company, college..."
-                        value={search}
+                        value={
+                            search
+                        }
                         onChange={(event) =>
                             setSearch(
                                 event.target.value
@@ -1284,7 +1790,9 @@ function Applications() {
 
 
                 <select
-                    value={statusFilter}
+                    value={
+                        statusFilter
+                    }
                     onChange={(event) =>
                         setStatusFilter(
                             event.target.value
@@ -1314,13 +1822,8 @@ function Applications() {
 
                 </select>
 
-
             </section>
 
-
-            {/* =================================================
-                RESULTS INFO
-            ================================================= */}
 
             <div className="applications-results">
 
@@ -1345,10 +1848,6 @@ function Applications() {
             </div>
 
 
-            {/* =================================================
-                APPLICATION TABLE
-            ================================================= */}
-
             <section className="applications-card">
 
                 {filteredApplications.length === 0 ? (
@@ -1364,8 +1863,8 @@ function Applications() {
                         </h3>
 
                         <p>
-                            No student applications match
-                            your current search or filter.
+                            No valid student applications
+                            match your current search or filter.
                         </p>
 
                     </div>
@@ -1375,7 +1874,6 @@ function Applications() {
                     <div className="applications-table-wrapper">
 
                         <table className="applications-table">
-
 
                             <thead>
 
@@ -1405,6 +1903,10 @@ function Applications() {
                                         Status
                                     </th>
 
+                                    <th>
+                                        Action
+                                    </th>
+
                                 </tr>
 
                             </thead>
@@ -1421,11 +1923,6 @@ function Applications() {
                                             }
                                         >
 
-
-                                            {/* =================================
-                                                STUDENT
-                                            ================================= */}
-
                                             <td>
 
                                                 <div className="student-cell">
@@ -1435,7 +1932,6 @@ function Applications() {
                                                             application
                                                         }
                                                     />
-
 
                                                     <div className="student-info">
 
@@ -1462,10 +1958,6 @@ function Applications() {
                                             </td>
 
 
-                                            {/* =================================
-                                                JOB
-                                            ================================= */}
-
                                             <td>
 
                                                 <div className="job-cell">
@@ -1485,10 +1977,6 @@ function Applications() {
                                             </td>
 
 
-                                            {/* =================================
-                                                COMPANY
-                                            ================================= */}
-
                                             <td>
 
                                                 <span className="company-name">
@@ -1503,10 +1991,6 @@ function Applications() {
 
                                             </td>
 
-
-                                            {/* =================================
-                                                EDUCATION
-                                            ================================= */}
 
                                             <td>
 
@@ -1537,10 +2021,6 @@ function Applications() {
                                             </td>
 
 
-                                            {/* =================================
-                                                APPLIED DATE
-                                            ================================= */}
-
                                             <td>
 
                                                 <span className="applied-date">
@@ -1557,10 +2037,6 @@ function Applications() {
 
                                             </td>
 
-
-                                            {/* =================================
-                                                STATUS
-                                            ================================= */}
 
                                             <td>
 
@@ -1583,6 +2059,38 @@ function Applications() {
                                             </td>
 
 
+                                            <td>
+
+                                                <button
+                                                    type="button"
+                                                    className="application-delete-button"
+                                                    disabled={
+                                                        deletingId ===
+                                                        application.id
+                                                    }
+                                                    onClick={() =>
+                                                        deleteApplication(
+                                                            application
+                                                        )
+                                                    }
+                                                    title="Delete application"
+                                                >
+
+                                                    <FaTrash />
+
+                                                    <span>
+
+                                                        {deletingId ===
+                                                        application.id
+                                                            ? "Deleting..."
+                                                            : "Delete"}
+
+                                                    </span>
+
+                                                </button>
+
+                                            </td>
+
                                         </tr>
 
                                     )
@@ -1597,7 +2105,6 @@ function Applications() {
                 )}
 
             </section>
-
 
         </div>
 

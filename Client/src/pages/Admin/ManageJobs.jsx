@@ -2,8 +2,6 @@ import { useCallback, useEffect, useMemo, useState } from "react";
 
 import {
     collection,
-    deleteDoc,
-    doc,
     getDocs,
     orderBy,
     query,
@@ -18,7 +16,6 @@ import {
     FaMoneyBillWave,
     FaCalendarAlt,
     FaEye,
-    FaTrash,
     FaSearch,
     FaTimes,
     FaCheckCircle,
@@ -32,7 +29,6 @@ import {
 import { db } from "../../firebase/firebaseConfig";
 
 import "./ManageJobs.css";
-
 
 /* =========================================================
    CONSTANTS
@@ -52,7 +48,6 @@ const SEARCH_FIELDS = [
     "description",
     "requirements"
 ];
-
 
 /* =========================================================
    SAFE VALUE NORMALIZATION
@@ -78,9 +73,7 @@ const normalize = (value) => {
             .join(", ");
     }
 
-    /*
-        Firestore Timestamp
-    */
+    /* Firestore Timestamp */
     if (
         typeof value === "object" &&
         typeof value.toDate === "function"
@@ -92,9 +85,7 @@ const normalize = (value) => {
         }
     }
 
-    /*
-        Firestore Timestamp-like object
-    */
+    /* Firestore Timestamp-like object */
     if (
         typeof value === "object" &&
         typeof value.seconds === "number"
@@ -108,11 +99,7 @@ const normalize = (value) => {
         }
     }
 
-    /*
-        Do not dump arbitrary objects into the UI.
-        This prevents unexpected structures from becoming
-        confusing "[object Object]" values.
-    */
+    /* Avoid [object Object] */
     if (typeof value === "object") {
         try {
             return JSON.stringify(value);
@@ -123,7 +110,6 @@ const normalize = (value) => {
 
     return String(value);
 };
-
 
 /* =========================================================
    FIRST AVAILABLE FIELD
@@ -144,7 +130,6 @@ const getFirstValue = (data, fields) => {
 
     return "";
 };
-
 
 /* =========================================================
    DATE FORMAT
@@ -167,9 +152,7 @@ const formatDate = (value) => {
             typeof value === "object" &&
             typeof value.seconds === "number"
         ) {
-            date = new Date(
-                value.seconds * 1000
-            );
+            date = new Date(value.seconds * 1000);
         } else {
             date = new Date(value);
         }
@@ -191,7 +174,6 @@ const formatDate = (value) => {
     }
 };
 
-
 /* =========================================================
    SALARY FORMAT
 ========================================================= */
@@ -201,7 +183,6 @@ const formatSalary = (salary) => {
 
     return value || "Not specified";
 };
-
 
 /* =========================================================
    JOB INITIAL
@@ -214,7 +195,6 @@ const getJobInitial = (title) => {
         ? name.charAt(0).toUpperCase()
         : "J";
 };
-
 
 /* =========================================================
    NORMALIZE FIRESTORE JOB
@@ -330,25 +310,19 @@ const normalizeJob = (firestoreDoc) => {
     };
 };
 
-
 /* =========================================================
    COMPONENT
 ========================================================= */
 
 function ManageJobs() {
-
     const [jobs, setJobs] = useState([]);
     const [loading, setLoading] = useState(true);
     const [refreshing, setRefreshing] = useState(false);
 
     const [search, setSearch] = useState("");
-
     const [selectedJob, setSelectedJob] = useState(null);
 
-    const [deletingId, setDeletingId] = useState(null);
-
     const [error, setError] = useState("");
-
 
     /* =====================================================
        FETCH JOBS
@@ -356,7 +330,6 @@ function ManageJobs() {
 
     const fetchJobs = useCallback(
         async ({ silent = false } = {}) => {
-
             try {
                 setError("");
 
@@ -366,41 +339,20 @@ function ManageJobs() {
                     setLoading(true);
                 }
 
-                /*
-                    IMPORTANT:
-
-                    This query is limited so the admin browser
-                    cannot accidentally download an unlimited
-                    collection.
-
-                    Security is still enforced by Firestore Rules.
-                */
-
-                const jobsRef = collection(
-                    db,
-                    "jobs"
-                );
+                const jobsRef = collection(db, "jobs");
 
                 const jobsQuery = query(
                     jobsRef,
-                    orderBy(
-                        "createdAt",
-                        "desc"
-                    ),
+                    orderBy("createdAt", "desc"),
                     limit(MAX_JOBS)
                 );
 
-                const snapshot = await getDocs(
-                    jobsQuery
-                );
+                const snapshot = await getDocs(jobsQuery);
 
-                const jobsData = snapshot.docs
-                    .map(normalizeJob);
+                const jobsData = snapshot.docs.map(normalizeJob);
 
                 setJobs(jobsData);
-
             } catch (error) {
-
                 console.error(
                     "Manage Jobs fetch error:",
                     error
@@ -411,16 +363,13 @@ function ManageJobs() {
                         ? "You do not have permission to view job listings."
                         : "Unable to load job listings."
                 );
-
             } finally {
-
                 setLoading(false);
                 setRefreshing(false);
             }
         },
         []
     );
-
 
     /* =====================================================
        INITIAL LOAD
@@ -430,13 +379,11 @@ function ManageJobs() {
         fetchJobs();
     }, [fetchJobs]);
 
-
     /* =====================================================
        ESCAPE MODAL
     ===================================================== */
 
     useEffect(() => {
-
         const handleEscape = (event) => {
             if (event.key === "Escape") {
                 setSelectedJob(null);
@@ -456,16 +403,13 @@ function ManageJobs() {
                 handleEscape
             );
         };
-
     }, [selectedJob]);
 
-
     /* =====================================================
-       BODY SCROLL LOCK WHEN MODAL IS OPEN
+       BODY SCROLL LOCK
     ===================================================== */
 
     useEffect(() => {
-
         if (!selectedJob) {
             return;
         }
@@ -479,131 +423,32 @@ function ManageJobs() {
             document.body.style.overflow =
                 previousOverflow;
         };
-
     }, [selectedJob]);
-
 
     /* =====================================================
        SEARCH
     ===================================================== */
 
     const filteredJobs = useMemo(() => {
-
-        const searchText =
-            search
-                .trim()
-                .toLocaleLowerCase();
+        const searchText = search
+            .trim()
+            .toLocaleLowerCase();
 
         if (!searchText) {
             return jobs;
         }
 
         return jobs.filter((job) => {
-
-            const searchableText =
-                SEARCH_FIELDS
-                    .map(
-                        (field) =>
-                            normalize(job[field])
-                    )
-                    .join(" ")
-                    .toLocaleLowerCase();
-
-            return searchableText.includes(
-                searchText
-            );
-        });
-
-    }, [jobs, search]);
-
-
-    /* =====================================================
-       DELETE JOB
-    ===================================================== */
-
-    const deleteJob = async (jobId) => {
-
-        if (!jobId || deletingId) {
-            return;
-        }
-
-        const job =
-            jobs.find(
-                (item) =>
-                    item.id === jobId
-            );
-
-        const jobName =
-            job?.jobTitle ||
-            "this job";
-
-        const confirmed =
-            window.confirm(
-                `Delete "${jobName}"?\n\nThis action cannot be undone.`
-            );
-
-        if (!confirmed) {
-            return;
-        }
-
-        try {
-
-            setDeletingId(jobId);
-
-            /*
-                Firestore Security Rules MUST independently
-                verify that the current user is an admin.
-            */
-
-            await deleteDoc(
-                doc(
-                    db,
-                    "jobs",
-                    jobId
+            const searchableText = SEARCH_FIELDS
+                .map((field) =>
+                    normalize(job[field])
                 )
-            );
+                .join(" ")
+                .toLocaleLowerCase();
 
-            setJobs(
-                (previous) =>
-                    previous.filter(
-                        (item) =>
-                            item.id !== jobId
-                    )
-            );
-
-            setSelectedJob(
-                (current) =>
-                    current?.id === jobId
-                        ? null
-                        : current
-            );
-
-        } catch (error) {
-
-            console.error(
-                "Delete Job Error:",
-                error
-            );
-
-            if (
-                error?.code ===
-                "permission-denied"
-            ) {
-                alert(
-                    "You do not have permission to delete this job."
-                );
-            } else {
-                alert(
-                    "Unable to delete this job. Please try again."
-                );
-            }
-
-        } finally {
-
-            setDeletingId(null);
-        }
-    };
-
+            return searchableText.includes(searchText);
+        });
+    }, [jobs, search]);
 
     /* =====================================================
        VIEW JOB
@@ -613,18 +458,14 @@ function ManageJobs() {
         setSelectedJob(job);
     };
 
-
     /* =====================================================
        LOADING
     ===================================================== */
 
     if (loading) {
-
         return (
             <div className="manage-jobs-page">
-
                 <div className="jobs-loading-state">
-
                     <div
                         className="jobs-loading-spinner"
                         aria-hidden="true"
@@ -637,20 +478,16 @@ function ManageJobs() {
                     <p>
                         Fetching registered job listings...
                     </p>
-
                 </div>
-
             </div>
         );
     }
-
 
     /* =====================================================
        PAGE
     ===================================================== */
 
     return (
-
         <div className="manage-jobs-page">
 
             {/* =================================================
@@ -676,7 +513,6 @@ function ManageJobs() {
 
                 </div>
 
-
                 <div className="jobs-total-card">
 
                     <div className="jobs-total-icon">
@@ -699,35 +535,27 @@ function ManageJobs() {
 
             </header>
 
-
             {/* =================================================
                 ERROR
             ================================================= */}
 
             {error && (
-
                 <div
                     className="jobs-error-banner"
                     role="alert"
                 >
-
                     <span>
                         {error}
                     </span>
 
                     <button
                         type="button"
-                        onClick={() =>
-                            fetchJobs()
-                        }
+                        onClick={() => fetchJobs()}
                     >
                         Try Again
                     </button>
-
                 </div>
-
             )}
-
 
             {/* =================================================
                 SEARCH TOOLBAR
@@ -765,7 +593,6 @@ function ManageJobs() {
                         />
 
                         {search && (
-
                             <button
                                 type="button"
                                 className="jobs-clear-search"
@@ -776,22 +603,18 @@ function ManageJobs() {
                             >
                                 <FaTimes />
                             </button>
-
                         )}
 
                     </div>
 
                     {search && (
-
                         <span className="jobs-search-hint">
                             Searching {filteredJobs.length} matching
                             job{filteredJobs.length === 1 ? "" : "s"}.
                         </span>
-
                     )}
 
                 </div>
-
 
                 <div className="jobs-toolbar-right">
 
@@ -799,7 +622,6 @@ function ManageJobs() {
                         className="jobs-result-text"
                         aria-live="polite"
                     >
-
                         <span>
                             Showing
                         </span>
@@ -819,9 +641,7 @@ function ManageJobs() {
                         <span>
                             jobs
                         </span>
-
                     </div>
-
 
                     <button
                         type="button"
@@ -833,7 +653,6 @@ function ManageJobs() {
                         }
                         disabled={refreshing}
                     >
-
                         <FaSyncAlt
                             className={
                                 refreshing
@@ -845,23 +664,19 @@ function ManageJobs() {
                         <span>
                             {refreshing
                                 ? "Refreshing..."
-                                : "Refresh"
-                            }
+                                : "Refresh"}
                         </span>
-
                     </button>
 
                 </div>
 
             </section>
 
-
             {/* =================================================
                 EMPTY
             ================================================= */}
 
             {filteredJobs.length === 0 && (
-
                 <div className="jobs-empty-state">
 
                     <div className="jobs-empty-icon">
@@ -880,7 +695,6 @@ function ManageJobs() {
                     </p>
 
                     {search && (
-
                         <button
                             type="button"
                             className="jobs-empty-clear"
@@ -890,25 +704,32 @@ function ManageJobs() {
                         >
                             Clear Search
                         </button>
-
                     )}
 
                 </div>
-
             )}
-
 
             {/* =================================================
                 DESKTOP TABLE
             ================================================= */}
 
             {filteredJobs.length > 0 && (
-
                 <section className="jobs-table-card">
 
                     <div className="jobs-table-scroll">
 
                         <table className="jobs-table">
+
+                            {/* Explicit column sizing keeps
+                                Actions/View perfectly aligned. */}
+                            <colgroup>
+                                <col className="job-col" />
+                                <col className="company-col" />
+                                <col className="location-col" />
+                                <col className="salary-col" />
+                                <col className="deadline-col" />
+                                <col className="actions-col" />
+                            </colgroup>
 
                             <thead>
                                 <tr>
@@ -940,241 +761,187 @@ function ManageJobs() {
                                 </tr>
                             </thead>
 
-
                             <tbody>
 
-                                {filteredJobs.map(
-                                    (job) => (
+                                {filteredJobs.map((job) => (
+                                    <tr key={job.id}>
 
-                                        <tr key={job.id}>
+                                        {/* JOB */}
 
-                                            {/* JOB */}
+                                        <td className="job-column">
 
-                                            <td className="job-column">
+                                            <div className="job-table-profile">
 
-                                                <div className="job-table-profile">
-
-                                                    <div className="job-table-avatar">
-                                                        {getJobInitial(
-                                                            job.jobTitle
-                                                        )}
-                                                    </div>
-
-                                                    <div className="job-table-name">
-
-                                                        <strong
-                                                            title={
-                                                                job.jobTitle ||
-                                                                "Untitled Job"
-                                                            }
-                                                        >
-                                                            {
-                                                                job.jobTitle ||
-                                                                "Untitled Job"
-                                                            }
-                                                        </strong>
-
-                                                        <span>
-                                                            Job listing
-                                                        </span>
-
-                                                    </div>
-
-                                                </div>
-
-                                            </td>
-
-
-                                            {/* COMPANY */}
-
-                                            <td className="company-column">
-
-                                                <div className="job-company-info">
-
-                                                    <div className="job-company-name">
-
-                                                        <FaBuilding />
-
-                                                        <strong
-                                                            title={
-                                                                job.companyName ||
-                                                                "Not specified"
-                                                            }
-                                                        >
-                                                            {
-                                                                job.companyName ||
-                                                                "Not specified"
-                                                            }
-                                                        </strong>
-
-                                                    </div>
-
-                                                    {job.companyEmail && (
-
-                                                        <div
-                                                            className="job-company-email"
-                                                            title={
-                                                                job.companyEmail
-                                                            }
-                                                        >
-
-                                                            <FaEnvelope />
-
-                                                            <span>
-                                                                {
-                                                                    job.companyEmail
-                                                                }
-                                                            </span>
-
-                                                        </div>
-
+                                                <div className="job-table-avatar">
+                                                    {getJobInitial(
+                                                        job.jobTitle
                                                     )}
-
                                                 </div>
 
-                                            </td>
+                                                <div className="job-table-name">
 
-
-                                            {/* LOCATION */}
-
-                                            <td className="location-column">
-
-                                                {job.location ? (
-
-                                                    <div
-                                                        className="job-location"
+                                                    <strong
                                                         title={
-                                                            job.location
+                                                            job.jobTitle ||
+                                                            "Untitled Job"
                                                         }
                                                     >
+                                                        {job.jobTitle ||
+                                                            "Untitled Job"}
+                                                    </strong>
 
-                                                        <FaMapMarkerAlt />
+                                                    <span>
+                                                        Job listing
+                                                    </span>
+
+                                                </div>
+
+                                            </div>
+
+                                        </td>
+
+                                        {/* COMPANY */}
+
+                                        <td className="company-column">
+
+                                            <div className="job-company-info">
+
+                                                <div className="job-company-name">
+
+                                                    <FaBuilding />
+
+                                                    <strong
+                                                        title={
+                                                            job.companyName ||
+                                                            "Not specified"
+                                                        }
+                                                    >
+                                                        {job.companyName ||
+                                                            "Not specified"}
+                                                    </strong>
+
+                                                </div>
+
+                                                {job.companyEmail && (
+                                                    <div
+                                                        className="job-company-email"
+                                                        title={
+                                                            job.companyEmail
+                                                        }
+                                                    >
+                                                        <FaEnvelope />
 
                                                         <span>
                                                             {
-                                                                job.location
+                                                                job.companyEmail
                                                             }
                                                         </span>
-
                                                     </div>
-
-                                                ) : (
-
-                                                    <span className="job-muted-text">
-                                                        Not available
-                                                    </span>
-
                                                 )}
 
-                                            </td>
+                                            </div>
 
+                                        </td>
 
-                                            {/* SALARY */}
+                                        {/* LOCATION */}
 
-                                            <td className="salary-column">
+                                        <td className="location-column">
 
-                                                <span
-                                                    className="job-salary-badge"
+                                            {job.location ? (
+                                                <div
+                                                    className="job-location"
                                                     title={
+                                                        job.location
+                                                    }
+                                                >
+                                                    <FaMapMarkerAlt />
+
+                                                    <span>
+                                                        {
+                                                            job.location
+                                                        }
+                                                    </span>
+                                                </div>
+                                            ) : (
+                                                <span className="job-muted-text">
+                                                    Not available
+                                                </span>
+                                            )}
+
+                                        </td>
+
+                                        {/* SALARY */}
+
+                                        <td className="salary-column">
+
+                                            <span
+                                                className="job-salary-badge"
+                                                title={
+                                                    formatSalary(
+                                                        job.salary
+                                                    )
+                                                }
+                                            >
+                                                <FaMoneyBillWave />
+
+                                                <span>
+                                                    {
                                                         formatSalary(
                                                             job.salary
                                                         )
                                                     }
-                                                >
+                                                </span>
+                                            </span>
 
-                                                    <FaMoneyBillWave />
+                                        </td>
 
-                                                    <span>
-                                                        {
-                                                            formatSalary(
-                                                                job.salary
-                                                            )
-                                                        }
-                                                    </span>
+                                        {/* DEADLINE */}
 
+                                        <td className="deadline-column">
+
+                                            <div className="job-deadline">
+
+                                                <FaCalendarAlt />
+
+                                                <span>
+                                                    {
+                                                        formatDate(
+                                                            job.deadline
+                                                        )
+                                                    }
                                                 </span>
 
-                                            </td>
+                                            </div>
 
+                                        </td>
 
-                                            {/* DEADLINE */}
+                                        {/* ACTIONS */}
 
-                                            <td className="deadline-column">
+                                        <td className="actions-column">
 
-                                                <div className="job-deadline">
+                                            <div className="job-action-buttons">
 
-                                                    <FaCalendarAlt />
+                                                <button
+                                                    type="button"
+                                                    className="job-view-btn"
+                                                    onClick={() =>
+                                                        viewJob(job)
+                                                    }
+                                                    aria-label={`View ${job.jobTitle || "job"} details`}
+                                                >
+                                                    <FaEye />
 
                                                     <span>
-                                                        {
-                                                            formatDate(
-                                                                job.deadline
-                                                            )
-                                                        }
+                                                        View
                                                     </span>
+                                                </button>
 
-                                                </div>
+                                            </div>
 
-                                            </td>
+                                        </td>
 
-
-                                            {/* ACTIONS */}
-
-                                            <td className="actions-column">
-
-                                                <div className="job-action-buttons">
-
-                                                    <button
-                                                        type="button"
-                                                        className="job-view-btn"
-                                                        onClick={() =>
-                                                            viewJob(job)
-                                                        }
-                                                    >
-
-                                                        <FaEye />
-
-                                                        <span>
-                                                            View
-                                                        </span>
-
-                                                    </button>
-
-
-                                                    <button
-                                                        type="button"
-                                                        className="job-delete-btn"
-                                                        onClick={() =>
-                                                            deleteJob(
-                                                                job.id
-                                                            )
-                                                        }
-                                                        disabled={
-                                                            deletingId ===
-                                                            job.id
-                                                        }
-                                                    >
-
-                                                        <FaTrash />
-
-                                                        <span>
-                                                            {deletingId ===
-                                                            job.id
-                                                                ? "Deleting..."
-                                                                : "Delete"
-                                                            }
-                                                        </span>
-
-                                                    </button>
-
-                                                </div>
-
-                                            </td>
-
-                                        </tr>
-
-                                    )
-                                )}
+                                    </tr>
+                                ))}
 
                             </tbody>
 
@@ -1183,228 +950,176 @@ function ManageJobs() {
                     </div>
 
                 </section>
-
             )}
-
 
             {/* =================================================
                 MOBILE CARDS
             ================================================= */}
 
             {filteredJobs.length > 0 && (
-
                 <section className="jobs-mobile-list">
 
-                    {filteredJobs.map(
-                        (job) => (
+                    {filteredJobs.map((job) => (
+                        <article
+                            className="job-mobile-card"
+                            key={job.id}
+                        >
 
-                            <article
-                                className="job-mobile-card"
-                                key={job.id}
-                            >
+                            <div className="job-mobile-top">
 
-                                <div className="job-mobile-top">
+                                <div className="job-mobile-profile">
 
-                                    <div className="job-mobile-profile">
+                                    <div className="job-mobile-avatar">
+                                        {getJobInitial(
+                                            job.jobTitle
+                                        )}
+                                    </div>
 
-                                        <div className="job-mobile-avatar">
-                                            {getJobInitial(
-                                                job.jobTitle
-                                            )}
-                                        </div>
+                                    <div>
 
-                                        <div>
+                                        <h3>
+                                            {job.jobTitle ||
+                                                "Untitled Job"}
+                                        </h3>
 
-                                            <h3>
-                                                {
-                                                    job.jobTitle ||
-                                                    "Untitled Job"
-                                                }
-                                            </h3>
-
-                                            <span>
-                                                {
-                                                    job.companyName ||
-                                                    "Company not specified"
-                                                }
-                                            </span>
-
-                                        </div>
+                                        <span>
+                                            {job.companyName ||
+                                                "Company not specified"}
+                                        </span>
 
                                     </div>
 
+                                </div>
 
-                                    <span className="job-status-badge">
+                                <span className="job-status-badge">
 
-                                        <FaCheckCircle />
+                                    <FaCheckCircle />
 
-                                        Active
+                                    Active
 
+                                </span>
+
+                            </div>
+
+                            <div className="job-mobile-details">
+
+                                <div className="mobile-job-detail-item">
+
+                                    <span className="mobile-job-detail-label">
+                                        <FaBuilding />
+                                        Company
                                     </span>
 
-                                </div>
-
-
-                                <div className="job-mobile-details">
-
-                                    <div className="mobile-job-detail-item">
-
-                                        <span className="mobile-job-detail-label">
-                                            <FaBuilding />
-                                            Company
-                                        </span>
-
-                                        <strong>
-                                            {
-                                                job.companyName ||
-                                                "Not available"
-                                            }
-                                        </strong>
-
-                                    </div>
-
-
-                                    <div className="mobile-job-detail-item">
-
-                                        <span className="mobile-job-detail-label">
-                                            <FaMapMarkerAlt />
-                                            Location
-                                        </span>
-
-                                        <strong>
-                                            {
-                                                job.location ||
-                                                "Not available"
-                                            }
-                                        </strong>
-
-                                    </div>
-
-
-                                    <div className="mobile-job-detail-item">
-
-                                        <span className="mobile-job-detail-label">
-                                            <FaMoneyBillWave />
-                                            Salary
-                                        </span>
-
-                                        <strong>
-                                            {
-                                                formatSalary(
-                                                    job.salary
-                                                )
-                                            }
-                                        </strong>
-
-                                    </div>
-
-
-                                    <div className="mobile-job-detail-item">
-
-                                        <span className="mobile-job-detail-label">
-                                            <FaCalendarAlt />
-                                            Deadline
-                                        </span>
-
-                                        <strong>
-                                            {
-                                                formatDate(
-                                                    job.deadline
-                                                )
-                                            }
-                                        </strong>
-
-                                    </div>
-
-
-                                    <div className="mobile-job-detail-item mobile-job-full-width">
-
-                                        <span className="mobile-job-detail-label">
-                                            <FaEnvelope />
-                                            Company Email
-                                        </span>
-
-                                        <strong>
-                                            {
-                                                job.companyEmail ||
-                                                "Not available"
-                                            }
-                                        </strong>
-
-                                    </div>
+                                    <strong>
+                                        {job.companyName ||
+                                            "Not available"}
+                                    </strong>
 
                                 </div>
 
+                                <div className="mobile-job-detail-item">
 
-                                <div className="job-mobile-actions">
+                                    <span className="mobile-job-detail-label">
+                                        <FaMapMarkerAlt />
+                                        Location
+                                    </span>
 
-                                    <button
-                                        type="button"
-                                        className="job-view-btn"
-                                        onClick={() =>
-                                            viewJob(job)
-                                        }
-                                    >
+                                    <strong>
+                                        {job.location ||
+                                            "Not available"}
+                                    </strong>
 
-                                        <FaEye />
+                                </div>
 
-                                        View Details
+                                <div className="mobile-job-detail-item">
 
-                                    </button>
+                                    <span className="mobile-job-detail-label">
+                                        <FaMoneyBillWave />
+                                        Salary
+                                    </span>
 
-
-                                    <button
-                                        type="button"
-                                        className="job-delete-btn"
-                                        onClick={() =>
-                                            deleteJob(
-                                                job.id
+                                    <strong>
+                                        {
+                                            formatSalary(
+                                                job.salary
                                             )
                                         }
-                                        disabled={
-                                            deletingId ===
-                                            job.id
-                                        }
-                                    >
-
-                                        <FaTrash />
-
-                                        {deletingId === job.id
-                                            ? "Deleting..."
-                                            : "Delete"
-                                        }
-
-                                    </button>
+                                    </strong>
 
                                 </div>
 
-                            </article>
+                                <div className="mobile-job-detail-item">
 
-                        )
-                    )}
+                                    <span className="mobile-job-detail-label">
+                                        <FaCalendarAlt />
+                                        Deadline
+                                    </span>
+
+                                    <strong>
+                                        {
+                                            formatDate(
+                                                job.deadline
+                                            )
+                                        }
+                                    </strong>
+
+                                </div>
+
+                                <div className="mobile-job-detail-item mobile-job-full-width">
+
+                                    <span className="mobile-job-detail-label">
+                                        <FaEnvelope />
+                                        Company Email
+                                    </span>
+
+                                    <strong>
+                                        {job.companyEmail ||
+                                            "Not available"}
+                                    </strong>
+
+                                </div>
+
+                            </div>
+
+                            <div className="job-mobile-actions">
+
+                                <button
+                                    type="button"
+                                    className="job-view-btn"
+                                    onClick={() =>
+                                        viewJob(job)
+                                    }
+                                    aria-label={`View ${job.jobTitle || "job"} details`}
+                                >
+                                    <FaEye />
+
+                                    <span>
+                                        View Details
+                                    </span>
+                                </button>
+
+                            </div>
+
+                        </article>
+                    ))}
 
                 </section>
-
             )}
-
 
             {/* =================================================
                 JOB MODAL
             ================================================= */}
 
             {selectedJob && (
-
                 <div
                     className="job-modal-overlay"
                     onMouseDown={(event) => {
-
                         if (
                             event.target ===
                             event.currentTarget
                         ) {
                             setSelectedJob(null);
                         }
-
                     }}
                     role="presentation"
                 >
@@ -1426,7 +1141,6 @@ function ManageJobs() {
                                 )}
                             </div>
 
-
                             <div className="job-modal-title">
 
                                 <span>
@@ -1434,21 +1148,16 @@ function ManageJobs() {
                                 </span>
 
                                 <h2 id="job-modal-title">
-                                    {
-                                        selectedJob.jobTitle ||
-                                        "Untitled Job"
-                                    }
+                                    {selectedJob.jobTitle ||
+                                        "Untitled Job"}
                                 </h2>
 
                                 <p>
-                                    {
-                                        selectedJob.companyName ||
-                                        "Company not specified"
-                                    }
+                                    {selectedJob.companyName ||
+                                        "Company not specified"}
                                 </p>
 
                             </div>
-
 
                             <button
                                 type="button"
@@ -1462,7 +1171,6 @@ function ManageJobs() {
                             </button>
 
                         </div>
-
 
                         {/* MODAL BODY */}
 
@@ -1479,7 +1187,6 @@ function ManageJobs() {
                                     </div>
 
                                     <div>
-
                                         <h3>
                                             Job Information
                                         </h3>
@@ -1488,11 +1195,9 @@ function ManageJobs() {
                                             Basic information about this
                                             job listing.
                                         </p>
-
                                     </div>
 
                                 </div>
-
 
                                 <div className="job-detail-grid">
 
@@ -1504,14 +1209,11 @@ function ManageJobs() {
                                         </span>
 
                                         <strong>
-                                            {
-                                                selectedJob.jobTitle ||
-                                                "Not available"
-                                            }
+                                            {selectedJob.jobTitle ||
+                                                "Not available"}
                                         </strong>
 
                                     </div>
-
 
                                     <div className="job-detail-item">
 
@@ -1521,14 +1223,11 @@ function ManageJobs() {
                                         </span>
 
                                         <strong>
-                                            {
-                                                selectedJob.companyName ||
-                                                "Not available"
-                                            }
+                                            {selectedJob.companyName ||
+                                                "Not available"}
                                         </strong>
 
                                     </div>
-
 
                                     <div className="job-detail-item">
 
@@ -1538,14 +1237,11 @@ function ManageJobs() {
                                         </span>
 
                                         <strong className="long-value">
-                                            {
-                                                selectedJob.companyEmail ||
-                                                "Not available"
-                                            }
+                                            {selectedJob.companyEmail ||
+                                                "Not available"}
                                         </strong>
 
                                     </div>
-
 
                                     <div className="job-detail-item">
 
@@ -1555,14 +1251,11 @@ function ManageJobs() {
                                         </span>
 
                                         <strong>
-                                            {
-                                                selectedJob.location ||
-                                                "Not available"
-                                            }
+                                            {selectedJob.location ||
+                                                "Not available"}
                                         </strong>
 
                                     </div>
-
 
                                     <div className="job-detail-item">
 
@@ -1581,7 +1274,6 @@ function ManageJobs() {
 
                                     </div>
 
-
                                     <div className="job-detail-item">
 
                                         <span>
@@ -1599,7 +1291,6 @@ function ManageJobs() {
 
                                     </div>
 
-
                                     <div className="job-detail-item full-width">
 
                                         <span>
@@ -1608,10 +1299,8 @@ function ManageJobs() {
                                         </span>
 
                                         <strong>
-                                            {
-                                                selectedJob.education ||
-                                                "Not specified"
-                                            }
+                                            {selectedJob.education ||
+                                                "Not specified"}
                                         </strong>
 
                                     </div>
@@ -1619,7 +1308,6 @@ function ManageJobs() {
                                 </div>
 
                             </section>
-
 
                             {/* SKILLS */}
 
@@ -1646,22 +1334,18 @@ function ManageJobs() {
 
                                 </div>
 
-
                                 <div className="job-skills-box">
 
                                     <FaTools />
 
                                     <p>
-                                        {
-                                            selectedJob.skills ||
-                                            "No specific skills have been added."
-                                        }
+                                        {selectedJob.skills ||
+                                            "No specific skills have been added."}
                                     </p>
 
                                 </div>
 
                             </section>
-
 
                             {/* DESCRIPTION */}
 
@@ -1688,22 +1372,18 @@ function ManageJobs() {
 
                                 </div>
 
-
                                 <div className="job-description">
 
                                     <FaAlignLeft />
 
                                     <p>
-                                        {
-                                            selectedJob.description ||
-                                            "No job description has been added."
-                                        }
+                                        {selectedJob.description ||
+                                            "No job description has been added."}
                                     </p>
 
                                 </div>
 
                             </section>
-
 
                             {/* REQUIREMENTS */}
 
@@ -1730,16 +1410,13 @@ function ManageJobs() {
 
                                 </div>
 
-
                                 <div className="job-requirements">
 
                                     <FaUserTie />
 
                                     <p>
-                                        {
-                                            selectedJob.requirements ||
-                                            "No additional requirements have been added."
-                                        }
+                                        {selectedJob.requirements ||
+                                            "No additional requirements have been added."}
                                     </p>
 
                                 </div>
@@ -1747,7 +1424,6 @@ function ManageJobs() {
                             </section>
 
                         </div>
-
 
                         {/* MODAL FOOTER */}
 
@@ -1763,33 +1439,7 @@ function ManageJobs() {
 
                             </div>
 
-
                             <div className="job-modal-actions">
-
-                                <button
-                                    type="button"
-                                    className="job-modal-delete"
-                                    onClick={() =>
-                                        deleteJob(
-                                            selectedJob.id
-                                        )
-                                    }
-                                    disabled={
-                                        deletingId ===
-                                        selectedJob.id
-                                    }
-                                >
-
-                                    <FaTrash />
-
-                                    {deletingId ===
-                                    selectedJob.id
-                                        ? "Deleting..."
-                                        : "Delete Job"
-                                    }
-
-                                </button>
-
 
                                 <button
                                     type="button"
@@ -1808,12 +1458,10 @@ function ManageJobs() {
                     </div>
 
                 </div>
-
             )}
 
         </div>
     );
 }
-
 
 export default ManageJobs;

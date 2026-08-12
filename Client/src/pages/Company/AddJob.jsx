@@ -1,3 +1,4 @@
+
 import { useState } from "react";
 
 import {
@@ -14,6 +15,8 @@ import {
 import { db } from "../../firebase/firebaseConfig";
 import { useAuth } from "../../context/AuthContext";
 
+import sendEmail from "../../services/emailService";
+
 import {
     FaBriefcase,
     FaGraduationCap,
@@ -27,8 +30,9 @@ import {
 
 import "./AddJob.css";
 
+
 /* =========================================================
-INITIAL FORM DATA
+   INITIAL FORM DATA
 ========================================================= */
 
 const INITIAL_FORM_DATA = {
@@ -46,13 +50,15 @@ const INITIAL_FORM_DATA = {
     experience: "Fresher"
 };
 
+
 /* =========================================================
-ADD JOB
+   ADD JOB
 ========================================================= */
 
 function AddJob() {
 
     const { user } = useAuth();
+
 
     /* =====================================================
        STATES
@@ -92,8 +98,6 @@ function AddJob() {
 
     /* =====================================================
        CHECK COMPANY PROFILE
-       
-       REQUIRED BEFORE POSTING JOB
     ===================================================== */
 
     const checkCompanyProfile = async () => {
@@ -121,10 +125,6 @@ function AddJob() {
                 await getDoc(companyRef);
 
 
-            /* =============================================
-               PROFILE DOCUMENT DOES NOT EXIST
-            ============================================= */
-
             if (!companySnapshot.exists()) {
 
                 return {
@@ -139,10 +139,6 @@ function AddJob() {
             const company =
                 companySnapshot.data();
 
-
-            /* =============================================
-               REQUIRED PROFILE FIELDS
-            ============================================= */
 
             const requiredFields = [
 
@@ -179,10 +175,6 @@ function AddJob() {
             ];
 
 
-            /* =============================================
-               FIND MISSING FIELDS
-            ============================================= */
-
             const missingFields =
                 requiredFields
                     .filter(
@@ -196,10 +188,6 @@ function AddJob() {
                             item.label
                     );
 
-
-            /* =============================================
-               PROFILE INCOMPLETE
-            ============================================= */
 
             if (missingFields.length > 0) {
 
@@ -216,10 +204,6 @@ function AddJob() {
 
             }
 
-
-            /* =============================================
-               PROFILE COMPLETE
-            ============================================= */
 
             return {
 
@@ -356,9 +340,7 @@ function AddJob() {
 
 
                     if (!studentId) {
-
                         return;
-
                     }
 
 
@@ -441,9 +423,7 @@ function AddJob() {
 
 
                     if (!tpoId) {
-
                         return;
-
                     }
 
 
@@ -541,7 +521,11 @@ function AddJob() {
                     studentSnapshot.size,
 
                 tpo:
-                    tpoSnapshot.size
+                    tpoSnapshot.size,
+
+                studentSnapshot,
+
+                tpoSnapshot
 
             };
 
@@ -558,6 +542,533 @@ function AddJob() {
             return {
 
                 success: false,
+
+                error
+
+            };
+
+        }
+
+    };
+
+
+    /* =====================================================
+       SEND JOB EMAILS
+       
+       Sends email to:
+       - Students
+       - TPO users
+
+       Email failure does NOT cancel job posting.
+    ===================================================== */
+
+    const sendJobEmails = async (
+        job,
+        studentSnapshot,
+        tpoSnapshot
+    ) => {
+
+        try {
+
+            console.log(
+                "Starting job email notifications..."
+            );
+
+
+            const emailPromises = [];
+
+
+            /* =================================================
+               EMAIL CONTENT
+            ================================================= */
+
+            const subject =
+                `New Job Opportunity - ${job.jobTitle}`;
+
+
+            const htmlMessage = `
+                <div
+                    style="
+                        font-family: Arial, sans-serif;
+                        max-width: 650px;
+                        margin: 0 auto;
+                        padding: 24px;
+                        background: #ffffff;
+                        color: #222222;
+                    "
+                >
+
+                    <div
+                        style="
+                            padding: 20px;
+                            background: #667eea;
+                            color: #ffffff;
+                            border-radius: 10px 10px 0 0;
+                        "
+                    >
+
+                        <h2
+                            style="
+                                margin: 0;
+                                font-size: 24px;
+                            "
+                        >
+                            New Job Opportunity
+                        </h2>
+
+                        <p
+                            style="
+                                margin: 8px 0 0;
+                                font-size: 15px;
+                            "
+                        >
+                            Placement Management System
+                        </p>
+
+                    </div>
+
+
+                    <div
+                        style="
+                            border: 1px solid #e5e7eb;
+                            border-top: none;
+                            padding: 24px;
+                            border-radius: 0 0 10px 10px;
+                        "
+                    >
+
+                        <h2
+                            style="
+                                margin-top: 0;
+                                color: #333333;
+                            "
+                        >
+                            ${job.jobTitle}
+                        </h2>
+
+
+                        <p>
+                            <strong>Company:</strong>
+                            ${job.companyName}
+                        </p>
+
+
+                        <p>
+                            <strong>Location:</strong>
+                            ${job.location}
+                        </p>
+
+
+                        <p>
+                            <strong>Salary / Package:</strong>
+                            ${job.salary}
+                        </p>
+
+
+                        <p>
+                            <strong>Application Deadline:</strong>
+                            ${job.deadline}
+                        </p>
+
+
+                        <hr
+                            style="
+                                border: none;
+                                border-top: 1px solid #eeeeee;
+                                margin: 20px 0;
+                            "
+                        />
+
+
+                        <h3>
+                            Job Description
+                        </h3>
+
+                        <p
+                            style="
+                                line-height: 1.6;
+                                white-space: pre-line;
+                            "
+                        >
+                            ${job.jobDescription}
+                        </p>
+
+
+                        <h3>
+                            Required Skills
+                        </h3>
+
+                        <p>
+                            ${job.skills}
+                        </p>
+
+
+                        <h3>
+                            Eligibility
+                        </h3>
+
+                        <p>
+                            <strong>Education:</strong>
+                            ${job.eligibility.education}
+                        </p>
+
+                        <p>
+                            <strong>Minimum 10th:</strong>
+                            ${job.eligibility.minimum10th}%
+                        </p>
+
+                        <p>
+                            <strong>Minimum 12th:</strong>
+                            ${job.eligibility.minimum12th}%
+                        </p>
+
+                        <p>
+                            <strong>Minimum CGPA:</strong>
+                            ${job.eligibility.minimumCGPA}/10
+                        </p>
+
+                        <p>
+                            <strong>Branches:</strong>
+                            ${
+                                job.eligibility.branches ||
+                                "All branches"
+                            }
+                        </p>
+
+                        <p>
+                            <strong>Experience:</strong>
+                            ${job.eligibility.experience}
+                        </p>
+
+
+                        <div
+                            style="
+                                margin-top: 25px;
+                                padding: 15px;
+                                background: #f5f7ff;
+                                border-radius: 8px;
+                            "
+                        >
+
+                            <p
+                                style="
+                                    margin: 0;
+                                    line-height: 1.6;
+                                "
+                            >
+                                Log in to the Placement Management
+                                System to view the complete job
+                                details and apply.
+                            </p>
+
+                        </div>
+
+
+                        <p
+                            style="
+                                margin-top: 25px;
+                                color: #666666;
+                                font-size: 13px;
+                            "
+                        >
+                            This is an automated email from the
+                            Placement Management System.
+                        </p>
+
+                    </div>
+
+                </div>
+            `;
+
+
+            /* =================================================
+               STUDENT EMAILS
+            ================================================= */
+
+            if (studentSnapshot) {
+
+                studentSnapshot.forEach(
+                    (studentDocument) => {
+
+                        const studentData =
+                            studentDocument.data();
+
+
+                        const studentEmail =
+                            String(
+                                studentData.email || ""
+                            )
+                                .trim()
+                                .toLowerCase();
+
+
+                        if (!studentEmail) {
+
+                            console.log(
+                                "Student has no email:",
+                                studentDocument.id
+                            );
+
+                            return;
+
+                        }
+
+
+                        emailPromises.push(
+
+                            sendEmail({
+
+                                to:
+                                    studentEmail,
+
+                                subject,
+
+                                message:
+                                    htmlMessage
+
+                            })
+                                .then(() => {
+
+                                    console.log(
+                                        "Student email sent:",
+                                        studentEmail
+                                    );
+
+                                    return {
+                                        success: true,
+                                        email: studentEmail,
+                                        role: "student"
+                                    };
+
+                                })
+                                .catch((error) => {
+
+                                    console.error(
+                                        `Failed to send student email to ${studentEmail}:`,
+                                        error
+                                    );
+
+                                    return {
+                                        success: false,
+                                        email: studentEmail,
+                                        role: "student",
+                                        error
+                                    };
+
+                                })
+
+                        );
+
+                    }
+                );
+
+            }
+
+
+            /* =================================================
+               TPO EMAILS
+            ================================================= */
+
+            if (tpoSnapshot) {
+
+                tpoSnapshot.forEach(
+                    (tpoDocument) => {
+
+                        const tpoData =
+                            tpoDocument.data();
+
+
+                        const tpoEmail =
+                            String(
+                                tpoData.email || ""
+                            )
+                                .trim()
+                                .toLowerCase();
+
+
+                        if (!tpoEmail) {
+
+                            console.log(
+                                "TPO user has no email:",
+                                tpoDocument.id
+                            );
+
+                            return;
+
+                        }
+
+
+                        emailPromises.push(
+
+                            sendEmail({
+
+                                to:
+                                    tpoEmail,
+
+                                subject:
+                                    `New Placement Job Posted - ${job.jobTitle}`,
+
+                                message:
+                                    htmlMessage
+
+                            })
+                                .then(() => {
+
+                                    console.log(
+                                        "TPO email sent:",
+                                        tpoEmail
+                                    );
+
+                                    return {
+                                        success: true,
+                                        email: tpoEmail,
+                                        role: "tpo"
+                                    };
+
+                                })
+                                .catch((error) => {
+
+                                    console.error(
+                                        `Failed to send TPO email to ${tpoEmail}:`,
+                                        error
+                                    );
+
+                                    return {
+                                        success: false,
+                                        email: tpoEmail,
+                                        role: "tpo",
+                                        error
+                                    };
+
+                                })
+
+                        );
+
+                    }
+                );
+
+            }
+
+
+            /* =================================================
+               NO EMAILS
+            ================================================= */
+
+            if (
+                emailPromises.length === 0
+            ) {
+
+                console.log(
+                    "No user email addresses found."
+                );
+
+                return {
+
+                    success: false,
+
+                    total:
+                        0,
+
+                    sent:
+                        0,
+
+                    failed:
+                        0
+
+                };
+
+            }
+
+
+            /* =================================================
+               SEND EMAILS
+            ================================================= */
+
+            const results =
+                await Promise.all(
+                    emailPromises
+                );
+
+
+            const successfulEmails =
+                results.filter(
+                    (result) =>
+                        result.success
+                );
+
+
+            const failedEmails =
+                results.filter(
+                    (result) =>
+                        !result.success
+                );
+
+
+            console.log(
+                "================================="
+            );
+
+            console.log(
+                "JOB EMAIL RESULT"
+            );
+
+            console.log(
+                "Total:",
+                results.length
+            );
+
+            console.log(
+                "Sent:",
+                successfulEmails.length
+            );
+
+            console.log(
+                "Failed:",
+                failedEmails.length
+            );
+
+            console.log(
+                "================================="
+            );
+
+
+            return {
+
+                success:
+                    successfulEmails.length > 0,
+
+                total:
+                    results.length,
+
+                sent:
+                    successfulEmails.length,
+
+                failed:
+                    failedEmails.length,
+
+                results
+
+            };
+
+        }
+
+        catch (error) {
+
+            console.error(
+                "Job email notification error:",
+                error
+            );
+
+
+            return {
+
+                success: false,
+
+                total: 0,
+
+                sent: 0,
+
+                failed: 0,
 
                 error
 
@@ -601,9 +1112,6 @@ function AddJob() {
 
         /* =================================================
            COMPANY PROFILE CHECK
-           
-           IMPORTANT:
-           THIS HAPPENS BEFORE JOB CREATION.
         ================================================= */
 
         const profileResult =
@@ -618,12 +1126,6 @@ function AddJob() {
                 profileResult.reason
             );
 
-
-            /*
-             * Browser alert is also shown so the
-             * company clearly understands why
-             * the job cannot be posted.
-             */
 
             alert(
                 profileResult.reason
@@ -814,9 +1316,6 @@ function AddJob() {
 
             /* =================================================
                COMPANY PROFILE DATA
-               
-               Use the verified profile values instead of
-               relying only on the login display name.
             ================================================= */
 
             const companyProfile =
@@ -972,6 +1471,49 @@ function AddJob() {
 
 
             /* =================================================
+               SEND EMAILS
+               
+               Only after the job is successfully created.
+            ================================================= */
+
+            let emailResult = {
+
+                success: false,
+
+                total: 0,
+
+                sent: 0,
+
+                failed: 0
+
+            };
+
+
+            if (
+                notificationResult?.success
+            ) {
+
+                emailResult =
+                    await sendJobEmails(
+
+                        createdJob,
+
+                        notificationResult.studentSnapshot,
+
+                        notificationResult.tpoSnapshot
+
+                    );
+
+            }
+
+
+            console.log(
+                "Email result:",
+                emailResult
+            );
+
+
+            /* =================================================
                SUCCESS MESSAGE
             ================================================= */
 
@@ -979,13 +1521,31 @@ function AddJob() {
                 notificationResult?.success
             ) {
 
-                setMessageType(
-                    "success"
-                );
+                if (
+                    emailResult?.sent > 0
+                ) {
 
-                setMessage(
-                    `Job posted successfully! ${notificationResult.count} notification(s) sent.`
-                );
+                    setMessageType(
+                        "success"
+                    );
+
+                    setMessage(
+                        `Job posted successfully! ${notificationResult.students} student(s) and ${notificationResult.tpo} TPO notification(s) created. ${emailResult.sent} email(s) sent.`
+                    );
+
+                }
+
+                else {
+
+                    setMessageType(
+                        "success"
+                    );
+
+                    setMessage(
+                        `Job posted successfully! ${notificationResult.count} notification(s) created, but email notifications could not be sent.`
+                    );
+
+                }
 
             }
 
@@ -996,7 +1556,7 @@ function AddJob() {
                 );
 
                 setMessage(
-                    "Job posted successfully, but notifications could not be sent."
+                    "Job posted successfully, but notifications could not be created."
                 );
 
             }

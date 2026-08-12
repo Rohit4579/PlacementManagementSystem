@@ -5,62 +5,46 @@ import { useNavigate } from "react-router-dom";
 import "./Login.css";
 
 import { loginUser } from "../../services/authService";
-
+import sendEmail from "../../services/emailService";
 
 function Login() {
 
     const navigate = useNavigate();
 
-
     const [data, setData] = useState({
-
         email: "",
         password: ""
-
     });
 
-
     const [loading, setLoading] = useState(false);
-
 
     const change = (e) => {
 
         const { name, value } = e.target;
 
         setData((previousData) => ({
-
             ...previousData,
-
             [name]: value
-
         }));
 
     };
-
 
     const submit = async (e) => {
 
         e.preventDefault();
 
-
         if (loading) {
             return;
         }
-
 
         try {
 
             setLoading(true);
 
-
             const user = await loginUser(
-
                 data.email.trim().toLowerCase(),
-
                 data.password
-
             );
-
 
             if (!user) {
 
@@ -72,11 +56,56 @@ function Login() {
 
             }
 
-
             console.log(
                 "Logged in user:",
                 user
             );
+
+
+            // =====================================================
+            // SEND LOGIN EMAIL
+            // =====================================================
+
+            try {
+
+                await sendEmail({
+
+                    to: data.email.trim().toLowerCase(),
+
+                    subject:
+                        "Successful Login - Placement Management System",
+
+                    message:
+                        `Hello ${user.name || "User"},
+
+You have successfully logged in to the Placement Management System.
+
+Your account was accessed successfully.
+
+If this was not you, please contact the administrator immediately.
+
+Regards,
+Placement Management System`
+
+                });
+
+                console.log(
+                    "Login email sent successfully."
+                );
+
+            } catch (emailError) {
+
+                /*
+                 * Do NOT stop the login if email fails.
+                 * Authentication has already succeeded.
+                 */
+
+                console.error(
+                    "Login email could not be sent:",
+                    emailError
+                );
+
+            }
 
 
             // -----------------------------------------
@@ -325,6 +354,4 @@ function Login() {
 
 }
 
-
 export default Login;
-

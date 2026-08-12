@@ -1,4 +1,3 @@
-
 import { useEffect, useState } from "react";
 
 import {
@@ -6,17 +5,13 @@ import {
     query,
     where,
     getDocs,
+    onSnapshot,
     deleteDoc,
     doc
 } from "firebase/firestore";
 
-import {
-    db
-} from "../../firebase/firebaseConfig";
-
-import {
-    useAuth
-} from "../../context/AuthContext";
+import { db } from "../../firebase/firebaseConfig";
+import { useAuth } from "../../context/AuthContext";
 
 import {
     FaBriefcase,
@@ -159,7 +154,7 @@ function ManageJobs() {
         if (Array.isArray(skills)) {
 
             return skills
-                .map(skill =>
+                .map((skill) =>
                     String(skill).trim()
                 )
                 .filter(Boolean);
@@ -174,7 +169,7 @@ function ManageJobs() {
 
         return String(skills)
             .split(",")
-            .map(skill =>
+            .map((skill) =>
                 skill.trim()
             )
             .filter(Boolean);
@@ -183,10 +178,141 @@ function ManageJobs() {
 
 
     /* =========================================================
-       FETCH JOBS
+       GET JOB DATE
     ========================================================= */
 
-    const fetchJobs = async () => {
+    const getJobTime = (value) => {
+
+        if (!value) {
+            return 0;
+        }
+
+        try {
+
+            if (
+                value &&
+                typeof value.toDate === "function"
+            ) {
+
+                return value
+                    .toDate()
+                    .getTime();
+
+            }
+
+
+            const date = new Date(value);
+
+
+            return isNaN(
+                date.getTime()
+            )
+                ? 0
+                : date.getTime();
+
+        }
+
+        catch {
+
+            return 0;
+
+        }
+
+    };
+
+
+    /* =========================================================
+       CHECK WHETHER THIS JOB BELONGS TO CURRENT COMPANY
+       
+       NEW JOBS:
+           companyId === user.uid
+
+       OLD JOBS:
+           companyEmail === user.email
+       
+       This allows older jobs created before companyId
+       was added to still be managed and deleted.
+    ========================================================= */
+
+    const belongsToCurrentCompany = (job) => {
+
+        if (!job || !user?.uid) {
+            return false;
+        }
+
+
+        /* =================================================
+           NEW JOB FORMAT
+        ================================================= */
+
+        if (
+            job.companyId &&
+            String(job.companyId) ===
+            String(user.uid)
+        ) {
+
+            return true;
+
+        }
+
+
+        /* =================================================
+           OLD JOB FORMAT
+           
+           Older jobs may not have companyId but may have
+           companyEmail.
+        ================================================= */
+
+        const jobCompanyEmail =
+            String(
+                job.companyEmail ||
+                ""
+            )
+                .trim()
+                .toLowerCase();
+
+
+        const currentUserEmail =
+            String(
+                user.email ||
+                ""
+            )
+                .trim()
+                .toLowerCase();
+
+
+        if (
+            jobCompanyEmail &&
+            currentUserEmail &&
+            jobCompanyEmail ===
+            currentUserEmail
+        ) {
+
+            return true;
+
+        }
+
+
+        return false;
+
+    };
+
+
+    /* =========================================================
+       LOAD COMPANY JOBS
+       
+       We use TWO queries:
+       
+       1. New jobs:
+          companyId == user.uid
+
+       2. Legacy jobs:
+          companyEmail == user.email
+
+       Then combine them without duplicates.
+    ========================================================= */
+
+    useEffect(() => {
 
         if (!user?.uid) {
 
@@ -199,44 +325,132 @@ function ManageJobs() {
         }
 
 
-        try {
+        let unsubscribeCompanyId = null;
 
-            setLoading(true);
-
-            setError("");
+        let unsubscribeCompanyEmail = null;
 
 
-            const jobsQuery = query(
+        setLoading(true);
 
-                collection(
-                    db,
-                    "jobs"
-                ),
+        setError("");
 
+
+        const jobsRef =
+            collection(
+                db,
+                "jobs"
+            );
+
+
+        /* =====================================================
+           NEW JOBS QUERY
+        ===================================================== */
+
+        const companyIdQuery =
+            query(
+                jobsRef,
                 where(
                     "companyId",
                     "==",
                     user.uid
                 )
-
             );
 
 
-            const snapshot =
-                await getDocs(
-                    jobsQuery
+        /* =====================================================
+           LEGACY JOBS QUERY
+           
+           Older jobs created before companyId was added
+           may contain companyEmail.
+        ===================================================== */
+
+        const companyEmail =
+            String(
+                user.email ||
+                ""
+            )
+                .trim()
+                .toLowerCase();
+
+
+        let companyEmailQuery = null;
+
+
+        if (companyEmail) {
+
+            companyEmailQuery =
+                query(
+                    jobsRef,
+                    where(
+                        "companyEmail",
+                        "==",
+                        companyEmail
+                    )
                 );
+
+        }
+
+
+        /* =====================================================
+           COMBINE SNAPSHOTS
+        ===================================================== */
+
+        let companyIdJobs = [];
+
+        let companyEmailJobs = [];
+
+
+        const rebuildJobs = () => {
+
+            const combinedJobs = [
+
+                ...companyIdJobs,
+
+                ...companyEmailJobs
+
+            ];
+
+
+            /* =================================================
+               REMOVE DUPLICATES
+            ================================================= */
+
+            const uniqueJobsMap =
+                new Map();
+
+
+            combinedJobs.forEach(
+                (job) => {
+
+                    if (!job?.id) {
+                        return;
+                    }
+
+
+                    /*
+                     * Extra ownership validation.
+                     */
+
+                    if (
+                        belongsToCurrentCompany(
+                            job
+                        )
+                    ) {
+
+                        uniqueJobsMap.set(
+                            job.id,
+                            job
+                        );
+
+                    }
+
+                }
+            );
 
 
             const jobList =
-                snapshot.docs.map(
-                    item => ({
-
-                        id: item.id,
-
-                        ...item.data()
-
-                    })
+                Array.from(
+                    uniqueJobsMap.values()
                 );
 
 
@@ -247,43 +461,23 @@ function ManageJobs() {
             jobList.sort(
                 (a, b) => {
 
-                    const getTime =
-                        (value) => {
-
-                            if (
-                                value &&
-                                typeof value.toDate === "function"
-                            ) {
-
-                                return value
-                                    .toDate()
-                                    .getTime();
-
-                            }
+                    const timeA =
+                        getJobTime(
+                            a.createdAt ||
+                            a.postedAt
+                        );
 
 
-                            const date =
-                                new Date(value);
-
-
-                            return isNaN(
-                                date.getTime()
-                            )
-                                ? 0
-                                : date.getTime();
-
-                        };
+                    const timeB =
+                        getJobTime(
+                            b.createdAt ||
+                            b.postedAt
+                        );
 
 
                     return (
-                        getTime(
-                            b.createdAt ||
-                            b.postedAt
-                        ) -
-                        getTime(
-                            a.createdAt ||
-                            a.postedAt
-                        )
+                        timeB -
+                        timeA
                     );
 
                 }
@@ -292,44 +486,163 @@ function ManageJobs() {
 
             setJobs(jobList);
 
-        }
-
-        catch (error) {
-
-            console.error(
-                "Fetch jobs error:",
-                error
-            );
-
-
-            setError(
-                "Unable to load your jobs. Please try again."
-            );
-
-        }
-
-        finally {
-
             setLoading(false);
 
+            setError("");
+
+        };
+
+
+        /* =====================================================
+           LISTEN TO NEW JOB FORMAT
+        ===================================================== */
+
+        unsubscribeCompanyId =
+            onSnapshot(
+
+                companyIdQuery,
+
+                (snapshot) => {
+
+                    companyIdJobs =
+                        snapshot.docs.map(
+                            (document) => ({
+
+                                id:
+                                    document.id,
+
+                                ...document.data()
+
+                            })
+                        );
+
+
+                    rebuildJobs();
+
+                },
+
+                (firebaseError) => {
+
+                    console.error(
+                        "Company ID jobs listener error:",
+                        firebaseError
+                    );
+
+
+                    setError(
+                        "Unable to load your jobs. Please try again."
+                    );
+
+                    setLoading(false);
+
+                }
+
+            );
+
+
+        /* =====================================================
+           LISTEN TO OLD JOB FORMAT
+        ===================================================== */
+
+        if (companyEmailQuery) {
+
+            unsubscribeCompanyEmail =
+                onSnapshot(
+
+                    companyEmailQuery,
+
+                    (snapshot) => {
+
+                        companyEmailJobs =
+                            snapshot.docs.map(
+                                (document) => ({
+
+                                    id:
+                                        document.id,
+
+                                    ...document.data()
+
+                                })
+                            );
+
+
+                        rebuildJobs();
+
+                    },
+
+                    (firebaseError) => {
+
+                        console.error(
+                            "Legacy company email jobs listener error:",
+                            firebaseError
+                        );
+
+                        /*
+                         * Don't destroy the entire page if the
+                         * legacy query has a problem.
+                         *
+                         * New companyId jobs can still work.
+                         */
+
+                        rebuildJobs();
+
+                    }
+
+                );
+
+        }
+        else {
+
+            rebuildJobs();
+
         }
 
-    };
+
+        /* =====================================================
+           CLEANUP
+        ===================================================== */
+
+        return () => {
+
+            if (
+                unsubscribeCompanyId
+            ) {
+
+                unsubscribeCompanyId();
+
+            }
 
 
-    /* =========================================================
-       LOAD JOBS
-    ========================================================= */
+            if (
+                unsubscribeCompanyEmail
+            ) {
 
-    useEffect(() => {
+                unsubscribeCompanyEmail();
 
-        fetchJobs();
+            }
 
-    }, [user]);
+        };
+
+    }, [
+        user?.uid,
+        user?.email
+    ]);
 
 
     /* =========================================================
        DELETE JOB
+       
+       IMPORTANT:
+       
+       This deletes the actual Firestore document:
+       
+           jobs/{jobId}
+       
+       It is NOT just hiding the job.
+       
+       Student AvailableJobs uses onSnapshot(), so after
+       deleteDoc() the student page receives the updated
+       jobs collection automatically.
     ========================================================= */
 
     const deleteJob = async (job) => {
@@ -345,13 +658,43 @@ function ManageJobs() {
         }
 
 
+        if (!job?.id) {
+
+            alert(
+                "Invalid job selected."
+            );
+
+            return;
+
+        }
+
+
+        /* =================================================
+           SECURITY CHECK
+        ================================================= */
+
+        if (
+            !belongsToCurrentCompany(
+                job
+            )
+        ) {
+
+            alert(
+                "You are not authorized to delete this job."
+            );
+
+            return;
+
+        }
+
+
         const jobTitle =
             getJobTitle(job);
 
 
         const confirmDelete =
             window.confirm(
-                `Are you sure you want to delete "${jobTitle}"?`
+                `Are you sure you want to permanently delete "${jobTitle}"?\n\nThis job will be removed from Firestore and will disappear from the student job listings.`
             );
 
 
@@ -367,6 +710,10 @@ function ManageJobs() {
             );
 
 
+            /* =================================================
+               DELETE FIRESTORE DOCUMENT
+            ================================================= */
+
             const jobReference =
                 doc(
                     db,
@@ -380,12 +727,26 @@ function ManageJobs() {
             );
 
 
+            /*
+             * Remove locally immediately.
+             *
+             * The onSnapshot listener will also update
+             * automatically.
+             */
+
             setJobs(
-                previous =>
+                (previous) =>
                     previous.filter(
-                        item =>
-                            item.id !== job.id
+                        (item) =>
+                            item.id !==
+                            job.id
                     )
+            );
+
+
+            console.log(
+                "Job permanently deleted:",
+                job.id
             );
 
 
@@ -400,7 +761,7 @@ function ManageJobs() {
 
 
             alert(
-                error.message ||
+                error?.message ||
                 "Unable to delete this job."
             );
 
@@ -475,7 +836,9 @@ function ManageJobs() {
 
                     <button
                         type="button"
-                        onClick={fetchJobs}
+                        onClick={() =>
+                            window.location.reload()
+                        }
                     >
                         Try Again
                     </button>
@@ -627,7 +990,17 @@ function ManageJobs() {
 
 
                         const isDeleting =
-                            deletingId === job.id;
+                            deletingId ===
+                            job.id;
+
+
+                        /*
+                         * Show legacy badge if job does not
+                         * contain companyId.
+                         */
+
+                        const isLegacyJob =
+                            !job.companyId;
 
 
                         return (
@@ -673,6 +1046,29 @@ function ManageJobs() {
                                     </div>
 
                                 </div>
+
+
+                                {/* =================================
+                                    LEGACY JOB NOTICE
+                                ================================= */}
+
+                                {isLegacyJob && (
+
+                                    <div
+                                        style={{
+                                            marginTop: "10px",
+                                            padding: "8px 12px",
+                                            borderRadius: "8px",
+                                            background: "#fff7ed",
+                                            color: "#c2410c",
+                                            fontSize: "12px",
+                                            fontWeight: "600"
+                                        }}
+                                    >
+                                        Legacy Job — can still be deleted
+                                    </div>
+
+                                )}
 
 
                                 {/* =================================
@@ -890,7 +1286,9 @@ function ManageJobs() {
                                     <button
                                         type="button"
                                         className="delete-job-button"
-                                        disabled={isDeleting}
+                                        disabled={
+                                            isDeleting
+                                        }
                                         onClick={() =>
                                             deleteJob(
                                                 job
@@ -907,6 +1305,7 @@ function ManageJobs() {
                                     </button>
 
                                 </div>
+
 
                             </article>
 
@@ -926,4 +1325,3 @@ function ManageJobs() {
 
 
 export default ManageJobs;
-

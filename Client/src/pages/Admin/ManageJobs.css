@@ -11,7 +11,6 @@
     box-sizing: border-box;
 
     background: #f5f7fb;
-
     color: #172033;
 
     font-family:
@@ -21,7 +20,6 @@
         "Segoe UI",
         sans-serif;
 }
-
 
 /* =========================================================
    PAGE HEADER
@@ -77,7 +75,6 @@
     font-size: 14px;
     line-height: 1.6;
 }
-
 
 /* =========================================================
    TOTAL CARD
@@ -146,7 +143,6 @@
     font-weight: 800;
 }
 
-
 /* =========================================================
    ERROR
 ========================================================= */
@@ -197,7 +193,6 @@
     cursor: pointer;
 }
 
-
 /* =========================================================
    TOOLBAR
 ========================================================= */
@@ -214,9 +209,8 @@
     margin-bottom: 20px;
 }
 
-
 /* =========================================================
-   SEARCH WRAPPER
+   SEARCH
 ========================================================= */
 
 .jobs-search-wrapper {
@@ -224,15 +218,6 @@
 
     min-width: 0;
 }
-
-
-/* =========================================================
-   SEARCH BOX
-
-   IMPORTANT:
-   The icon has its own flex container.
-   The input cannot overlap it.
-========================================================= */
 
 .jobs-search-box {
     width: 100%;
@@ -256,8 +241,7 @@
 
     transition:
         border-color 0.2s ease,
-        box-shadow 0.2s ease,
-        background 0.2s ease;
+        box-shadow 0.2s ease;
 }
 
 .jobs-search-box:hover {
@@ -267,17 +251,10 @@
 .jobs-search-box:focus-within {
     border-color: #6975e7;
 
-    background: #ffffff;
-
     box-shadow:
         0 0 0 4px rgba(89, 101, 232, 0.10),
         0 5px 18px rgba(28, 39, 68, 0.05);
 }
-
-
-/* =========================================================
-   SEARCH ICON CONTAINER
-========================================================= */
 
 .jobs-search-icon-container {
     width: 34px;
@@ -296,11 +273,6 @@
     pointer-events: none;
 }
 
-
-/* =========================================================
-   SEARCH INPUT
-========================================================= */
-
 .jobs-search-box input {
     flex: 1 1 auto;
 
@@ -311,7 +283,6 @@
     display: block;
 
     padding: 0 8px;
-
     margin: 0;
 
     box-sizing: border-box;
@@ -331,18 +302,12 @@
 
 .jobs-search-box input::placeholder {
     color: #9aa4b4;
-
     opacity: 1;
 }
 
 .jobs-search-box input::-webkit-search-cancel-button {
     display: none;
 }
-
-
-/* =========================================================
-   CLEAR SEARCH
-========================================================= */
 
 .jobs-clear-search {
     width: 32px;
@@ -371,18 +336,12 @@
 
 .jobs-clear-search:hover {
     background: #e6e9ef;
-
     color: #303a4e;
 }
 
 .jobs-clear-search:active {
     transform: scale(0.95);
 }
-
-
-/* =========================================================
-   SEARCH HINT
-========================================================= */
 
 .jobs-search-hint {
     display: block;
@@ -394,7 +353,6 @@
     font-size: 10px;
     line-height: 1.4;
 }
-
 
 /* =========================================================
    TOOLBAR RIGHT
@@ -410,11 +368,6 @@
 
     min-height: 50px;
 }
-
-
-/* =========================================================
-   RESULT COUNT
-========================================================= */
 
 .jobs-result-text {
     display: flex;
@@ -434,11 +387,6 @@
 
     font-weight: 800;
 }
-
-
-/* =========================================================
-   REFRESH
-========================================================= */
 
 .jobs-refresh-btn {
     height: 44px;
@@ -491,7 +439,6 @@
     animation: jobSpin 0.75s linear infinite;
 }
 
-
 /* =========================================================
    TABLE CARD
 ========================================================= */
@@ -510,11 +457,6 @@
     box-shadow:
         0 5px 22px rgba(28, 39, 68, 0.045);
 }
-
-
-/* =========================================================
-   TABLE SCROLL
-========================================================= */
 
 .jobs-table-scroll {
     width: 100%;
@@ -547,30 +489,64 @@
     background: #aeb7c7;
 }
 
-
 /* =========================================================
    TABLE
+
+   Explicit column percentages prevent the Actions column
+   from shifting and keep View directly below Actions.
 ========================================================= */
 
 .jobs-table {
     width: 100%;
 
-    min-width: 1120px;
+    min-width: 1080px;
 
     border-collapse: separate;
-
     border-spacing: 0;
 
     table-layout: fixed;
 }
 
+/* =========================================================
+   COLUMN WIDTHS
+
+   Total = 100%
+========================================================= */
+
+.jobs-table .job-col {
+    width: 24%;
+}
+
+.jobs-table .company-col {
+    width: 20%;
+}
+
+.jobs-table .location-col {
+    width: 14%;
+}
+
+.jobs-table .salary-col {
+    width: 12%;
+}
+
+.jobs-table .deadline-col {
+    width: 15%;
+}
+
+.jobs-table .actions-col {
+    width: 15%;
+}
 
 /* =========================================================
    TABLE HEADER
 ========================================================= */
 
 .jobs-table th {
-    padding: 15px 16px;
+    height: 50px;
+
+    padding: 0 16px;
+
+    box-sizing: border-box;
 
     background: #f8f9fc;
 
@@ -590,15 +566,33 @@
     letter-spacing: 0.7px;
 
     white-space: nowrap;
+
+    vertical-align: middle;
 }
 
+/* =========================================================
+   ACTIONS HEADER
+========================================================= */
+
+.jobs-table th.actions-column {
+    padding-left: 16px;
+    padding-right: 16px;
+
+    text-align: center;
+
+    white-space: nowrap;
+}
 
 /* =========================================================
    TABLE BODY
 ========================================================= */
 
 .jobs-table td {
+    height: 90px;
+
     padding: 17px 16px;
+
+    box-sizing: border-box;
 
     border-bottom: 1px solid #edf0f4;
 
@@ -622,37 +616,22 @@
     border-bottom: none;
 }
 
-
 /* =========================================================
-   COLUMNS
+   ACTION CELL
+
+   Fixed alignment with the Actions heading.
 ========================================================= */
 
-.jobs-table .job-column {
-    width: 23%;
+.jobs-table td.actions-column {
+    padding-left: 16px;
+    padding-right: 16px;
+
+    text-align: center;
+
+    white-space: nowrap;
+
+    vertical-align: middle;
 }
-
-.jobs-table .company-column {
-    width: 20%;
-}
-
-.jobs-table .location-column {
-    width: 14%;
-}
-
-.jobs-table .salary-column {
-    width: 12%;
-}
-
-.jobs-table .deadline-column {
-    width: 13%;
-}
-
-.jobs-table .actions-column {
-    width: 18%;
-
-    min-width: 180px;
-}
-
 
 /* =========================================================
    JOB PROFILE
@@ -724,7 +703,6 @@
 
     white-space: nowrap;
 }
-
 
 /* =========================================================
    COMPANY
@@ -800,7 +778,6 @@
     white-space: nowrap;
 }
 
-
 /* =========================================================
    LOCATION
 ========================================================= */
@@ -833,7 +810,6 @@
 
     white-space: nowrap;
 }
-
 
 /* =========================================================
    SALARY
@@ -879,7 +855,6 @@
     white-space: nowrap;
 }
 
-
 /* =========================================================
    DEADLINE
 ========================================================= */
@@ -903,7 +878,6 @@
     font-size: 12px;
 }
 
-
 /* =========================================================
    MUTED
 ========================================================= */
@@ -914,23 +888,41 @@
     font-size: 12px;
 }
 
-
 /* =========================================================
-   ACTIONS
+   ACTION BUTTON WRAPPER
+
+   IMPORTANT FIX:
+   The wrapper fills the entire Actions cell and centers
+   the View button exactly beneath the Actions heading.
 ========================================================= */
 
 .job-action-buttons {
+    width: 100%;
+
     display: flex;
     align-items: center;
+    justify-content: center;
 
     gap: 8px;
+
+    flex-wrap: nowrap;
 
     white-space: nowrap;
 }
 
-.job-view-btn,
-.job-delete-btn {
+/* =========================================================
+   VIEW BUTTON
+
+   Fixed dimensions prevent the button from moving or
+   wrapping inside the Actions column.
+========================================================= */
+
+.job-view-btn {
+    width: 82px;
+    min-width: 82px;
     height: 36px;
+
+    flex: 0 0 82px;
 
     display: inline-flex;
     align-items: center;
@@ -938,29 +930,45 @@
 
     gap: 6px;
 
-    padding: 0 12px;
+    padding: 0 10px;
+
+    box-sizing: border-box;
+
+    border: 1px solid #cbd3ff;
 
     border-radius: 8px;
+
+    background: #eef1ff;
+
+    color: #4f5fe4;
 
     font-family: inherit;
 
     font-size: 11px;
     font-weight: 800;
 
+    line-height: 1;
+
+    white-space: nowrap;
+
     cursor: pointer;
 
     transition:
         background 0.2s ease,
         border-color 0.2s ease,
-        transform 0.2s ease;
+        color 0.2s ease,
+        transform 0.2s ease,
+        box-shadow 0.2s ease;
 }
 
-.job-view-btn {
-    border: 1px solid #cbd3ff;
+.job-view-btn svg {
+    flex-shrink: 0;
 
-    background: #eef1ff;
+    font-size: 11px;
+}
 
-    color: #4f5fe4;
+.job-view-btn span {
+    display: inline-block;
 }
 
 .job-view-btn:hover {
@@ -968,31 +976,24 @@
 
     background: #e0e5ff;
 
-    transform: translateY(-1px);
-}
-
-.job-delete-btn {
-    border: 1px solid #f3b8b8;
-
-    background: #fff1f1;
-
-    color: #dc2626;
-}
-
-.job-delete-btn:hover:not(:disabled) {
-    border-color: #ef9a9a;
-
-    background: #ffe2e2;
+    color: #4454db;
 
     transform: translateY(-1px);
+
+    box-shadow:
+        0 4px 10px rgba(79, 95, 228, 0.12);
 }
 
-.job-delete-btn:disabled {
-    opacity: 0.55;
-
-    cursor: not-allowed;
+.job-view-btn:active {
+    transform: translateY(0);
 }
 
+.job-view-btn:focus-visible {
+    outline: none;
+
+    box-shadow:
+        0 0 0 3px rgba(89, 101, 232, 0.18);
+}
 
 /* =========================================================
    LOADING / EMPTY
@@ -1110,7 +1111,6 @@
     cursor: pointer;
 }
 
-
 /* =========================================================
    MOBILE LIST
 ========================================================= */
@@ -1119,6 +1119,194 @@
     display: none;
 }
 
+/* =========================================================
+   MOBILE CARD
+========================================================= */
+
+.job-mobile-card {
+    width: 100%;
+
+    padding: 17px;
+
+    box-sizing: border-box;
+
+    background: #ffffff;
+
+    border: 1px solid #e1e6ee;
+
+    border-radius: 15px;
+
+    box-shadow:
+        0 4px 15px
+        rgba(28, 39, 68, 0.04);
+}
+
+.job-mobile-top {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+
+    gap: 12px;
+
+    padding-bottom: 15px;
+
+    border-bottom: 1px solid #edf0f4;
+}
+
+.job-mobile-profile {
+    min-width: 0;
+
+    display: flex;
+    align-items: center;
+
+    gap: 11px;
+}
+
+.job-mobile-avatar {
+    width: 43px;
+    height: 43px;
+
+    flex-shrink: 0;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    border-radius: 11px;
+
+    background: #eef0ff;
+
+    color: #5965e8;
+
+    font-size: 15px;
+    font-weight: 800;
+}
+
+.job-mobile-profile h3 {
+    margin: 0;
+
+    color: #202a3c;
+
+    font-size: 14px;
+    font-weight: 800;
+
+    overflow-wrap: anywhere;
+}
+
+.job-mobile-profile span {
+    display: block;
+
+    margin-top: 3px;
+
+    color: #99a2b1;
+
+    font-size: 10px;
+}
+
+.job-status-badge {
+    display: inline-flex;
+    align-items: center;
+
+    gap: 6px;
+
+    padding: 6px 8px;
+
+    border-radius: 999px;
+
+    background: #ecfdf3;
+
+    color: #16804b;
+
+    font-size: 9px;
+    font-weight: 800;
+
+    white-space: nowrap;
+}
+
+/* =========================================================
+   MOBILE DETAILS
+========================================================= */
+
+.job-mobile-details {
+    display: grid;
+
+    grid-template-columns:
+        1fr 1fr;
+
+    gap: 12px;
+
+    padding: 16px 0;
+}
+
+.mobile-job-detail-item {
+    min-width: 0;
+}
+
+.mobile-job-full-width {
+    grid-column: 1 / -1;
+}
+
+.mobile-job-detail-label {
+    display: flex;
+    align-items: center;
+
+    gap: 6px;
+
+    margin-bottom: 5px;
+
+    color: #7a8496;
+
+    font-size: 9px;
+    font-weight: 800;
+
+    text-transform: uppercase;
+
+    letter-spacing: 0.35px;
+}
+
+.mobile-job-detail-label svg {
+    color: #5d6ae0;
+
+    font-size: 9px;
+}
+
+.mobile-job-detail-item strong {
+    display: block;
+
+    color: #354056;
+
+    font-size: 12px;
+    line-height: 1.45;
+
+    font-weight: 650;
+
+    overflow-wrap: anywhere;
+
+    word-break: break-word;
+}
+
+/* =========================================================
+   MOBILE ACTIONS
+
+   One View Details button, full width.
+========================================================= */
+
+.job-mobile-actions {
+    display: flex;
+
+    width: 100%;
+
+    padding-top: 14px;
+
+    border-top: 1px solid #edf0f4;
+}
+
+.job-mobile-actions .job-view-btn {
+    width: 100%;
+    min-width: 0;
+
+    flex: 1 1 auto;
+}
 
 /* =========================================================
    MODAL OVERLAY
@@ -1160,7 +1348,6 @@
         opacity: 1;
     }
 }
-
 
 /* =========================================================
    MODAL
@@ -1207,7 +1394,6 @@
             scale(1);
     }
 }
-
 
 /* =========================================================
    MODAL HEADER
@@ -1335,7 +1521,6 @@
     transform: translateY(-1px);
 }
 
-
 /* =========================================================
    MODAL BODY
 ========================================================= */
@@ -1367,7 +1552,6 @@
 
     border-radius: 20px;
 }
-
 
 /* =========================================================
    MODAL SECTIONS
@@ -1426,7 +1610,6 @@
 
     font-size: 11px;
 }
-
 
 /* =========================================================
    DETAIL GRID
@@ -1506,7 +1689,6 @@
     word-break: break-word;
 }
 
-
 /* =========================================================
    TEXT BOXES
 ========================================================= */
@@ -1562,7 +1744,6 @@
     word-break: break-word;
 }
 
-
 /* =========================================================
    MODAL FOOTER
 ========================================================= */
@@ -1612,7 +1793,6 @@
     gap: 9px;
 }
 
-.job-modal-delete,
 .job-modal-close-btn {
     height: 43px;
 
@@ -1620,11 +1800,17 @@
     align-items: center;
     justify-content: center;
 
-    gap: 7px;
-
     padding: 0 16px;
 
+    min-width: 90px;
+
+    border: none;
+
     border-radius: 10px;
+
+    background: #111b30;
+
+    color: #ffffff;
 
     font-family: inherit;
 
@@ -1633,43 +1819,11 @@
 
     cursor: pointer;
 
-    transition: all 0.2s ease;
-}
-
-.job-modal-delete {
-    border: 1px solid #f2b8b8;
-
-    background: #fff0f0;
-
-    color: #dc2626;
-}
-
-.job-modal-delete:hover:not(:disabled) {
-    background: #ffe1e1;
-
-    border-color: #ef9a9a;
-
-    transform: translateY(-1px);
-}
-
-.job-modal-delete:disabled {
-    opacity: 0.55;
-
-    cursor: not-allowed;
-}
-
-.job-modal-close-btn {
-    min-width: 90px;
-
-    border: none;
-
-    background: #111b30;
-
-    color: #ffffff;
-
     box-shadow:
         0 5px 14px
         rgba(15, 23, 42, 0.14);
+
+    transition: all 0.2s ease;
 }
 
 .job-modal-close-btn:hover {
@@ -1678,13 +1832,11 @@
     transform: translateY(-1px);
 }
 
-
 /* =========================================================
-   MOBILE
+   MOBILE <= 1000px
 ========================================================= */
 
 @media (max-width: 1000px) {
-
     .manage-jobs-page {
         padding: 25px;
     }
@@ -1714,7 +1866,7 @@
     }
 
     .jobs-table {
-        min-width: 1100px;
+        min-width: 1080px;
     }
 
     .job-modal-overlay {
@@ -1726,13 +1878,11 @@
     }
 }
 
-
 /* =========================================================
-   MOBILE <= 700
+   MOBILE <= 700px
 ========================================================= */
 
 @media (max-width: 700px) {
-
     .manage-jobs-page {
         padding: 16px;
     }
@@ -1756,7 +1906,6 @@
 
         padding: 14px 16px;
     }
-
 
     /* SEARCH */
 
@@ -1783,13 +1932,11 @@
         display: none;
     }
 
-
     /* TABLE */
 
     .jobs-table-card {
         display: none;
     }
-
 
     /* MOBILE CARDS */
 
@@ -1799,24 +1946,6 @@
         flex-direction: column;
 
         gap: 12px;
-    }
-
-    .job-mobile-card {
-        width: 100%;
-
-        padding: 17px;
-
-        box-sizing: border-box;
-
-        background: #ffffff;
-
-        border: 1px solid #e1e6ee;
-
-        border-radius: 15px;
-
-        box-shadow:
-            0 4px 15px
-            rgba(28, 39, 68, 0.04);
     }
 
     .job-mobile-top {
@@ -1901,6 +2030,8 @@
         white-space: nowrap;
     }
 
+    /* MOBILE DETAILS */
+
     .job-mobile-details {
         display: grid;
 
@@ -1959,26 +2090,24 @@
         word-break: break-word;
     }
 
-
-    /* MOBILE ACTIONS */
+    /* MOBILE ACTION */
 
     .job-mobile-actions {
-        display: grid;
+        width: 100%;
 
-        grid-template-columns:
-            1fr 1fr;
-
-        gap: 8px;
+        display: flex;
 
         padding-top: 14px;
 
         border-top: 1px solid #edf0f4;
     }
 
-    .job-mobile-actions button {
+    .job-mobile-actions .job-view-btn {
         width: 100%;
-    }
+        min-width: 0;
 
+        flex: 1 1 auto;
+    }
 
     /* MODAL */
 
@@ -2076,21 +2205,16 @@
         width: 100%;
     }
 
-    .job-modal-delete,
     .job-modal-close-btn {
-        flex: 1;
-
-        min-width: 0;
+        width: 100%;
     }
 }
 
-
 /* =========================================================
-   SMALL MOBILE
+   SMALL MOBILE <= 430px
 ========================================================= */
 
 @media (max-width: 430px) {
-
     .manage-jobs-page {
         padding: 13px;
     }

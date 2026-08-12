@@ -42,82 +42,36 @@ import "./PlacementReports.css";
    PROFILE AVATAR COMPONENT
 ===================================================== */
 
-/*
- * This component handles:
- *
- * 1. Valid profile photo
- * 2. Broken profile photo
- * 3. No profile photo
- *
- * If image loading fails, initials are automatically shown.
- */
-
 function StudentAvatar({
     photo,
     name,
     initials
 }) {
-
-    const [imageError, setImageError] =
-        useState(false);
-
-    /*
-     * If photo changes for another student,
-     * reset the error state.
-     */
+    const [imageError, setImageError] = useState(false);
 
     useEffect(() => {
-
         setImageError(false);
-
     }, [photo]);
 
-
-    /*
-     * No photo OR broken photo
-     * => initials.
-     */
-
-    if (
-        !photo ||
-        imageError
-    ) {
-
+    if (!photo || imageError) {
         return (
-
             <div className="report-avatar report-avatar-fallback">
-
                 {initials}
-
             </div>
-
         );
-
     }
 
-
     return (
-
         <img
             className="report-avatar report-avatar-photo"
             src={photo}
             alt={name || "Student"}
             loading="lazy"
-
-            /*
-             * Broken Firebase Storage URL,
-             * deleted image, invalid URL, etc.
-             */
-
             onError={() => {
-
                 setImageError(true);
-
             }}
         />
-
     );
-
 }
 
 
@@ -127,43 +81,71 @@ function StudentAvatar({
 
 function PlacementReports() {
 
+    const [loading, setLoading] = useState(true);
+
+    const [students, setStudents] = useState([]);
+
+    const [companies, setCompanies] = useState([]);
+
+    const [jobs, setJobs] = useState([]);
+
+    const [applications, setApplications] = useState([]);
+
+    const [search, setSearch] = useState("");
+
+    const [companyFilter, setCompanyFilter] = useState("all");
+
+    const [jobFilter, setJobFilter] = useState("all");
+
+    const [recordFilter, setRecordFilter] = useState("all");
+
+    const [copyMessage, setCopyMessage] = useState("");
+
+    const [error, setError] = useState("");
+
 
     /* =====================================================
-       STATE
+       DELETED RECORD CHECK
     ===================================================== */
 
-    const [loading, setLoading] =
-        useState(true);
+    const isDeletedRecord = (record) => {
 
-    const [students, setStudents] =
-        useState([]);
+        if (!record) {
+            return false;
+        }
 
-    const [companies, setCompanies] =
-        useState([]);
+        if (
+            record.isDeleted === true ||
+            record.deleted === true ||
+            record.isRemoved === true ||
+            record.removed === true
+        ) {
+            return true;
+        }
 
-    const [jobs, setJobs] =
-        useState([]);
+        if (
+            record.deletedAt !== undefined &&
+            record.deletedAt !== null &&
+            String(record.deletedAt).trim() !== ""
+        ) {
+            return true;
+        }
 
-    const [applications, setApplications] =
-        useState([]);
+        const status = String(
+            record.status || ""
+        )
+            .trim()
+            .toLowerCase();
 
-    const [search, setSearch] =
-        useState("");
+        if (
+            status === "deleted" ||
+            status === "removed"
+        ) {
+            return true;
+        }
 
-    const [companyFilter, setCompanyFilter] =
-        useState("all");
-
-    const [jobFilter, setJobFilter] =
-        useState("all");
-
-    const [recordFilter, setRecordFilter] =
-        useState("all");
-
-    const [copyMessage, setCopyMessage] =
-        useState("");
-
-    const [error, setError] =
-        useState("");
+        return false;
+    };
 
 
     /* =====================================================
@@ -171,20 +153,30 @@ function PlacementReports() {
     ===================================================== */
 
     useEffect(() => {
-
         loadPlacementData();
-
     }, []);
 
+
+    /* =====================================================
+       LOAD PLACEMENT DATA
+       
+       IMPORTANT:
+       COMPANY MUST EXIST AS AN ACTIVE COMPANY USER.
+       
+       JOB MUST BELONG TO AN ACTIVE COMPANY.
+       
+       APPLICATION MUST BELONG TO:
+       - ACTIVE STUDENT
+       - ACTIVE COMPANY
+       - ACTIVE JOB
+    ===================================================== */
 
     const loadPlacementData = async () => {
 
         try {
 
             setLoading(true);
-
             setError("");
-
 
             const [
                 usersSnapshot,
@@ -230,13 +222,9 @@ function PlacementReports() {
 
             const usersData =
                 usersSnapshot.docs.map(
-                    document => ({
-
-                        id:
-                            document.id,
-
+                    (document) => ({
+                        id: document.id,
                         ...document.data()
-
                     })
                 );
 
@@ -247,13 +235,9 @@ function PlacementReports() {
 
             const jobsData =
                 jobsSnapshot.docs.map(
-                    document => ({
-
-                        id:
-                            document.id,
-
+                    (document) => ({
+                        id: document.id,
                         ...document.data()
-
                     })
                 );
 
@@ -264,13 +248,9 @@ function PlacementReports() {
 
             const applicationsData =
                 applicationsSnapshot.docs.map(
-                    document => ({
-
-                        id:
-                            document.id,
-
+                    (document) => ({
+                        id: document.id,
                         ...document.data()
-
                     })
                 );
 
@@ -281,87 +261,103 @@ function PlacementReports() {
 
             const profilesData =
                 profilesSnapshot.docs.map(
-                    document => ({
-
-                        id:
-                            document.id,
-
+                    (document) => ({
+                        id: document.id,
                         ...document.data()
-
                     })
                 );
 
 
             /* =============================================
-               STUDENTS
+               ACTIVE USERS
             ============================================= */
 
-            const studentData =
+            const activeUsersData =
                 usersData.filter(
-                    user =>
-
-                        String(
-                            user.role || ""
-                        )
-                            .toLowerCase() ===
-                        "student"
-
+                    (user) =>
+                        !isDeletedRecord(user)
                 );
 
 
             /* =============================================
-               COMPANIES
+               ACTIVE STUDENTS
             ============================================= */
 
-            const companyData =
-                usersData.filter(
-                    user =>
-
+            const studentData =
+                activeUsersData.filter(
+                    (user) =>
                         String(
                             user.role || ""
                         )
+                            .trim()
                             .toLowerCase() ===
-                        "company"
-
+                        "student"
                 );
 
 
-            /*
-             * Create lookup maps.
-             *
-             * This is faster and more reliable than
-             * repeatedly using Array.find().
-             */
+            /* =============================================
+               ACTIVE COMPANIES
+               
+               ONLY USERS WITH ROLE COMPANY
+               ARE ALLOWED TO CREATE COMPANY RECORDS.
+            ============================================= */
 
-            const userMap =
-                new Map();
-
-            usersData.forEach(
-                user => {
-
-                    const possibleIds = [
-
-                        user.id,
-
-                        user.uid,
-
-                        user.userId,
-
-                        user.studentId,
-
-                        user.studentID
-
-                    ];
+            const companyData =
+                activeUsersData.filter(
+                    (user) =>
+                        String(
+                            user.role || ""
+                        )
+                            .trim()
+                            .toLowerCase() ===
+                        "company"
+                );
 
 
-                    possibleIds
+            /* =============================================
+               ACTIVE JOBS
+            ============================================= */
+
+            const activeJobsData =
+                jobsData.filter(
+                    (job) =>
+                        !isDeletedRecord(job)
+                );
+
+
+            /* =============================================
+               ACTIVE PROFILES
+            ============================================= */
+
+            const activeProfilesData =
+                profilesData.filter(
+                    (profile) =>
+                        !isDeletedRecord(profile)
+                );
+
+
+            /* =================================================
+               ACTIVE STUDENT ID SET
+            ================================================= */
+
+            const activeStudentIds = new Set();
+
+            studentData.forEach(
+                (student) => {
+
+                    [
+                        student.id,
+                        student.uid,
+                        student.userId,
+                        student.studentId,
+                        student.studentID
+                    ]
                         .filter(Boolean)
                         .forEach(
-                            id => {
+                            (id) => {
 
-                                userMap.set(
-                                    String(id),
-                                    user
+                                activeStudentIds.add(
+                                    String(id)
                                 );
 
                             }
@@ -371,31 +367,118 @@ function PlacementReports() {
             );
 
 
-            const profileMap =
-                new Map();
+            /* =================================================
+               ACTIVE COMPANY ID SET
+               
+               THIS IS THE IMPORTANT PART.
+               
+               ONLY THESE IDS CAN BE USED TO DISPLAY
+               A COMPANY OR ITS JOBS.
+            ================================================= */
 
-            profilesData.forEach(
-                profile => {
+            const activeCompanyIds = new Set();
+
+            companyData.forEach(
+                (company) => {
+
+                    [
+                        company.id,
+                        company.uid,
+                        company.userId,
+                        company.companyId,
+                        company.companyID
+                    ]
+                        .filter(Boolean)
+                        .forEach(
+                            (id) => {
+
+                                activeCompanyIds.add(
+                                    String(id)
+                                );
+
+                            }
+                        );
+
+                }
+            );
+
+
+            /* =================================================
+               COMPANY LOOKUP MAP
+            ================================================= */
+
+            const companyMap = new Map();
+
+            companyData.forEach(
+                (company) => {
+
+                    const ids = [
+
+                        company.id,
+                        company.uid,
+                        company.userId,
+                        company.companyId,
+                        company.companyID
+
+                    ]
+                        .filter(Boolean)
+                        .map(
+                            (id) =>
+                                String(id)
+                        );
+
+
+                    const companyName =
+                        company.companyName ||
+                        company.company ||
+                        company.name ||
+                        company.businessName ||
+                        company.displayName ||
+                        "Company";
+
+
+                    ids.forEach(
+                        (id) => {
+
+                            companyMap.set(
+                                id,
+                                {
+                                    ...company,
+                                    _companyName:
+                                        companyName
+                                }
+                            );
+
+                        }
+                    );
+
+                }
+            );
+
+
+            /* =================================================
+               PROFILE LOOKUP MAP
+            ================================================= */
+
+            const profileMap = new Map();
+
+            activeProfilesData.forEach(
+                (profile) => {
 
                     const possibleIds = [
 
                         profile.id,
-
                         profile.uid,
-
                         profile.userId,
-
                         profile.studentId,
-
                         profile.studentID
 
                     ];
 
-
                     possibleIds
                         .filter(Boolean)
                         .forEach(
-                            id => {
+                            (id) => {
 
                                 profileMap.set(
                                     String(id),
@@ -409,34 +492,164 @@ function PlacementReports() {
             );
 
 
-            const jobMap =
-                new Map();
+            /* =================================================
+               USER LOOKUP MAP
+            ================================================= */
 
-            jobsData.forEach(
-                job => {
+            const userMap = new Map();
 
-                    jobMap.set(
-                        String(job.id),
-                        job
-                    );
+            activeUsersData.forEach(
+                (user) => {
 
-                    if (
-                        job.uid
-                    ) {
+                    const possibleIds = [
 
-                        jobMap.set(
-                            String(job.uid),
-                            job
+                        user.id,
+                        user.uid,
+                        user.userId,
+                        user.studentId,
+                        user.studentID,
+                        user.companyId,
+                        user.companyID
+
+                    ];
+
+                    possibleIds
+                        .filter(Boolean)
+                        .forEach(
+                            (id) => {
+
+                                userMap.set(
+                                    String(id),
+                                    user
+                                );
+
+                            }
                         );
 
+                }
+            );
+
+
+            /* =================================================
+               ACTIVE JOB MAP
+               
+               IMPORTANT:
+               A JOB IS ONLY ACTIVE IF:
+               
+               1. JOB ITSELF IS NOT DELETED
+               2. JOB HAS A COMPANY ID
+               3. COMPANY ID BELONGS TO AN ACTIVE COMPANY
+            ================================================= */
+
+            const activeJobMap = new Map();
+
+            activeJobsData.forEach(
+                (job) => {
+
+                    const companyId =
+
+                        job.companyId ||
+                        job.companyID ||
+                        job.companyUid ||
+                        job.companyUID ||
+                        job.companyUserId ||
+                        job.companyUserID ||
+                        job.uidCompany ||
+                        job.uid_company ||
+                        "";
+
+
+                    /* -----------------------------------------
+                       JOB WITHOUT A VALID COMPANY
+                       IS NOT A VALID RECRUITMENT ROLE.
+                    ----------------------------------------- */
+
+                    if (!companyId) {
+                        return;
                     }
 
-                    if (
-                        job.jobId
-                    ) {
 
-                        jobMap.set(
-                            String(job.jobId),
+                    /* -----------------------------------------
+                       COMPANY MUST CURRENTLY EXIST.
+                    ----------------------------------------- */
+
+                    if (
+                        !activeCompanyIds.has(
+                            String(companyId)
+                        )
+                    ) {
+                        return;
+                    }
+
+
+                    const jobIds = [
+
+                        job.id,
+                        job.uid,
+                        job.jobId
+
+                    ]
+                        .filter(Boolean)
+                        .map(
+                            (id) =>
+                                String(id)
+                        );
+
+
+                    const company =
+                        companyMap.get(
+                            String(companyId)
+                        );
+
+
+                    const normalizedJob = {
+
+                        ...job,
+
+                        _companyId:
+                            String(companyId),
+
+                        _company:
+                            company || null
+
+                    };
+
+
+                    jobIds.forEach(
+                        (jobId) => {
+
+                            activeJobMap.set(
+                                jobId,
+                                normalizedJob
+                            );
+
+                        }
+                    );
+
+                }
+            );
+
+
+            /* =================================================
+               ACTIVE JOB ARRAY
+            ================================================= */
+
+            const validJobsMap = new Map();
+
+            activeJobMap.forEach(
+                (job) => {
+
+                    const key =
+                        String(
+                            job.id ||
+                            job.jobId ||
+                            job.uid
+                        );
+
+                    if (!validJobsMap.has(key)) {
+
+                        validJobsMap.set(
+                            key,
                             job
                         );
 
@@ -446,106 +659,386 @@ function PlacementReports() {
             );
 
 
-            /* =============================================
-               ENRICH APPLICATIONS
-            ============================================= */
-
-            const enrichedApplications =
-                applicationsData.map(
-                    application => {
-
-                        const studentId =
-
-                            application.studentId ||
-
-                            application.studentID ||
-
-                            application.studentUid ||
-
-                            application.studentUID ||
-
-                            application.uid ||
-
-                            application.userId ||
-
-                            application.userId ||
-
-                            "";
+            const validJobsData =
+                Array.from(
+                    validJobsMap.values()
+                );
 
 
-                        const jobId =
+            /* =================================================
+               DELETED JOB IDS
+               
+               Used to explicitly reject old applications.
+            ================================================= */
 
-                            application.jobId ||
+            const deletedJobIds = new Set();
 
-                            application.jobID ||
+            jobsData
+                .filter(
+                    (job) =>
+                        isDeletedRecord(job)
+                )
+                .forEach(
+                    (job) => {
 
-                            application.jobUid ||
+                        [
+                            job.id,
+                            job.uid,
+                            job.jobId
+                        ]
+                            .filter(Boolean)
+                            .forEach(
+                                (id) => {
 
-                            application.jobUID ||
+                                    deletedJobIds.add(
+                                        String(id)
+                                    );
 
-                            "";
-
-
-                        /*
-                         * Find student profile.
-                         */
-
-                        const profile =
-                            profileMap.get(
-                                String(
-                                    studentId
-                                )
-                            ) || null;
-
-
-                        /*
-                         * Find user.
-                         */
-
-                        const user =
-                            userMap.get(
-                                String(
-                                    studentId
-                                )
-                            ) || null;
-
-
-                        /*
-                         * Find job.
-                         */
-
-                        const job =
-                            jobMap.get(
-                                String(
-                                    jobId
-                                )
-                            ) || null;
-
-
-                        return {
-
-                            ...application,
-
-                            _profile:
-                                profile,
-
-                            _user:
-                                user,
-
-                            _job:
-                                job,
-
-                            _studentId:
-                                studentId,
-
-                            _jobId:
-                                jobId
-
-                        };
+                                }
+                            );
 
                     }
                 );
 
+
+            /* =================================================
+               ALL USER IDS
+               
+               Used to detect references to deleted users.
+            ================================================= */
+
+            const allUserIds = new Set();
+
+            usersData.forEach(
+                (user) => {
+
+                    [
+                        user.id,
+                        user.uid,
+                        user.userId,
+                        user.studentId,
+                        user.studentID,
+                        user.companyId,
+                        user.companyID
+                    ]
+                        .filter(Boolean)
+                        .forEach(
+                            (id) => {
+
+                                allUserIds.add(
+                                    String(id)
+                                );
+
+                            }
+                        );
+
+                }
+            );
+
+
+            /* =================================================
+               ENRICH APPLICATIONS
+               
+               STRICT VALIDATION
+            ================================================= */
+
+            const enrichedApplications =
+                applicationsData
+
+                    .filter(
+                        (application) => {
+
+                            /* ---------------------------------
+                               APPLICATION ITSELF DELETED
+                            --------------------------------- */
+
+                            if (
+                                isDeletedRecord(
+                                    application
+                                )
+                            ) {
+                                return false;
+                            }
+
+
+                            /* ---------------------------------
+                               STUDENT ID
+                            --------------------------------- */
+
+                            const studentId =
+
+                                application.studentId ||
+                                application.studentID ||
+                                application.studentUid ||
+                                application.studentUID ||
+                                application.uid ||
+                                application.userId ||
+                                "";
+
+
+                            /* ---------------------------------
+                               JOB ID
+                            --------------------------------- */
+
+                            const jobId =
+
+                                application.jobId ||
+                                application.jobID ||
+                                application.jobUid ||
+                                application.jobUID ||
+                                "";
+
+
+                            /* ---------------------------------
+                               MUST HAVE STUDENT
+                            --------------------------------- */
+
+                            if (!studentId) {
+                                return false;
+                            }
+
+
+                            /* ---------------------------------
+                               STUDENT MUST CURRENTLY EXIST
+                            --------------------------------- */
+
+                            if (
+                                !activeStudentIds.has(
+                                    String(studentId)
+                                )
+                            ) {
+                                return false;
+                            }
+
+
+                            /* ---------------------------------
+                               DELETED JOB
+                            --------------------------------- */
+
+                            if (
+                                jobId &&
+                                deletedJobIds.has(
+                                    String(jobId)
+                                )
+                            ) {
+                                return false;
+                            }
+
+
+                            /* ---------------------------------
+                               JOB MUST CURRENTLY EXIST
+                            --------------------------------- */
+
+                            if (!jobId) {
+                                return false;
+                            }
+
+
+                            const job =
+                                activeJobMap.get(
+                                    String(jobId)
+                                );
+
+
+                            if (!job) {
+                                return false;
+                            }
+
+
+                            /* ---------------------------------
+                               COMPANY FROM JOB
+                            --------------------------------- */
+
+                            const jobCompanyId =
+
+                                job._companyId ||
+                                job.companyId ||
+                                job.companyID ||
+                                job.companyUid ||
+                                job.companyUID ||
+                                "";
+
+
+                            /* ---------------------------------
+                               JOB COMPANY MUST EXIST
+                            --------------------------------- */
+
+                            if (!jobCompanyId) {
+                                return false;
+                            }
+
+
+                            if (
+                                !activeCompanyIds.has(
+                                    String(jobCompanyId)
+                                )
+                            ) {
+                                return false;
+                            }
+
+
+                            /* ---------------------------------
+                               COMPANY USER MUST EXIST
+                            --------------------------------- */
+
+                            const company =
+                                companyMap.get(
+                                    String(jobCompanyId)
+                                );
+
+
+                            if (!company) {
+                                return false;
+                            }
+
+
+                            /* ---------------------------------
+                               APPLICATION COMPANY REFERENCES
+                               IF PRESENT, THEY MUST ALSO MATCH
+                               AN ACTIVE COMPANY.
+                            --------------------------------- */
+
+                            const applicationCompanyId =
+
+                                application.companyId ||
+                                application.companyID ||
+                                application.companyUid ||
+                                application.companyUID ||
+                                application.companyUserId ||
+                                application.companyUserID ||
+                                "";
+
+
+                            if (
+                                applicationCompanyId &&
+                                !activeCompanyIds.has(
+                                    String(
+                                        applicationCompanyId
+                                    )
+                                )
+                            ) {
+                                return false;
+                            }
+
+
+                            /* ---------------------------------
+                               IF APPLICATION HAS A COMPANY ID,
+                               IT MUST MATCH THE JOB COMPANY.
+                            --------------------------------- */
+
+                            if (
+                                applicationCompanyId &&
+                                String(
+                                    applicationCompanyId
+                                ) !==
+                                String(
+                                    jobCompanyId
+                                )
+                            ) {
+                                return false;
+                            }
+
+
+                            /* ---------------------------------
+                               ALL VALID
+                            --------------------------------- */
+
+                            return true;
+
+                        }
+                    )
+
+                    .map(
+                        (application) => {
+
+                            const studentId =
+
+                                application.studentId ||
+                                application.studentID ||
+                                application.studentUid ||
+                                application.studentUID ||
+                                application.uid ||
+                                application.userId ||
+                                "";
+
+
+                            const jobId =
+
+                                application.jobId ||
+                                application.jobID ||
+                                application.jobUid ||
+                                application.jobUID ||
+                                "";
+
+
+                            const profile =
+                                profileMap.get(
+                                    String(studentId)
+                                ) || null;
+
+
+                            const user =
+                                userMap.get(
+                                    String(studentId)
+                                ) || null;
+
+
+                            const job =
+                                activeJobMap.get(
+                                    String(jobId)
+                                ) || null;
+
+
+                            const companyId =
+
+                                job?._companyId ||
+                                job?.companyId ||
+                                job?.companyID ||
+                                job?.companyUid ||
+                                job?.companyUID ||
+                                "";
+
+
+                            const company =
+                                companyMap.get(
+                                    String(companyId)
+                                ) || null;
+
+
+                            return {
+
+                                ...application,
+
+                                _profile:
+                                    profile,
+
+                                _user:
+                                    user,
+
+                                _job:
+                                    job,
+
+                                _company:
+                                    company,
+
+                                _companyId:
+                                    companyId,
+
+                                _studentId:
+                                    studentId,
+
+                                _jobId:
+                                    jobId
+
+                            };
+
+                        }
+                    );
+
+
+            /* =================================================
+               FINAL DATA
+            ================================================= */
 
             setStudents(
                 studentData
@@ -556,7 +1049,7 @@ function PlacementReports() {
             );
 
             setJobs(
-                jobsData
+                validJobsData
             );
 
             setApplications(
@@ -598,120 +1091,59 @@ function PlacementReports() {
     ) => {
 
         if (!object) {
-
             return fallback;
-
         }
 
-
-        for (
-            const field of fields
-        ) {
+        for (const field of fields) {
 
             const value =
                 object[field];
-
 
             if (
                 value !== undefined &&
                 value !== null &&
                 String(value).trim() !== ""
             ) {
-
                 return value;
-
             }
 
         }
 
-
         return fallback;
-
     };
 
 
     /* =====================================================
-       PROFILE PHOTO FIELDS
+       PHOTO FIELDS
     ===================================================== */
 
     const PHOTO_FIELDS = [
 
-        /*
-         * Firebase Auth / common
-         */
-
         "photoURL",
-
         "photoUrl",
-
-        "photoURL",
-
-        /*
-         * Profile photo
-         */
-
         "photo",
-
         "profilePhoto",
-
         "profile_photo",
-
         "profileImage",
-
         "profile_image",
-
         "profilePicture",
-
         "profilePictureUrl",
-
         "profilePictureURL",
-
-        /*
-         * Image
-         */
-
         "image",
-
         "imageUrl",
-
         "imageURL",
-
-        /*
-         * Avatar
-         */
-
         "avatar",
-
         "avatarUrl",
-
         "avatarURL",
-
-        /*
-         * Picture
-         */
-
         "picture",
-
         "pictureUrl",
-
         "pictureURL",
-
-        /*
-         * Firebase Storage style fields
-         */
-
         "downloadURL",
-
         "downloadUrl",
-
         "profilePhotoUrl",
-
         "profilePhotoURL",
-
         "studentPhoto",
-
         "studentPhotoUrl",
-
         "studentPhotoURL"
 
     ];
@@ -727,19 +1159,12 @@ function PlacementReports() {
         application
     ) => {
 
-        /*
-         * -----------------------------------------------
-         * 1. STUDENT PROFILE
-         * -----------------------------------------------
-         */
-
         const profilePhoto =
             getFirstValue(
                 profile,
                 PHOTO_FIELDS,
                 ""
             );
-
 
         if (
             profilePhoto &&
@@ -753,19 +1178,12 @@ function PlacementReports() {
         }
 
 
-        /*
-         * -----------------------------------------------
-         * 2. USERS
-         * -----------------------------------------------
-         */
-
         const userPhoto =
             getFirstValue(
                 user,
                 PHOTO_FIELDS,
                 ""
             );
-
 
         if (
             userPhoto &&
@@ -779,19 +1197,12 @@ function PlacementReports() {
         }
 
 
-        /*
-         * -----------------------------------------------
-         * 3. APPLICATION
-         * -----------------------------------------------
-         */
-
         const applicationPhoto =
             getFirstValue(
                 application,
                 PHOTO_FIELDS,
                 ""
             );
-
 
         if (
             applicationPhoto &&
@@ -828,21 +1239,14 @@ function PlacementReports() {
                     " "
                 );
 
-
         if (!cleanName) {
-
             return "S";
-
         }
-
 
         const words =
             cleanName.split(" ");
 
-
-        if (
-            words.length === 1
-        ) {
+        if (words.length === 1) {
 
             return words[0]
                 .charAt(0)
@@ -850,9 +1254,7 @@ function PlacementReports() {
 
         }
 
-
         return (
-
             words[0]
                 .charAt(0) +
 
@@ -860,14 +1262,13 @@ function PlacementReports() {
                 words.length - 1
             ]
                 .charAt(0)
-
         ).toUpperCase();
 
     };
 
 
     /* =====================================================
-       DATE
+       DATE VALUE
     ===================================================== */
 
     const getDateValue = (
@@ -875,11 +1276,8 @@ function PlacementReports() {
     ) => {
 
         if (!value) {
-
             return 0;
-
         }
-
 
         if (
             typeof value.toDate ===
@@ -891,7 +1289,6 @@ function PlacementReports() {
                 .getTime();
 
         }
-
 
         if (
             typeof value === "object" &&
@@ -906,73 +1303,61 @@ function PlacementReports() {
 
         }
 
-
         const date =
             new Date(value);
-
 
         return isNaN(
             date.getTime()
         )
-
             ? 0
-
             : date.getTime();
 
     };
 
+
+    /* =====================================================
+       FORMAT DATE
+    ===================================================== */
 
     const formatDate = (
         value
     ) => {
 
         const timestamp =
-            getDateValue(
-                value
-            );
-
+            getDateValue(value);
 
         if (!timestamp) {
-
             return "—";
-
         }
-
 
         return new Date(
             timestamp
         ).toLocaleDateString(
             "en-IN",
             {
-
                 day: "2-digit",
-
                 month: "short",
-
                 year: "numeric"
-
             }
         );
 
     };
 
 
+    /* =====================================================
+       EXCEL DATE
+    ===================================================== */
+
     const getExcelDate = (
         value
     ) => {
 
         const timestamp =
-            getDateValue(
-                value
-            );
-
+            getDateValue(value);
 
         if (!timestamp) {
-
             return null;
-
         }
-
 
         return new Date(
             timestamp
@@ -994,11 +1379,8 @@ function PlacementReports() {
             value === null ||
             String(value).trim() === ""
         ) {
-
             return "Not Available";
-
         }
-
 
         return String(value);
 
@@ -1023,66 +1405,53 @@ function PlacementReports() {
 
 
     /* =====================================================
-       STATUS
+       APPLICATION STATUS
     ===================================================== */
 
     const isSelectedApplication =
-        application => {
+        (application) => {
 
             const status =
                 normalize(
                     application.status
                 );
 
-
             return (
-
                 status === "accepted" ||
-
                 status === "selected" ||
-
                 status === "placed"
-
             );
 
         };
 
 
     const isPlacedApplication =
-        application => {
+        (application) => {
 
             const status =
                 normalize(
                     application.status
                 );
 
-
             return (
-
                 application.placedStudent === true ||
-
                 application.isPlaced === true ||
-
                 status === "placed"
-
             );
 
         };
 
 
     const isSelectedOnlyApplication =
-        application => {
+        (application) => {
 
             return (
-
                 isSelectedApplication(
                     application
                 ) &&
-
                 !isPlacedApplication(
                     application
                 )
-
             );
 
         };
@@ -1093,7 +1462,7 @@ function PlacementReports() {
     ===================================================== */
 
     const buildStudentRecord =
-        application => {
+        (application) => {
 
             const profile =
                 application._profile;
@@ -1104,17 +1473,14 @@ function PlacementReports() {
             const job =
                 application._job;
 
+            const company =
+                application._company;
 
-            /* =============================================
-               STUDENT NAME
-            ============================================= */
 
             const studentName =
 
                 application.studentName ||
-
                 application.student ||
-
                 application.name ||
 
                 getFirstValue(
@@ -1137,14 +1503,9 @@ function PlacementReports() {
                 );
 
 
-            /* =============================================
-               EMAIL
-            ============================================= */
-
             const email =
 
                 application.studentEmail ||
-
                 application.email ||
 
                 getFirstValue(
@@ -1164,16 +1525,10 @@ function PlacementReports() {
                 );
 
 
-            /* =============================================
-               PHONE
-            ============================================= */
-
             const phone =
 
                 application.phone ||
-
                 application.mobile ||
-
                 application.mobileNumber ||
 
                 getFirstValue(
@@ -1198,14 +1553,9 @@ function PlacementReports() {
                 );
 
 
-            /* =============================================
-               COLLEGE
-            ============================================= */
-
             const college =
 
                 application.college ||
-
                 application.collegeName ||
 
                 getFirstValue(
@@ -1224,14 +1574,9 @@ function PlacementReports() {
                 );
 
 
-            /* =============================================
-               DEGREE
-            ============================================= */
-
             const degree =
 
                 application.degree ||
-
                 application.course ||
 
                 getFirstValue(
@@ -1250,14 +1595,9 @@ function PlacementReports() {
                 );
 
 
-            /* =============================================
-               DEPARTMENT
-            ============================================= */
-
             const department =
 
                 application.department ||
-
                 application.branch ||
 
                 getFirstValue(
@@ -1271,129 +1611,88 @@ function PlacementReports() {
                 );
 
 
-            /* =============================================
-               JOB TITLE
-            ============================================= */
-
             const jobTitle =
 
-                application.jobTitle ||
-
-                application.jobName ||
-
-                application.title ||
-
                 job?.jobTitle ||
-
                 job?.jobName ||
-
                 job?.title ||
-
                 job?.position ||
-
                 job?.role ||
+
+                application.jobTitle ||
+                application.jobName ||
+                application.title ||
 
                 "Job Not Available";
 
 
-            /* =============================================
-               COMPANY
-            ============================================= */
+            /*
+             * IMPORTANT:
+             *
+             * Company name is taken from the VALIDATED
+             * COMPANY USER first.
+             *
+             * Old application.companyName cannot create
+             * a fake company in the report.
+             */
 
             const companyName =
 
-                application.companyName ||
-
-                application.company ||
+                company?._companyName ||
+                company?.companyName ||
+                company?.company ||
+                company?.name ||
+                company?.businessName ||
+                company?.displayName ||
 
                 job?.companyName ||
-
                 job?.company ||
 
-                getFirstValue(
-                    job,
-                    [
-                        "companyName",
-                        "company",
-                        "company_name"
-                    ],
-                    "Company"
-                );
+                "Company";
 
-
-            /* =============================================
-               COMPANY ID
-            ============================================= */
 
             const companyId =
 
-                application.companyId ||
-
-                application.companyID ||
-
+                application._companyId ||
+                job?._companyId ||
                 job?.companyId ||
-
                 job?.companyID ||
-
+                job?.companyUid ||
+                job?.companyUID ||
                 "";
 
-
-            /* =============================================
-               PACKAGE
-            ============================================= */
 
             const packageValue =
 
                 application.salary ||
-
                 application.package ||
-
                 application.salaryPackage ||
-
                 application.ctc ||
 
                 job?.salary ||
-
                 job?.package ||
-
                 job?.salaryPackage ||
-
                 job?.ctc ||
 
                 "Not Specified";
 
 
-            /* =============================================
-               LOCATION
-            ============================================= */
-
             const location =
 
                 application.location ||
-
                 application.jobLocation ||
-
                 job?.location ||
 
                 "Not Specified";
 
 
-            /* =============================================
-               DATES
-            ============================================= */
-
             const selectedDate =
 
                 application.statusUpdatedAt ||
-
                 application.selectedAt ||
-
                 application.selectedDate ||
-
                 application.updatedAt ||
-
                 application.appliedAt ||
-
                 application.createdAt ||
 
                 null;
@@ -1402,9 +1701,7 @@ function PlacementReports() {
             const placedDate =
 
                 application.placedAt ||
-
                 application.placementDate ||
-
                 application.placedOn ||
 
                 (
@@ -1415,10 +1712,6 @@ function PlacementReports() {
                         : null
                 );
 
-
-            /* =============================================
-               STATUS
-            ============================================= */
 
             const selected =
                 isSelectedApplication(
@@ -1432,10 +1725,6 @@ function PlacementReports() {
                 );
 
 
-            /* =============================================
-               PROFILE PHOTO
-            ============================================= */
-
             const profilePhoto =
                 getProfilePhoto(
                     profile,
@@ -1443,10 +1732,6 @@ function PlacementReports() {
                     application
                 );
 
-
-            /* =============================================
-               INITIALS
-            ============================================= */
 
             const studentInitials =
                 getStudentInitials(
@@ -1515,55 +1800,39 @@ function PlacementReports() {
                 );
 
             },
-            [
-                applications
-            ]
+            [applications]
         );
 
 
     /* =====================================================
        COMPANY OPTIONS
+       
+       IMPORTANT:
+       OPTIONS COME FROM ACTIVE COMPANY USERS,
+       NOT FROM APPLICATION NAMES.
+       
+       ONLY COMPANIES THAT HAVE VALID JOB/APPLICATION
+       DATA ARE SHOWN.
     ===================================================== */
 
     const companyOptions =
         useMemo(
             () => {
 
-                const map =
-                    new Map();
-
+                const validCompanyIds =
+                    new Set();
 
                 processedApplications.forEach(
-                    record => {
-
-                        const companyKey =
-
-                            record.companyId ||
-
-                            record._job?.companyId ||
-
-                            normalize(
-                                record.companyName
-                            );
-
+                    (record) => {
 
                         if (
-                            !map.has(
-                                companyKey
-                            )
+                            record.companyId
                         ) {
 
-                            map.set(
-                                companyKey,
-                                {
-
-                                    id:
-                                        companyKey,
-
-                                    name:
-                                        record.companyName
-
-                                }
+                            validCompanyIds.add(
+                                String(
+                                    record.companyId
+                                )
                             );
 
                         }
@@ -1572,26 +1841,104 @@ function PlacementReports() {
                 );
 
 
-                return Array.from(
-                    map.values()
-                )
+                return companies
+
+                    .filter(
+                        (company) => {
+
+                            const ids = [
+
+                                company.id,
+                                company.uid,
+                                company.userId,
+                                company.companyId,
+                                company.companyID
+
+                            ]
+                                .filter(Boolean)
+                                .map(
+                                    (id) =>
+                                        String(id)
+                                );
+
+
+                            return ids.some(
+                                (id) =>
+                                    validCompanyIds.has(
+                                        id
+                                    )
+                            );
+
+                        }
+                    )
+
+                    .map(
+                        (company) => {
+
+                            const name =
+
+                                company.companyName ||
+                                company.company ||
+                                company.name ||
+                                company.businessName ||
+                                company.displayName ||
+                                "Company";
+
+
+                            const id =
+
+                                company.companyId ||
+                                company.companyID ||
+                                company.uid ||
+                                company.userId ||
+                                company.id;
+
+
+                            return {
+
+                                id:
+                                    String(id),
+
+                                name
+
+                            };
+
+                        }
+                    )
+
+                    .filter(
+                        (company, index, array) =>
+
+                            array.findIndex(
+                                (item) =>
+                                    String(item.id) ===
+                                    String(company.id)
+                            ) === index
+                    )
+
                     .sort(
                         (a, b) =>
-
-                            a.name.localeCompare(
-                                b.name
+                            String(
+                                a.name
+                            ).localeCompare(
+                                String(
+                                    b.name
+                                )
                             )
                     );
 
             },
             [
+                companies,
                 processedApplications
             ]
         );
 
 
     /* =====================================================
-       JOB OPTIONS
+       AVAILABLE JOBS
+       
+       ONLY VALIDATED ACTIVE JOBS ARE USED.
     ===================================================== */
 
     const availableJobs =
@@ -1608,29 +1955,15 @@ function PlacementReports() {
 
                     records =
                         records.filter(
-                            record => {
-
-                                const companyKey =
-
-                                    record.companyId ||
-
-                                    record._job?.companyId ||
-
-                                    normalize(
-                                        record.companyName
-                                    );
-
+                            (record) => {
 
                                 return (
-
                                     String(
-                                        companyKey
+                                        record.companyId
                                     ) ===
-
                                     String(
                                         companyFilter
                                     )
-
                                 );
 
                             }
@@ -1644,35 +1977,45 @@ function PlacementReports() {
 
 
                 records.forEach(
-                    record => {
+                    (record) => {
+
+                        /*
+                         * Job was already validated while
+                         * loading the data.
+                         */
+
+                        if (
+                            !record._job
+                        ) {
+                            return;
+                        }
+
 
                         const jobId =
 
                             record._jobId ||
+                            record._job.id ||
+                            record._job.jobId ||
+                            record._job.uid;
 
-                            record.jobId ||
 
-                            record.jobID ||
-
-                            record._job?.id ||
-
-                            normalize(
-                                `${record.companyName}-${record.jobTitle}`
-                            );
+                        if (!jobId) {
+                            return;
+                        }
 
 
                         if (
                             !map.has(
-                                jobId
+                                String(jobId)
                             )
                         ) {
 
                             map.set(
-                                jobId,
+                                String(jobId),
                                 {
 
                                     id:
-                                        jobId,
+                                        String(jobId),
 
                                     title:
                                         record.jobTitle,
@@ -1700,9 +2043,12 @@ function PlacementReports() {
                 )
                     .sort(
                         (a, b) =>
-
-                            a.title.localeCompare(
-                                b.title
+                            String(
+                                a.title
+                            ).localeCompare(
+                                String(
+                                    b.title
+                                )
                             )
                     );
 
@@ -1721,13 +2067,28 @@ function PlacementReports() {
     useEffect(
         () => {
 
-            setJobFilter(
-                "all"
-            );
+            const jobStillExists =
+                availableJobs.some(
+                    (job) =>
+                        String(job.id) ===
+                        String(jobFilter)
+                );
+
+
+            if (
+                jobFilter !== "all" &&
+                !jobStillExists
+            ) {
+
+                setJobFilter("all");
+
+            }
 
         },
         [
-            companyFilter
+            companyFilter,
+            availableJobs,
+            jobFilter
         ]
     );
 
@@ -1750,29 +2111,15 @@ function PlacementReports() {
 
                     records =
                         records.filter(
-                            record => {
-
-                                const companyKey =
-
-                                    record.companyId ||
-
-                                    record._job?.companyId ||
-
-                                    normalize(
-                                        record.companyName
-                                    );
-
+                            (record) => {
 
                                 return (
-
                                     String(
-                                        companyKey
+                                        record.companyId
                                     ) ===
-
                                     String(
                                         companyFilter
                                     )
-
                                 );
 
                             }
@@ -1787,31 +2134,24 @@ function PlacementReports() {
 
                     records =
                         records.filter(
-                            record => {
+                            (record) => {
 
                                 const applicationJobId =
 
                                     record._jobId ||
-
-                                    record.jobId ||
-
-                                    record.jobID ||
-
                                     record._job?.id ||
-
+                                    record._job?.jobId ||
+                                    record._job?.uid ||
                                     "";
 
 
                                 return (
-
                                     String(
                                         applicationJobId
                                     ) ===
-
                                     String(
                                         jobFilter
                                     )
-
                                 );
 
                             }
@@ -1831,13 +2171,13 @@ function PlacementReports() {
         );
 
 
-    /* =====================================================
-       STATUS COUNTS
-    ===================================================== */
-
     const allOpportunityRecords =
         opportunityApplications;
 
+
+    /* =====================================================
+       SELECTED
+    ===================================================== */
 
     const selectedOpportunityRecords =
         useMemo(
@@ -1849,11 +2189,13 @@ function PlacementReports() {
                     );
 
             },
-            [
-                allOpportunityRecords
-            ]
+            [allOpportunityRecords]
         );
 
+
+    /* =====================================================
+       PLACED
+    ===================================================== */
 
     const placedOpportunityRecords =
         useMemo(
@@ -1865,11 +2207,13 @@ function PlacementReports() {
                     );
 
             },
-            [
-                allOpportunityRecords
-            ]
+            [allOpportunityRecords]
         );
 
+
+    /* =====================================================
+       SELECTED ONLY
+    ===================================================== */
 
     const selectedOnlyOpportunityRecords =
         useMemo(
@@ -1881,9 +2225,7 @@ function PlacementReports() {
                     );
 
             },
-            [
-                allOpportunityRecords
-            ]
+            [allOpportunityRecords]
         );
 
 
@@ -1900,8 +2242,7 @@ function PlacementReports() {
 
 
                 if (
-                    recordFilter ===
-                    "selected"
+                    recordFilter === "selected"
                 ) {
 
                     records =
@@ -1913,8 +2254,7 @@ function PlacementReports() {
 
 
                 if (
-                    recordFilter ===
-                    "placed"
+                    recordFilter === "placed"
                 ) {
 
                     records =
@@ -1932,43 +2272,30 @@ function PlacementReports() {
 
 
                 if (!searchText) {
-
                     return records;
-
                 }
 
 
                 return records.filter(
-                    record => {
+                    (record) => {
 
                         const searchable = [
 
                             record.studentName,
-
                             record.email,
-
                             record.phone,
-
                             record.college,
-
                             record.degree,
-
                             record.department,
-
                             record.companyName,
-
                             record.jobTitle,
-
                             record.packageValue,
-
                             record.location,
-
                             record.status
 
                         ]
                             .map(
-                                value =>
-
+                                (value) =>
                                     String(
                                         value || ""
                                     )
@@ -1994,7 +2321,7 @@ function PlacementReports() {
 
 
     /* =====================================================
-       UNIQUE COUNTS
+       UNIQUE SELECTED STUDENTS
     ===================================================== */
 
     const uniqueSelectedStudents =
@@ -2004,12 +2331,10 @@ function PlacementReports() {
                 return new Set(
 
                     selectedOpportunityRecords.map(
-                        record =>
+                        (record) =>
 
                             record._studentId ||
-
                             record.studentId ||
-
                             record.id
 
                     )
@@ -2017,11 +2342,13 @@ function PlacementReports() {
                 ).size;
 
             },
-            [
-                selectedOpportunityRecords
-            ]
+            [selectedOpportunityRecords]
         );
 
+
+    /* =====================================================
+       UNIQUE PLACED STUDENTS
+    ===================================================== */
 
     const uniquePlacedStudents =
         useMemo(
@@ -2030,12 +2357,10 @@ function PlacementReports() {
                 return new Set(
 
                     placedOpportunityRecords.map(
-                        record =>
+                        (record) =>
 
                             record._studentId ||
-
                             record.studentId ||
-
                             record.id
 
                     )
@@ -2043,38 +2368,29 @@ function PlacementReports() {
                 ).size;
 
             },
-            [
-                placedOpportunityRecords
-            ]
+            [placedOpportunityRecords]
         );
 
+
+    /* =====================================================
+       TOTAL COUNTS
+    ===================================================== */
 
     const totalApplications =
         applications.length;
 
-
     const totalStudents =
         students.length;
-
-
-    const totalCompanies =
-        companies.length;
-
-
-    const totalJobs =
-        jobs.length;
 
 
     const placementPercentage =
         uniqueSelectedStudents > 0
 
             ? (
-
                 (
                     uniquePlacedStudents /
                     uniqueSelectedStudents
                 ) * 100
-
             ).toFixed(1)
 
             : "0.0";
@@ -2086,26 +2402,22 @@ function PlacementReports() {
 
     const selectedJob =
         availableJobs.find(
-            job =>
-
+            (job) =>
                 String(job.id) ===
                 String(jobFilter)
-
         );
 
 
     const selectedCompany =
         companyOptions.find(
-            company =>
-
+            (company) =>
                 String(company.id) ===
                 String(companyFilter)
-
         );
 
 
     /* =====================================================
-       WHATSAPP
+       WHATSAPP TEXT
     ===================================================== */
 
     const createWhatsAppText =
@@ -2117,10 +2429,8 @@ function PlacementReports() {
             if (!records.length) {
 
                 return (
-
                     `${title}\n\n` +
                     "No records available."
-
                 );
 
             }
@@ -2133,9 +2443,7 @@ function PlacementReports() {
                 "━━━━━━━━━━━━━━━━━━━━\n\n";
 
 
-            if (
-                selectedCompany
-            ) {
+            if (selectedCompany) {
 
                 text +=
                     `Company: ${selectedCompany.name}\n`;
@@ -2143,9 +2451,7 @@ function PlacementReports() {
             }
 
 
-            if (
-                selectedJob
-            ) {
+            if (selectedJob) {
 
                 text +=
                     `Role: ${selectedJob.title}\n`;
@@ -2200,11 +2506,9 @@ function PlacementReports() {
                     text +=
                         `Placed: ${
                             student.isPlaced
-
                                 ? formatDate(
                                     student.placedDate
                                 )
-
                                 : "—"
                         }\n`;
 
@@ -2224,6 +2528,10 @@ function PlacementReports() {
         };
 
 
+    /* =====================================================
+       COPY
+    ===================================================== */
+
     const copyForWhatsApp =
         async (
             records,
@@ -2239,11 +2547,9 @@ function PlacementReports() {
                     );
 
 
-                await navigator
-                    .clipboard
-                    .writeText(
-                        text
-                    );
+                await navigator.clipboard.writeText(
+                    text
+                );
 
 
                 setCopyMessage(
@@ -2254,9 +2560,7 @@ function PlacementReports() {
                 setTimeout(
                     () => {
 
-                        setCopyMessage(
-                            ""
-                        );
+                        setCopyMessage("");
 
                     },
                     3000
@@ -2269,6 +2573,7 @@ function PlacementReports() {
                 console.error(
                     copyError
                 );
+
 
                 setCopyMessage(
                     "Unable to copy records."
@@ -2300,9 +2605,7 @@ function PlacementReports() {
                 setTimeout(
                     () => {
 
-                        setCopyMessage(
-                            ""
-                        );
+                        setCopyMessage("");
 
                     },
                     2500
@@ -2316,7 +2619,7 @@ function PlacementReports() {
 
             const exportRows =
                 records.map(
-                    student => ({
+                    (student) => ({
 
                         "Student Name":
                             student.studentName,
@@ -2357,11 +2660,9 @@ function PlacementReports() {
 
                         "Placed Date":
                             student.isPlaced
-
                                 ? getExcelDate(
                                     student.placedDate
                                 )
-
                                 : null,
 
                         "Status":
@@ -2380,92 +2681,71 @@ function PlacementReports() {
             worksheet["!cols"] = [
 
                 { wch: 24 },
-
                 { wch: 34 },
-
                 { wch: 18 },
-
                 { wch: 42 },
-
                 { wch: 18 },
-
                 { wch: 28 },
-
                 { wch: 24 },
-
                 { wch: 32 },
-
                 { wch: 18 },
-
                 { wch: 22 },
-
                 { wch: 18 },
-
                 { wch: 18 },
-
                 { wch: 15 }
 
             ];
 
 
-            const range =
-                XLSX.utils.decode_range(
-                    worksheet["!ref"]
-                );
+            if (worksheet["!ref"]) {
 
+                const range =
+                    XLSX.utils.decode_range(
+                        worksheet["!ref"]
+                    );
 
-            for (
-                let rowIndex =
-                    range.s.r;
-
-                rowIndex <=
-                range.e.r;
-
-                rowIndex++
-            ) {
 
                 for (
-                    let colIndex =
-                        range.s.c;
-
-                    colIndex <=
-                    range.e.c;
-
-                    colIndex++
+                    let rowIndex = range.s.r;
+                    rowIndex <= range.e.r;
+                    rowIndex++
                 ) {
 
-                    const address =
-                        XLSX.utils.encode_cell({
-                            r:
-                                rowIndex,
-
-                            c:
-                                colIndex
-                        });
-
-
-                    if (
-                        !worksheet[address]
+                    for (
+                        let colIndex = range.s.c;
+                        colIndex <= range.e.c;
+                        colIndex++
                     ) {
 
-                        continue;
+                        const address =
+                            XLSX.utils.encode_cell({
+                                r: rowIndex,
+                                c: colIndex
+                            });
 
-                    }
 
-
-                    worksheet[address].s = {
-
-                        alignment: {
-
-                            vertical:
-                                "top",
-
-                            wrapText:
-                                true
-
+                        if (
+                            !worksheet[address]
+                        ) {
+                            continue;
                         }
 
-                    };
+
+                        worksheet[address].s = {
+
+                            alignment: {
+
+                                vertical:
+                                    "top",
+
+                                wrapText:
+                                    true
+
+                            }
+
+                        };
+
+                    }
 
                 }
 
@@ -2474,10 +2754,7 @@ function PlacementReports() {
 
             for (
                 let rowIndex = 1;
-
-                rowIndex <=
-                exportRows.length;
-
+                rowIndex <= exportRows.length;
                 rowIndex++
             ) {
 
@@ -2498,8 +2775,7 @@ function PlacementReports() {
                     selectedCell.v instanceof Date
                 ) {
 
-                    selectedCell.t =
-                        "d";
+                    selectedCell.t = "d";
 
                     selectedCell.z =
                         "dd-mmm-yyyy";
@@ -2512,8 +2788,7 @@ function PlacementReports() {
                     placedCell.v instanceof Date
                 ) {
 
-                    placedCell.t =
-                        "d";
+                    placedCell.t = "d";
 
                     placedCell.z =
                         "dd-mmm-yyyy";
@@ -2525,10 +2800,7 @@ function PlacementReports() {
 
             for (
                 let rowIndex = 1;
-
-                rowIndex <=
-                exportRows.length;
-
+                rowIndex <= exportRows.length;
                 rowIndex++
             ) {
 
@@ -2540,8 +2812,7 @@ function PlacementReports() {
 
                 if (phoneCell) {
 
-                    phoneCell.t =
-                        "s";
+                    phoneCell.t = "s";
 
                 }
 
@@ -2573,9 +2844,7 @@ function PlacementReports() {
             setTimeout(
                 () => {
 
-                    setCopyMessage(
-                        ""
-                    );
+                    setCopyMessage("");
 
                 },
                 3000
@@ -2586,6 +2855,8 @@ function PlacementReports() {
 
     /* =====================================================
        COMPANY-WISE DATA
+       
+       ONLY VALIDATED APPLICATIONS ARE PRESENT HERE.
     ===================================================== */
 
     const companyPlacementData =
@@ -2596,31 +2867,30 @@ function PlacementReports() {
 
 
                 processedApplications.forEach(
-                    application => {
+                    (application) => {
 
                         if (
+                            !application.companyId
+                        ) {
+                            return;
+                        }
 
+
+                        if (
                             !isSelectedApplication(
                                 application
                             ) &&
-
                             !isPlacedApplication(
                                 application
                             )
-
                         ) {
-
                             return;
-
                         }
 
 
                         const companyKey =
-
-                            application.companyId ||
-
-                            normalize(
-                                application.companyName
+                            String(
+                                application.companyId
                             );
 
 
@@ -2650,9 +2920,7 @@ function PlacementReports() {
                         const studentId =
 
                             application._studentId ||
-
                             application.studentId ||
-
                             application.id;
 
 
@@ -2693,11 +2961,9 @@ function PlacementReports() {
                 );
 
 
-                return Object.values(
-                    map
-                )
+                return Object.values(map)
                     .map(
-                        company => ({
+                        (company) => ({
 
                             companyId:
                                 company.companyId,
@@ -2715,20 +2981,19 @@ function PlacementReports() {
                     )
                     .sort(
                         (a, b) =>
-
                             b.selected -
                             a.selected
                     );
 
             },
-            [
-                processedApplications
-            ]
+            [processedApplications]
         );
 
 
     /* =====================================================
        JOB-WISE DATA
+       
+       ONLY VALIDATED ACTIVE JOBS CAN ENTER THIS REPORT.
     ===================================================== */
 
     const jobApplicationData =
@@ -2739,60 +3004,54 @@ function PlacementReports() {
 
 
                 processedApplications.forEach(
-                    application => {
+                    (application) => {
+
+                        if (
+                            !application._job ||
+                            !application.companyId
+                        ) {
+                            return;
+                        }
+
 
                         const jobId =
 
-                            application.jobId ||
-
-                            application.jobID ||
-
                             application._jobId ||
+                            application._job.id ||
+                            application._job.jobId ||
+                            application._job.uid;
 
-                            "unknown";
 
-
-                        const job =
-                            application._job;
+                        if (!jobId) {
+                            return;
+                        }
 
 
                         const jobTitle =
 
+                            application._job.jobTitle ||
+                            application._job.jobName ||
+                            application._job.title ||
+                            application._job.position ||
+                            application._job.role ||
+
                             application.jobTitle ||
-
-                            application.jobName ||
-
-                            application.title ||
-
-                            job?.jobTitle ||
-
-                            job?.jobName ||
-
-                            job?.title ||
 
                             "Job";
 
 
                         const companyName =
-
-                            application.companyName ||
-
-                            application.company ||
-
-                            job?.companyName ||
-
-                            job?.company ||
-
-                            "Company";
+                            application.companyName;
 
 
                         if (
-                            !map[jobId]
+                            !map[String(jobId)]
                         ) {
 
-                            map[jobId] = {
+                            map[String(jobId)] = {
 
-                                jobId,
+                                jobId:
+                                    String(jobId),
 
                                 jobTitle,
 
@@ -2812,17 +3071,14 @@ function PlacementReports() {
                         }
 
 
-                        map[jobId]
-                            .applications +=
-                            1;
+                        map[String(jobId)]
+                            .applications += 1;
 
 
                         const studentId =
 
                             application._studentId ||
-
                             application.studentId ||
-
                             application.id;
 
 
@@ -2832,7 +3088,7 @@ function PlacementReports() {
                             )
                         ) {
 
-                            map[jobId]
+                            map[String(jobId)]
                                 .selectedIds
                                 .add(
                                     studentId
@@ -2847,7 +3103,7 @@ function PlacementReports() {
                             )
                         ) {
 
-                            map[jobId]
+                            map[String(jobId)]
                                 .placedIds
                                 .add(
                                     studentId
@@ -2859,11 +3115,9 @@ function PlacementReports() {
                 );
 
 
-                return Object.values(
-                    map
-                )
+                return Object.values(map)
                     .map(
-                        job => ({
+                        (job) => ({
 
                             jobId:
                                 job.jobId,
@@ -2887,15 +3141,12 @@ function PlacementReports() {
                     )
                     .sort(
                         (a, b) =>
-
                             b.applications -
                             a.applications
                     );
 
             },
-            [
-                processedApplications
-            ]
+            [processedApplications]
         );
 
 
@@ -2918,7 +3169,7 @@ function PlacementReports() {
                     </h2>
 
                     <p>
-                        Fetching students,
+                        Fetching active students,
                         companies, jobs and
                         recruitment records.
                     </p>
@@ -2986,7 +3237,6 @@ function PlacementReports() {
 
         <div className="placement-reports-page">
 
-
             {/* =============================================
                 HEADER
             ============================================= */}
@@ -3050,7 +3300,7 @@ function PlacementReports() {
 
 
             {/* =============================================
-                OVERVIEW
+                STATISTICS
             ============================================= */}
 
             <div className="report-stats">
@@ -3069,48 +3319,6 @@ function PlacementReports() {
 
                         <strong>
                             {totalStudents}
-                        </strong>
-
-                    </div>
-
-                </div>
-
-
-                <div className="report-stat-card">
-
-                    <div className="stat-icon purple">
-                        <FaBuilding />
-                    </div>
-
-                    <div>
-
-                        <span>
-                            Companies
-                        </span>
-
-                        <strong>
-                            {totalCompanies}
-                        </strong>
-
-                    </div>
-
-                </div>
-
-
-                <div className="report-stat-card">
-
-                    <div className="stat-icon orange">
-                        <FaBriefcase />
-                    </div>
-
-                    <div>
-
-                        <span>
-                            Jobs / Roles
-                        </span>
-
-                        <strong>
-                            {totalJobs}
                         </strong>
 
                     </div>
@@ -3184,7 +3392,7 @@ function PlacementReports() {
 
 
             {/* =============================================
-                OPPORTUNITY SELECTOR
+                OPPORTUNITY PANEL
             ============================================= */}
 
             <div className="opportunity-panel">
@@ -3203,11 +3411,9 @@ function PlacementReports() {
 
                         <p>
 
-                            Choose one specific
-                            recruitment opportunity.
-                            The student list below will
-                            contain only applications
-                            for that opportunity.
+                            Only currently existing
+                            companies and their active
+                            recruitment roles are shown.
 
                         </p>
 
@@ -3221,7 +3427,6 @@ function PlacementReports() {
 
 
                 <div className="opportunity-select-grid">
-
 
                     {/* COMPANY */}
 
@@ -3240,8 +3445,7 @@ function PlacementReports() {
                                     companyFilter
                                 }
                                 onChange={
-                                    event =>
-
+                                    (event) =>
                                         setCompanyFilter(
                                             event.target.value
                                         )
@@ -3254,7 +3458,7 @@ function PlacementReports() {
 
 
                                 {companyOptions.map(
-                                    company => (
+                                    (company) => (
 
                                         <option
                                             key={
@@ -3265,9 +3469,7 @@ function PlacementReports() {
                                             }
                                         >
 
-                                            {
-                                                company.name
-                                            }
+                                            {company.name}
 
                                         </option>
 
@@ -3300,20 +3502,16 @@ function PlacementReports() {
                                     jobFilter
                                 }
                                 onChange={
-                                    event =>
-
+                                    (event) =>
                                         setJobFilter(
                                             event.target.value
                                         )
                                 }
                                 disabled={
-
                                     companyFilter !==
-                                    "all" &&
-
+                                        "all" &&
                                     availableJobs.length ===
-                                    0
-
+                                        0
                                 }
                             >
 
@@ -3321,10 +3519,8 @@ function PlacementReports() {
 
                                     {
                                         companyFilter ===
-                                        "all"
-
+                                            "all"
                                             ? "All Roles"
-
                                             : "All Roles for Selected Company"
                                     }
 
@@ -3332,7 +3528,7 @@ function PlacementReports() {
 
 
                                 {availableJobs.map(
-                                    job => (
+                                    (job) => (
 
                                         <option
                                             key={
@@ -3343,9 +3539,7 @@ function PlacementReports() {
                                             }
                                         >
 
-                                            {
-                                                job.title
-                                            }
+                                            {job.title}
 
                                         </option>
 
@@ -3362,6 +3556,8 @@ function PlacementReports() {
 
                 </div>
 
+
+                {/* SELECTED OPPORTUNITY */}
 
                 {(
                     selectedCompany ||
@@ -3386,9 +3582,7 @@ function PlacementReports() {
 
                                     {
                                         selectedCompany?.name ||
-
                                         selectedJob?.companyName ||
-
                                         "All Companies"
                                     }
 
@@ -3401,9 +3595,7 @@ function PlacementReports() {
 
                                         <FaBriefcase />
 
-                                        {
-                                            selectedJob.title
-                                        }
+                                        {selectedJob.title}
 
                                     </p>
 
@@ -3431,6 +3623,7 @@ function PlacementReports() {
                                     </strong>
 
                                 </div>
+
 
                                 <div>
 
@@ -3605,7 +3798,6 @@ function PlacementReports() {
 
             <div className="report-panel student-record-panel">
 
-
                 <div className="student-record-header">
 
                     <div>
@@ -3620,9 +3812,10 @@ function PlacementReports() {
 
                         <p>
 
-                            Only students who applied
-                            for the selected company
-                            and role are displayed.
+                            Only active students,
+                            existing companies and
+                            active company jobs are
+                            displayed.
 
                         </p>
 
@@ -3631,23 +3824,18 @@ function PlacementReports() {
 
                     <div className="record-actions">
 
-
                         <button
                             type="button"
                             className="action-button whatsapp-button"
                             onClick={() =>
-
                                 copyForWhatsApp(
                                     selectedOpportunityRecords,
                                     "Selected Students"
                                 )
-
                             }
                             disabled={
-
                                 selectedOpportunityRecords.length ===
                                 0
-
                             }
                         >
 
@@ -3662,19 +3850,15 @@ function PlacementReports() {
                             type="button"
                             className="action-button export-button"
                             onClick={() =>
-
                                 exportExcel(
                                     selectedOpportunityRecords,
                                     "selected-students.xlsx",
                                     "Selected"
                                 )
-
                             }
                             disabled={
-
                                 selectedOpportunityRecords.length ===
                                 0
-
                             }
                         >
 
@@ -3689,18 +3873,14 @@ function PlacementReports() {
                             type="button"
                             className="action-button placed-action"
                             onClick={() =>
-
                                 copyForWhatsApp(
                                     placedOpportunityRecords,
                                     "Placed Students"
                                 )
-
                             }
                             disabled={
-
                                 placedOpportunityRecords.length ===
                                 0
-
                             }
                         >
 
@@ -3715,19 +3895,15 @@ function PlacementReports() {
                             type="button"
                             className="action-button export-button"
                             onClick={() =>
-
                                 exportExcel(
                                     placedOpportunityRecords,
                                     "placed-students.xlsx",
                                     "Placed"
                                 )
-
                             }
                             disabled={
-
                                 placedOpportunityRecords.length ===
                                 0
-
                             }
                         >
 
@@ -3742,25 +3918,19 @@ function PlacementReports() {
                 </div>
 
 
-                {/* =========================================
-                    TABS
-                ========================================= */}
+                {/* TABS */}
 
                 <div className="student-tabs">
 
                     <button
                         type="button"
                         className={
-
                             recordFilter === "all"
                                 ? "active"
                                 : ""
-
                         }
                         onClick={() =>
-                            setRecordFilter(
-                                "all"
-                            )
+                            setRecordFilter("all")
                         }
                     >
 
@@ -3780,16 +3950,12 @@ function PlacementReports() {
                     <button
                         type="button"
                         className={
-
                             recordFilter === "selected"
                                 ? "active"
                                 : ""
-
                         }
                         onClick={() =>
-                            setRecordFilter(
-                                "selected"
-                            )
+                            setRecordFilter("selected")
                         }
                     >
 
@@ -3809,16 +3975,12 @@ function PlacementReports() {
                     <button
                         type="button"
                         className={
-
                             recordFilter === "placed"
                                 ? "active"
                                 : ""
-
                         }
                         onClick={() =>
-                            setRecordFilter(
-                                "placed"
-                            )
+                            setRecordFilter("placed")
                         }
                     >
 
@@ -3837,9 +3999,7 @@ function PlacementReports() {
                 </div>
 
 
-                {/* =========================================
-                    SEARCH
-                ========================================= */}
+                {/* SEARCH */}
 
                 <div className="records-toolbar">
 
@@ -3850,11 +4010,9 @@ function PlacementReports() {
                         <input
                             type="text"
                             placeholder="Search student, email, phone, college..."
-                            value={
-                                search
-                            }
+                            value={search}
                             onChange={
-                                event =>
+                                (event) =>
                                     setSearch(
                                         event.target.value
                                     )
@@ -3906,9 +4064,7 @@ function PlacementReports() {
                 </div>
 
 
-                {/* =========================================
-                    TABLE
-                ========================================= */}
+                {/* EMPTY */}
 
                 {filteredRecords.length === 0 ? (
 
@@ -3997,53 +4153,33 @@ function PlacementReports() {
 
                                         <tr
                                             key={
-
                                                 student.id ||
-
                                                 `${student._studentId}-${student._jobId}-${index}`
-
                                             }
                                         >
-
-
-                                            {/* =================================
-                                                STUDENT
-                                            ================================= */}
 
                                             <td>
 
                                                 <div className="report-student">
 
-
-                                                    {/* =================================
-                                                        PROFILE PHOTO
-                                                    ================================= */}
-
                                                     <StudentAvatar
-
                                                         photo={
                                                             student.profilePhoto
                                                         }
-
                                                         name={
                                                             student.studentName
                                                         }
-
                                                         initials={
                                                             student.studentInitials
                                                         }
-
                                                     />
-
 
                                                     <div className="student-primary">
 
                                                         <strong>
-
                                                             {
                                                                 student.studentName
                                                             }
-
                                                         </strong>
 
                                                     </div>
@@ -4052,10 +4188,6 @@ function PlacementReports() {
 
                                             </td>
 
-
-                                            {/* =================================
-                                                CONTACT
-                                            ================================= */}
 
                                             <td>
 
@@ -4066,11 +4198,9 @@ function PlacementReports() {
                                                         <FaEnvelope />
 
                                                         <span className="cell-text">
-
                                                             {
                                                                 student.email
                                                             }
-
                                                         </span>
 
                                                     </span>
@@ -4081,11 +4211,9 @@ function PlacementReports() {
                                                         <FaPhone />
 
                                                         <span className="cell-text phone-text">
-
                                                             {
                                                                 student.phone
                                                             }
-
                                                         </span>
 
                                                     </span>
@@ -4094,10 +4222,6 @@ function PlacementReports() {
 
                                             </td>
 
-
-                                            {/* =================================
-                                                COLLEGE
-                                            ================================= */}
 
                                             <td>
 
@@ -4108,11 +4232,9 @@ function PlacementReports() {
                                                         <FaUniversity />
 
                                                         <span>
-
                                                             {
                                                                 student.college
                                                             }
-
                                                         </span>
 
                                                     </strong>
@@ -4136,36 +4258,24 @@ function PlacementReports() {
                                             </td>
 
 
-                                            {/* =================================
-                                                COMPANY
-                                            ================================= */}
-
                                             <td>
 
                                                 <div className="company-record">
 
                                                     <div className="mini-icon">
-
                                                         <FaBuilding />
-
                                                     </div>
 
                                                     <strong>
-
                                                         {
                                                             student.companyName
                                                         }
-
                                                     </strong>
 
                                                 </div>
 
                                             </td>
 
-
-                                            {/* =================================
-                                                JOB
-                                            ================================= */}
 
                                             <td>
 
@@ -4174,11 +4284,9 @@ function PlacementReports() {
                                                     <FaBriefcase />
 
                                                     <span>
-
                                                         {
                                                             student.jobTitle
                                                         }
-
                                                     </span>
 
                                                 </div>
@@ -4186,26 +4294,16 @@ function PlacementReports() {
                                             </td>
 
 
-                                            {/* =================================
-                                                PACKAGE
-                                            ================================= */}
-
                                             <td>
 
                                                 <strong className="package-text">
-
                                                     {
                                                         student.packageValue
                                                     }
-
                                                 </strong>
 
                                             </td>
 
-
-                                            {/* =================================
-                                                LOCATION
-                                            ================================= */}
 
                                             <td>
 
@@ -4214,21 +4312,15 @@ function PlacementReports() {
                                                     <FaMapMarkerAlt />
 
                                                     <span>
-
                                                         {
                                                             student.location
                                                         }
-
                                                     </span>
 
                                                 </div>
 
                                             </td>
 
-
-                                            {/* =================================
-                                                SELECTED
-                                            ================================= */}
 
                                             <td>
 
@@ -4245,34 +4337,22 @@ function PlacementReports() {
                                             </td>
 
 
-                                            {/* =================================
-                                                PLACED
-                                            ================================= */}
-
                                             <td>
 
                                                 <span className="date-text">
 
                                                     {
-
                                                         student.isPlaced
-
                                                             ? formatDate(
                                                                 student.placedDate
                                                             )
-
                                                             : "—"
-
                                                     }
 
                                                 </span>
 
                                             </td>
 
-
-                                            {/* =================================
-                                                STATUS
-                                            ================================= */}
 
                                             <td>
 
@@ -4347,8 +4427,7 @@ function PlacementReports() {
                         <p>
 
                             Unique student counts across
-                            each company's recruitment
-                            opportunities.
+                            currently existing companies.
 
                         </p>
 
@@ -4409,7 +4488,7 @@ function PlacementReports() {
                             <tbody>
 
                                 {companyPlacementData.map(
-                                    company => {
+                                    (company) => {
 
                                         const notPlaced =
                                             Math.max(
@@ -4424,12 +4503,10 @@ function PlacementReports() {
                                             company.selected > 0
 
                                                 ? (
-
                                                     (
                                                         company.placed /
                                                         company.selected
                                                     ) * 100
-
                                                 ).toFixed(1)
 
                                                 : "0.0";
@@ -4448,17 +4525,13 @@ function PlacementReports() {
                                                     <div className="company-report-name">
 
                                                         <div className="company-report-icon">
-
                                                             <FaBuilding />
-
                                                         </div>
 
                                                         <strong>
-
                                                             {
                                                                 company.companyName
                                                             }
-
                                                         </strong>
 
                                                     </div>
@@ -4469,11 +4542,9 @@ function PlacementReports() {
                                                 <td>
 
                                                     <span className="count-badge selected-count">
-
                                                         {
                                                             company.selected
                                                         }
-
                                                     </span>
 
                                                 </td>
@@ -4482,11 +4553,9 @@ function PlacementReports() {
                                                 <td>
 
                                                     <span className="count-badge placed-count">
-
                                                         {
                                                             company.placed
                                                         }
-
                                                     </span>
 
                                                 </td>
@@ -4495,11 +4564,9 @@ function PlacementReports() {
                                                 <td>
 
                                                     <span className="count-badge pending-count">
-
                                                         {
                                                             notPlaced
                                                         }
-
                                                     </span>
 
                                                 </td>
@@ -4508,11 +4575,9 @@ function PlacementReports() {
                                                 <td>
 
                                                     <strong className="percentage-text">
-
                                                         {
                                                             percentage
                                                         }%
-
                                                     </strong>
 
                                                 </td>
@@ -4555,8 +4620,9 @@ function PlacementReports() {
 
                         <p>
 
-                            Each role is treated as a
-                            separate recruitment opportunity.
+                            Only roles belonging to
+                            currently existing companies
+                            are shown.
 
                         </p>
 
@@ -4621,19 +4687,17 @@ function PlacementReports() {
                             <tbody>
 
                                 {jobApplicationData.map(
-                                    job => {
+                                    (job) => {
 
                                         const percentage =
 
                                             job.selected > 0
 
                                                 ? (
-
                                                     (
                                                         job.placed /
                                                         job.selected
                                                     ) * 100
-
                                                 ).toFixed(1)
 
                                                 : "0.0";
@@ -4650,11 +4714,9 @@ function PlacementReports() {
                                                 <td>
 
                                                     <strong>
-
                                                         {
                                                             job.companyName
                                                         }
-
                                                     </strong>
 
                                                 </td>
@@ -4667,11 +4729,9 @@ function PlacementReports() {
                                                         <FaBriefcase />
 
                                                         <strong>
-
                                                             {
                                                                 job.jobTitle
                                                             }
-
                                                         </strong>
 
                                                     </div>

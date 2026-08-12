@@ -1,39 +1,99 @@
+
 /* =========================================================
-   COMPANY PROFILE
-========================================================= */
+   PLACEMENTPRO — COMPANY PROFILE
+   PREMIUM ENTERPRISE UI
+   ========================================================= */
 
 .company-profile {
     width: 100%;
-    padding: 5px 0 40px;
+    max-width: 1450px;
+    margin: 0 auto;
+    padding: 24px 28px 45px;
+
     box-sizing: border-box;
+
+    color: #172033;
 }
 
 
 /* =========================================================
-   HEADER
-========================================================= */
+   PAGE HEADER
+   ========================================================= */
 
 .profile-header {
-    margin-bottom: 25px;
+    position: relative;
 
-    padding: 28px 30px;
+    overflow: hidden;
 
-    background: linear-gradient(
-        135deg,
-        #ffffff,
-        #f8f9ff
-    );
+    margin-bottom: 24px;
+    padding: 30px 34px;
 
-    border: 1px solid #edf0f6;
+    background:
+        radial-gradient(
+            circle at 100% 0%,
+            rgba(99, 102, 241, 0.14),
+            transparent 30%
+        ),
+        linear-gradient(
+            135deg,
+            #ffffff 0%,
+            #f8f9ff 100%
+        );
 
-    border-radius: 20px;
+    border: 1px solid #e7eaf4;
+
+    border-radius: 22px;
 
     box-shadow:
-        0 8px 28px rgba(15, 23, 42, 0.06);
+        0 12px 35px rgba(15, 23, 42, 0.055),
+        inset 0 1px 0 rgba(255, 255, 255, 0.9);
+}
+
+
+/* decorative background */
+
+.profile-header::before {
+    content: "";
+
+    position: absolute;
+
+    width: 190px;
+    height: 190px;
+
+    right: -70px;
+    bottom: -120px;
+
+    border-radius: 50%;
+
+    background:
+        rgba(99, 102, 241, 0.08);
+
+    filter: blur(2px);
+}
+
+
+.profile-header::after {
+    content: "";
+
+    position: absolute;
+
+    width: 90px;
+    height: 90px;
+
+    right: 120px;
+    top: -50px;
+
+    border-radius: 50%;
+
+    background:
+        rgba(129, 140, 248, 0.07);
 }
 
 
 .profile-header-left {
+    position: relative;
+    z-index: 2;
+
     display: flex;
 
     align-items: center;
@@ -43,38 +103,67 @@
 
 
 .company-profile-icon {
-    width: 58px;
-    height: 58px;
+    width: 62px;
+    height: 62px;
 
-    min-width: 58px;
+    min-width: 62px;
 
     display: flex;
 
     align-items: center;
     justify-content: center;
 
-    border-radius: 16px;
+    border-radius: 18px;
 
-    background: #eef2ff;
+    background:
+        linear-gradient(
+            145deg,
+            #eef2ff,
+            #e0e7ff
+        );
 
-    color: #667eea;
+    border: 1px solid #dfe4ff;
 
-    font-size: 24px;
+    color: #6366f1;
+
+    font-size: 25px;
+
+    box-shadow:
+        0 10px 22px rgba(99, 102, 241, 0.12);
 }
 
 
 .profile-eyebrow {
-    display: block;
+    display: inline-flex;
 
-    margin-bottom: 5px;
+    align-items: center;
 
-    color: #667eea;
+    gap: 7px;
 
-    font-size: 10px;
+    margin-bottom: 6px;
+
+    color: #6366f1;
+
+    font-size: 9px;
 
     font-weight: 800;
 
-    letter-spacing: 1.2px;
+    letter-spacing: 1.4px;
+}
+
+
+.profile-eyebrow::before {
+    content: "";
+
+    width: 6px;
+    height: 6px;
+
+    border-radius: 50%;
+
+    background: #6366f1;
+
+    box-shadow:
+        0 0 0 4px rgba(99, 102, 241, 0.10);
 }
 
 
@@ -83,62 +172,103 @@
 
     color: #111827;
 
-    font-size: 30px;
+    font-size: 29px;
+
+    line-height: 1.2;
 
     font-weight: 800;
 
-    letter-spacing: -0.5px;
+    letter-spacing: -0.7px;
 }
 
 
 .profile-header p {
     margin: 7px 0 0;
 
-    color: #64748b;
+    color: #667085;
 
-    font-size: 13px;
+    font-size: 12px;
+
+    line-height: 1.6;
 }
 
 
 /* =========================================================
    MAIN LAYOUT
-========================================================= */
+   ========================================================= */
 
 .profile-layout {
     display: grid;
 
     grid-template-columns:
-        280px minmax(0, 1fr);
-
-    gap: 24px;
+        285px minmax(0, 1fr);
 
     align-items: start;
+
+    gap: 22px;
 }
 
 
 /* =========================================================
-   PROFILE SUMMARY
-========================================================= */
+   COMPANY SUMMARY CARD
+   ========================================================= */
 
 .profile-summary {
-    padding: 25px;
+    position: sticky;
 
-    background: #ffffff;
+    top: 20px;
 
-    border: 1px solid #edf0f5;
+    overflow: hidden;
 
-    border-radius: 18px;
+    padding: 25px 22px;
+
+    background:
+        linear-gradient(
+            145deg,
+            #ffffff 0%,
+            #fafbff 100%
+        );
+
+    border: 1px solid #e7eaf2;
+
+    border-radius: 20px;
 
     box-shadow:
-        0 7px 25px rgba(15, 23, 42, 0.06);
-
-    text-align: center;
+        0 10px 30px rgba(15, 23, 42, 0.055);
 }
 
 
+.profile-summary::before {
+    content: "";
+
+    display: block;
+
+    height: 3px;
+
+    margin:
+        -25px
+        -22px
+        24px;
+
+    background:
+        linear-gradient(
+            90deg,
+            #6366f1,
+            #818cf8,
+            #a5b4fc
+        );
+}
+
+
+/* =========================================================
+   COMPANY AVATAR
+   ========================================================= */
+
 .summary-avatar {
-    width: 72px;
-    height: 72px;
+    position: relative;
+
+    width: 78px;
+    height: 78px;
 
     margin: 0 auto 15px;
 
@@ -147,22 +277,59 @@
     align-items: center;
     justify-content: center;
 
-    border-radius: 20px;
+    border-radius: 22px;
 
-    background: #eef2ff;
+    background:
+        linear-gradient(
+            145deg,
+            #eef2ff,
+            #e0e7ff
+        );
 
-    color: #667eea;
+    border: 1px solid #dce2ff;
 
-    font-size: 29px;
+    color: #6366f1;
+
+    font-size: 30px;
+
+    box-shadow:
+        0 12px 25px rgba(99, 102, 241, 0.12);
 }
 
+
+.summary-avatar::after {
+    content: "";
+
+    position: absolute;
+
+    right: -3px;
+    bottom: -3px;
+
+    width: 14px;
+    height: 14px;
+
+    border: 3px solid #ffffff;
+
+    border-radius: 50%;
+
+    background: #22c55e;
+}
+
+
+/* =========================================================
+   SUMMARY TITLE
+   ========================================================= */
 
 .profile-summary h2 {
     margin: 0;
 
-    color: #1e293b;
+    color: #172033;
+
+    text-align: center;
 
     font-size: 17px;
+
+    line-height: 1.35;
 
     font-weight: 800;
 
@@ -173,56 +340,11 @@
 .profile-summary > p {
     margin: 6px 0 0;
 
-    color: #94a3b8;
+    color: #98a2b3;
 
-    font-size: 11px;
+    text-align: center;
 
-    word-break: break-word;
-}
-
-
-.summary-divider {
-    height: 1px;
-
-    margin: 22px 0;
-
-    background: #edf0f4;
-}
-
-
-.summary-item {
-    display: flex;
-
-    align-items: flex-start;
-
-    gap: 10px;
-
-    margin-bottom: 15px;
-
-    text-align: left;
-}
-
-
-.summary-item:last-child {
-    margin-bottom: 0;
-}
-
-
-.summary-item svg {
-    margin-top: 2px;
-
-    min-width: 13px;
-
-    color: #667eea;
-
-    font-size: 12px;
-}
-
-
-.summary-item span {
-    color: #64748b;
-
-    font-size: 11px;
+    font-size: 10px;
 
     line-height: 1.5;
 
@@ -231,34 +353,116 @@
 
 
 /* =========================================================
-   FORM
-========================================================= */
+   SUMMARY DIVIDER
+   ========================================================= */
+
+.summary-divider {
+    height: 1px;
+
+    margin: 21px 0;
+
+    background:
+        linear-gradient(
+            90deg,
+            transparent,
+            #e7eaf0,
+            transparent
+        );
+}
+
+
+/* =========================================================
+   SUMMARY INFORMATION
+   ========================================================= */
+
+.summary-item {
+    display: flex;
+
+    align-items: flex-start;
+
+    gap: 10px;
+
+    margin-bottom: 13px;
+
+    padding: 9px;
+
+    border-radius: 10px;
+
+    transition:
+        background 0.2s ease;
+}
+
+
+.summary-item:last-child {
+    margin-bottom: 0;
+}
+
+
+.summary-item:hover {
+    background: #f8f9ff;
+}
+
+
+.summary-item svg {
+    width: 14px;
+
+    min-width: 14px;
+
+    margin-top: 2px;
+
+    color: #6366f1;
+
+    font-size: 11px;
+}
+
+
+.summary-item span {
+    overflow-wrap: anywhere;
+
+    color: #667085;
+
+    font-size: 10px;
+
+    line-height: 1.5;
+}
+
+
+/* =========================================================
+   PROFILE FORM CARD
+   ========================================================= */
 
 .company-profile-form {
     width: 100%;
 
-    box-sizing: border-box;
+    overflow: hidden;
 
     background: #ffffff;
 
-    border: 1px solid #edf0f5;
+    border: 1px solid #e7eaf1;
 
-    border-radius: 18px;
+    border-radius: 20px;
 
     box-shadow:
-        0 7px 25px rgba(15, 23, 42, 0.06);
-
-    overflow: hidden;
+        0 10px 32px rgba(15, 23, 42, 0.055);
 }
 
 
+/* =========================================================
+   FORM SECTION
+   ========================================================= */
+
 .form-section {
-    padding: 30px;
+    padding: 30px 32px;
 }
 
 
 .form-section-header {
-    margin-bottom: 25px;
+    display: flex;
+
+    align-items: center;
+    justify-content: space-between;
+
+    margin-bottom: 27px;
 
     padding-bottom: 20px;
 
@@ -269,29 +473,33 @@
 .form-section-header h2 {
     margin: 0;
 
-    color: #1e293b;
+    color: #172033;
 
     font-size: 18px;
 
     font-weight: 800;
+
+    letter-spacing: -0.25px;
 }
 
 
 .form-section-header p {
     margin: 6px 0 0;
 
-    color: #94a3b8;
+    color: #98a2b3;
 
-    font-size: 11px;
+    font-size: 10px;
+
+    line-height: 1.5;
 }
 
 
 /* =========================================================
    FORM GROUP
-========================================================= */
+   ========================================================= */
 
 .form-group {
-    margin-bottom: 20px;
+    margin-bottom: 21px;
 }
 
 
@@ -301,34 +509,39 @@
 
 
 .form-group label {
-    display: block;
+    display: flex;
+
+    align-items: center;
 
     margin-bottom: 8px;
 
-    color: #334155;
+    color: #344054;
 
-    font-size: 12px;
+    font-size: 11px;
 
-    font-weight: 700;
+    font-weight: 750;
 }
 
 
-.form-group small {
-    display: block;
+.form-group label::after {
+    content: "";
 
-    margin-top: 6px;
+    width: 3px;
+    height: 3px;
 
-    color: #94a3b8;
+    margin-left: 6px;
 
-    font-size: 10px;
+    border-radius: 50%;
 
-    line-height: 1.5;
+    background: #c7d2fe;
+
+    opacity: 0;
 }
 
 
 /* =========================================================
-   INPUT
-========================================================= */
+   INPUT WRAPPER
+   ========================================================= */
 
 .input-wrapper {
     position: relative;
@@ -344,36 +557,53 @@
 
     left: 14px;
 
-    color: #94a3b8;
+    z-index: 2;
 
-    font-size: 13px;
+    color: #98a2b3;
+
+    font-size: 12px;
 
     pointer-events: none;
+
+    transition:
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+
+.input-wrapper:focus-within svg {
+    color: #6366f1;
+
+    transform: scale(1.05);
 }
 
 
 .input-wrapper input {
     width: 100%;
 
-    box-sizing: border-box;
-
     height: 46px;
 
-    padding: 0 14px 0 40px;
+    box-sizing: border-box;
 
-    border: 1px solid #dbe1e8;
+    padding:
+        0
+        14px
+        0
+        40px;
 
-    border-radius: 10px;
+    border: 1px solid #dfe3ea;
+
+    border-radius: 11px;
+
+    outline: none;
 
     background: #ffffff;
 
-    color: #1e293b;
+    color: #172033;
 
     font-family: inherit;
 
-    font-size: 12px;
-
-    outline: none;
+    font-size: 11px;
 
     transition:
         border-color 0.2s ease,
@@ -382,58 +612,90 @@
 }
 
 
-.input-wrapper input::placeholder {
-    color: #b0b8c4;
+.input-wrapper input:hover {
+    border-color: #cbd2dc;
 }
 
 
 .input-wrapper input:focus {
-    border-color: #667eea;
+    border-color: #818cf8;
+
+    background: #ffffff;
 
     box-shadow:
-        0 0 0 3px rgba(102, 126, 234, 0.10);
+        0 0 0 3px
+        rgba(99, 102, 241, 0.09),
+        0 4px 12px
+        rgba(15, 23, 42, 0.035);
 }
 
 
-.input-wrapper:focus-within svg {
-    color: #667eea;
+.input-wrapper input::placeholder {
+    color: #b4bbc6;
 }
 
 
 /* =========================================================
    DISABLED EMAIL
-========================================================= */
+   ========================================================= */
 
 .disabled-input input {
     background: #f8fafc;
 
-    color: #64748b;
+    color: #667085;
+
+    border-color: #e5e7eb;
 
     cursor: not-allowed;
 }
 
 
+.disabled-input input:focus {
+    box-shadow: none;
+
+    border-color: #e5e7eb;
+}
+
+
 .disabled-input svg {
-    color: #94a3b8;
+    color: #a5adba;
+}
+
+
+/* =========================================================
+   FORM HELP TEXT
+   ========================================================= */
+
+.form-group small {
+    display: block;
+
+    margin-top: 6px;
+
+    color: #98a2b3;
+
+    font-size: 9px;
+
+    line-height: 1.55;
 }
 
 
 /* =========================================================
    TWO COLUMN FORM
-========================================================= */
+   ========================================================= */
 
 .form-row {
     display: grid;
 
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns:
+        repeat(2, minmax(0, 1fr));
 
-    gap: 16px;
+    gap: 17px;
 }
 
 
 /* =========================================================
    TEXTAREA
-========================================================= */
+   ========================================================= */
 
 .textarea-wrapper {
     position: relative;
@@ -443,44 +705,57 @@
 .textarea-wrapper svg {
     position: absolute;
 
-    top: 16px;
-
+    top: 15px;
     left: 14px;
 
-    color: #94a3b8;
+    z-index: 2;
 
-    font-size: 13px;
+    color: #98a2b3;
+
+    font-size: 12px;
 
     pointer-events: none;
+
+    transition:
+        color 0.2s ease;
+}
+
+
+.textarea-wrapper:focus-within svg {
+    color: #6366f1;
 }
 
 
 .textarea-wrapper textarea {
     width: 100%;
 
+    min-height: 145px;
+
     box-sizing: border-box;
 
-    min-height: 135px;
+    padding:
+        13px
+        14px
+        13px
+        40px;
 
-    padding: 14px 14px 14px 40px;
+    border: 1px solid #dfe3ea;
 
-    border: 1px solid #dbe1e8;
-
-    border-radius: 10px;
-
-    background: #ffffff;
-
-    color: #1e293b;
-
-    font-family: inherit;
-
-    font-size: 12px;
-
-    line-height: 1.6;
+    border-radius: 11px;
 
     outline: none;
 
     resize: vertical;
+
+    background: #ffffff;
+
+    color: #172033;
+
+    font-family: inherit;
+
+    font-size: 11px;
+
+    line-height: 1.65;
 
     transition:
         border-color 0.2s ease,
@@ -488,43 +763,54 @@
 }
 
 
-.textarea-wrapper textarea::placeholder {
-    color: #b0b8c4;
+.textarea-wrapper textarea:hover {
+    border-color: #cbd2dc;
 }
 
 
 .textarea-wrapper textarea:focus {
-    border-color: #667eea;
+    border-color: #818cf8;
 
     box-shadow:
-        0 0 0 3px rgba(102, 126, 234, 0.10);
+        0 0 0 3px
+        rgba(99, 102, 241, 0.09),
+        0 4px 12px
+        rgba(15, 23, 42, 0.035);
 }
 
 
-.textarea-wrapper:focus-within svg {
-    color: #667eea;
+.textarea-wrapper textarea::placeholder {
+    color: #b4bbc6;
 }
 
 
 /* =========================================================
    FORM FOOTER
-========================================================= */
+   ========================================================= */
 
 .form-footer {
+    min-height: 72px;
+
     display: flex;
 
     align-items: center;
+
     justify-content: flex-end;
 
     gap: 15px;
 
-    min-height: 70px;
-
-    padding: 15px 30px;
+    padding:
+        14px
+        32px;
 
     box-sizing: border-box;
 
-    background: #fafbfc;
+    background:
+        linear-gradient(
+            180deg,
+            #fbfcfd,
+            #f8fafc
+        );
 
     border-top: 1px solid #edf0f4;
 }
@@ -532,7 +818,7 @@
 
 /* =========================================================
    SUCCESS MESSAGE
-========================================================= */
+   ========================================================= */
 
 .success-message {
     display: flex;
@@ -543,68 +829,123 @@
 
     margin-right: auto;
 
-    color: #16a34a;
+    padding: 7px 10px;
 
-    font-size: 11px;
+    border: 1px solid #bbf7d0;
+
+    border-radius: 8px;
+
+    background: #f0fdf4;
+
+    color: #15803d;
+
+    font-size: 10px;
 
     font-weight: 700;
+
+    animation:
+        successIn
+        0.25s
+        ease;
 }
 
 
 .success-message svg {
-    font-size: 13px;
+    font-size: 12px;
+}
+
+
+@keyframes successIn {
+
+    from {
+        opacity: 0;
+
+        transform:
+            translateY(3px);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            translateY(0);
+    }
 }
 
 
 /* =========================================================
    SAVE BUTTON
-========================================================= */
+   ========================================================= */
 
 .save-profile-btn {
-    display: flex;
+    min-width: 145px;
+
+    display: inline-flex;
 
     align-items: center;
     justify-content: center;
 
     gap: 8px;
 
-    min-width: 145px;
-
-    padding: 11px 18px;
+    padding: 11px 17px;
 
     border: none;
 
     border-radius: 10px;
 
-    background: #667eea;
+    background:
+        linear-gradient(
+            135deg,
+            #667eea,
+            #5b5fe8
+        );
 
     color: #ffffff;
 
     font-family: inherit;
 
-    font-size: 12px;
+    font-size: 11px;
 
-    font-weight: 700;
+    font-weight: 750;
 
     cursor: pointer;
 
     box-shadow:
-        0 5px 12px rgba(102, 126, 234, 0.20);
+        0 7px 16px
+        rgba(99, 102, 241, 0.20);
 
     transition:
-        background 0.2s ease,
         transform 0.2s ease,
-        box-shadow 0.2s ease;
+        box-shadow 0.2s ease,
+        background 0.2s ease;
+}
+
+
+.save-profile-btn svg {
+    font-size: 11px;
 }
 
 
 .save-profile-btn:hover {
-    background: #5646c9;
+    transform:
+        translateY(-2px);
 
-    transform: translateY(-1px);
+    background:
+        linear-gradient(
+            135deg,
+            #5b61e9,
+            #5146d8
+        );
 
     box-shadow:
-        0 7px 16px rgba(102, 126, 234, 0.25);
+        0 10px 22px
+        rgba(99, 102, 241, 0.28);
+}
+
+
+.save-profile-btn:active {
+    transform:
+        translateY(0);
 }
 
 
@@ -614,47 +955,55 @@
     cursor: not-allowed;
 
     transform: none;
+
+    box-shadow: none;
 }
 
 
 /* =========================================================
    BUTTON LOADER
-========================================================= */
+   ========================================================= */
 
 .button-spinner {
-    width: 13px;
-    height: 13px;
+    width: 12px;
+    height: 12px;
 
-    border: 2px solid rgba(255,255,255,0.4);
+    border:
+        2px solid
+        rgba(255, 255, 255, 0.4);
 
-    border-top-color: white;
+    border-top-color: #ffffff;
 
     border-radius: 50%;
 
     animation:
-        buttonSpin 0.7s linear infinite;
+        buttonSpin
+        0.7s
+        linear
+        infinite;
 }
 
 
 @keyframes buttonSpin {
 
     from {
-        transform: rotate(0deg);
+        transform:
+            rotate(0deg);
     }
 
     to {
-        transform: rotate(360deg);
+        transform:
+            rotate(360deg);
     }
-
 }
 
 
 /* =========================================================
    PAGE LOADING
-========================================================= */
+   ========================================================= */
 
 .company-profile-loading {
-    min-height: 300px;
+    min-height: 400px;
 
     display: flex;
 
@@ -665,50 +1014,99 @@
 
     gap: 12px;
 
-    color: #64748b;
+    color: #667085;
 }
 
 
 .company-profile-loading p {
     margin: 0;
 
-    font-size: 12px;
+    font-size: 11px;
 }
 
 
 .profile-loader {
-    width: 28px;
-    height: 28px;
+    width: 31px;
+    height: 31px;
 
-    border: 3px solid #e5e7eb;
+    border:
+        3px solid
+        #e8eaf0;
 
-    border-top-color: #667eea;
+    border-top-color: #6366f1;
 
     border-radius: 50%;
 
     animation:
-        profileSpin 0.8s linear infinite;
+        profileSpin
+        0.75s
+        linear
+        infinite;
 }
 
 
 @keyframes profileSpin {
 
     from {
-        transform: rotate(0deg);
+        transform:
+            rotate(0deg);
     }
 
     to {
-        transform: rotate(360deg);
+        transform:
+            rotate(360deg);
     }
-
 }
 
 
 /* =========================================================
    TABLET
-========================================================= */
+   ========================================================= */
 
-@media (max-width: 950px) {
+@media (max-width: 1050px) {
+
+    .company-profile {
+        padding:
+            20px
+            22px
+            40px;
+    }
+
+
+    .profile-layout {
+        grid-template-columns:
+            250px minmax(0, 1fr);
+
+        gap: 18px;
+    }
+
+
+    .profile-summary {
+        padding:
+            23px
+            19px;
+    }
+
+
+    .form-section {
+        padding:
+            27px;
+    }
+
+
+    .form-footer {
+        padding:
+            14px
+            27px;
+    }
+}
+
+
+/* =========================================================
+   TABLET / SMALL LAPTOP
+   ========================================================= */
+
+@media (max-width: 850px) {
 
     .profile-layout {
         grid-template-columns: 1fr;
@@ -716,18 +1114,32 @@
 
 
     .profile-summary {
+        position: relative;
+
+        top: auto;
+
         display: grid;
 
-        grid-template-columns: auto 1fr;
+        grid-template-columns:
+            auto minmax(0, 1fr);
 
-        column-gap: 15px;
+        column-gap: 17px;
 
         text-align: left;
     }
 
 
+    .profile-summary::before {
+        margin:
+            -23px
+            -19px
+            20px;
+    }
+
+
     .summary-avatar {
-        grid-row: span 2;
+        grid-row:
+            span 2;
 
         margin: 0;
     }
@@ -735,6 +1147,8 @@
 
     .profile-summary h2 {
         align-self: end;
+
+        text-align: left;
     }
 
 
@@ -742,38 +1156,48 @@
         align-self: start;
 
         margin-top: 4px;
+
+        text-align: left;
     }
 
 
     .summary-divider {
-        grid-column: 1 / -1;
+        grid-column:
+            1 / -1;
 
-        margin: 18px 0;
+        margin:
+            18px
+            0;
     }
 
 
     .summary-item {
         margin-bottom: 0;
     }
-
 }
 
 
 /* =========================================================
    MOBILE
-========================================================= */
+   ========================================================= */
 
 @media (max-width: 650px) {
 
     .company-profile {
-        padding: 0 0 30px;
+        padding:
+            12px
+            12px
+            30px;
     }
 
 
     .profile-header {
-        padding: 22px;
+        margin-bottom: 17px;
 
-        border-radius: 16px;
+        padding:
+            22px;
+
+        border-radius: 17px;
     }
 
 
@@ -783,45 +1207,57 @@
 
 
     .company-profile-icon {
-        width: 48px;
-        height: 48px;
+        width: 50px;
+        height: 50px;
 
-        min-width: 48px;
+        min-width: 50px;
 
-        border-radius: 13px;
+        border-radius: 14px;
 
         font-size: 20px;
     }
 
 
     .profile-header h1 {
-        font-size: 24px;
+        font-size: 23px;
     }
 
 
     .profile-header p {
-        font-size: 11px;
-
-        line-height: 1.5;
-    }
-
-
-    .profile-layout {
-        gap: 16px;
+        font-size: 10px;
     }
 
 
     .profile-summary {
         display: block;
 
-        padding: 20px;
+        padding:
+            21px;
+
+        border-radius: 17px;
 
         text-align: center;
     }
 
 
+    .profile-summary::before {
+        margin:
+            -21px
+            -21px
+            20px;
+    }
+
+
     .summary-avatar {
-        margin: 0 auto 12px;
+        margin:
+            0
+            auto
+            13px;
+    }
+
+
+    .profile-summary h2 {
+        text-align: center;
     }
 
 
@@ -831,19 +1267,38 @@
 
 
     .summary-divider {
-        margin: 18px 0;
+        margin:
+            18px
+            0;
     }
 
 
     .summary-item {
-        margin-bottom: 12px;
+        margin-bottom: 11px;
 
         text-align: left;
     }
 
 
+    .company-profile-form {
+        border-radius: 17px;
+    }
+
+
     .form-section {
-        padding: 22px;
+        padding:
+            22px
+            19px;
+    }
+
+
+    .form-section-header {
+        margin-bottom: 22px;
+    }
+
+
+    .form-section-header h2 {
+        font-size: 16px;
     }
 
 
@@ -854,12 +1309,19 @@
     }
 
 
+    .form-group {
+        margin-bottom: 18px;
+    }
+
+
     .form-footer {
         flex-direction: column;
 
         align-items: stretch;
 
-        padding: 15px 22px;
+        padding:
+            15px
+            19px;
     }
 
 
@@ -867,11 +1329,88 @@
         margin-right: 0;
 
         justify-content: center;
+
+        text-align: center;
     }
 
 
     .save-profile-btn {
         width: 100%;
     }
+}
 
+
+/* =========================================================
+   SMALL MOBILE
+   ========================================================= */
+
+@media (max-width: 420px) {
+
+    .company-profile {
+        padding:
+            9px
+            9px
+            25px;
+    }
+
+
+    .profile-header {
+        padding:
+            19px;
+    }
+
+
+    .company-profile-icon {
+        width: 44px;
+        height: 44px;
+
+        min-width: 44px;
+
+        font-size: 18px;
+    }
+
+
+    .profile-header h1 {
+        font-size: 20px;
+    }
+
+
+    .profile-header p {
+        font-size: 9px;
+    }
+
+
+    .form-section {
+        padding:
+            19px
+            16px;
+    }
+
+
+    .input-wrapper input {
+        height: 44px;
+    }
+
+
+    .textarea-wrapper textarea {
+        min-height: 125px;
+    }
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+   ========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    *,
+    *::before,
+    *::after {
+        animation-duration: 0.01ms !important;
+
+        animation-iteration-count: 1 !important;
+
+        transition-duration: 0.01ms !important;
+    }
 }

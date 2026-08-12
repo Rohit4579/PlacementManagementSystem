@@ -1,178 +1,2210 @@
-/* ===========================
-   Resume Upload
-=========================== */
+/* =========================================================
+   RESUME UPLOAD
+   COMPLETE PROFESSIONAL DESIGN SYSTEM
+   =========================================================
 
-.resume-upload{
-    width:100%;
-    display:flex;
-    justify-content:center;
-    align-items:flex-start;
-    padding:30px;
-    box-sizing:border-box;
+   Features:
+   - Modern placement dashboard design
+   - Indigo / violet theme
+   - Responsive desktop/tablet/mobile
+   - Accessible controls
+   - Loading state
+   - Success/error states
+   - Resume URL preview
+   - Smooth animations
+   - Darker visual hierarchy
+   - No dependency on external CSS
+
+========================================================= */
+
+
+/* =========================================================
+   01. ROOT
+========================================================= */
+
+.resume-upload {
+
+    --resume-primary: #667eea;
+    --resume-primary-dark: #5646c9;
+    --resume-primary-light: #eef2ff;
+    --resume-primary-soft: #f7f8ff;
+
+    --resume-secondary: #8b5cf6;
+
+    --resume-success: #059669;
+    --resume-success-dark: #047857;
+    --resume-success-light: #ecfdf5;
+
+    --resume-danger: #dc2626;
+    --resume-danger-dark: #b91c1c;
+    --resume-danger-light: #fef2f2;
+
+    --resume-text: #111827;
+    --resume-heading: #1e293b;
+    --resume-text-secondary: #334155;
+    --resume-text-muted: #64748b;
+    --resume-text-light: #94a3b8;
+
+    --resume-border: #e7eaf2;
+    --resume-border-light: #eef0f5;
+    --resume-border-input: #dfe3eb;
+
+    --resume-background: #f5f7fb;
+    --resume-surface: #ffffff;
+    --resume-surface-soft: #f8fafc;
+
+    --resume-radius-sm: 9px;
+    --resume-radius-md: 11px;
+    --resume-radius-lg: 15px;
+    --resume-radius-xl: 20px;
+    --resume-radius-xxl: 24px;
+
+    --resume-shadow-sm:
+        0 5px 18px rgba(15, 23, 42, 0.045);
+
+    --resume-shadow-md:
+        0 12px 35px rgba(15, 23, 42, 0.065);
+
+    --resume-shadow-lg:
+        0 25px 70px rgba(15, 23, 42, 0.10);
+
+    --resume-transition-fast:
+        .15s ease;
+
+    --resume-transition:
+        .22s ease;
+
+    --resume-transition-slow:
+        .35s ease;
+
+    width: 100%;
+
+    min-height: 100%;
+
+    display: flex;
+
+    align-items: flex-start;
+
+    justify-content: center;
+
+    padding: 34px;
+
+    box-sizing: border-box;
+
+    font-family:
+        Inter,
+        "Segoe UI",
+        Roboto,
+        Helvetica,
+        Arial,
+        sans-serif;
+
+    color: var(--resume-text);
+
+    -webkit-font-smoothing: antialiased;
+
+    -moz-osx-font-smoothing: grayscale;
+
 }
 
-.resume-card{
-    width:100%;
-    max-width:700px;
-    background:#ffffff;
-    border-radius:20px;
-    padding:40px;
-    box-shadow:0 10px 30px rgba(0,0,0,.08);
+
+/* =========================================================
+   02. BOX SIZING
+========================================================= */
+
+.resume-upload *,
+.resume-upload *::before,
+.resume-upload *::after {
+
+    box-sizing: border-box;
+
 }
 
-.resume-card h1{
-    margin:0;
-    font-size:30px;
-    color:#111827;
-    font-weight:700;
+
+/* =========================================================
+   03. CARD
+========================================================= */
+
+.resume-card {
+
+    position: relative;
+
+    width: 100%;
+
+    max-width: 780px;
+
+    overflow: hidden;
+
+    background:
+        rgba(255, 255, 255, .98);
+
+    border:
+        1px solid
+        var(--resume-border);
+
+    border-radius:
+        var(--resume-radius-xxl);
+
+    box-shadow:
+        var(--resume-shadow-md);
+
+    isolation: isolate;
+
+    animation:
+        resume-card-in
+        .35s
+        cubic-bezier(.2, .8, .2, 1);
+
 }
 
-.resume-card p{
-    margin-top:10px;
-    margin-bottom:30px;
-    color:#6b7280;
-    font-size:16px;
-    line-height:1.6;
+
+/* =========================================================
+   CARD TOP DECORATION
+========================================================= */
+
+.resume-card::before {
+
+    content: "";
+
+    position: absolute;
+
+    width: 280px;
+
+    height: 280px;
+
+    right: -155px;
+
+    top: -170px;
+
+    border-radius: 50%;
+
+    background:
+        rgba(102, 126, 234, .055);
+
+    pointer-events: none;
+
+    z-index: -1;
+
 }
 
-/* ===========================
-   File Upload
-=========================== */
 
-.resume-input{
-    width:100%;
-    padding:16px;
-    border:2px dashed #cbd5e1;
-    border-radius:14px;
-    background:#f8fafc;
-    cursor:pointer;
-    transition:.3s;
-    box-sizing:border-box;
+.resume-card::after {
+
+    content: "";
+
+    position: absolute;
+
+    width: 170px;
+
+    height: 170px;
+
+    left: -100px;
+
+    bottom: -110px;
+
+    border-radius: 50%;
+
+    background:
+        rgba(139, 92, 246, .035);
+
+    pointer-events: none;
+
+    z-index: -1;
+
 }
 
-.resume-input:hover{
-    border-color:#667eea;
-    background:#eef2ff;
+
+/* =========================================================
+   04. HEADER
+========================================================= */
+
+.resume-header {
+
+    position: relative;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 18px;
+
+    padding:
+        30px
+        30px
+        26px;
+
+    border-bottom:
+        1px solid
+        var(--resume-border-light);
+
 }
 
-.resume-input::file-selector-button{
-    background:#667eea;
-    color:#fff;
-    border:none;
-    padding:10px 18px;
-    border-radius:8px;
-    cursor:pointer;
-    margin-right:15px;
-    font-weight:600;
-    transition:.3s;
+
+/* =========================================================
+   HEADER ICON
+========================================================= */
+
+.resume-header-icon {
+
+    width: 58px;
+
+    height: 58px;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 16px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #eef2ff 0%,
+            #e8edff 100%
+        );
+
+    color:
+        var(--resume-primary);
+
+    box-shadow:
+        inset 0 1px 0 rgba(255,255,255,.9),
+        0 7px 18px rgba(102,126,234,.08);
+
 }
 
-.resume-input::file-selector-button:hover{
-    background:#5646c9;
+
+.resume-header-icon svg {
+
+    width: 26px;
+
+    height: 26px;
+
 }
 
-/* ===========================
-   Upload Button
-=========================== */
 
-.upload-btn{
-    width:100%;
-    margin-top:25px;
-    padding:15px;
-    border:none;
-    border-radius:12px;
-    background:#667eea;
-    color:#fff;
-    font-size:17px;
-    font-weight:600;
-    cursor:pointer;
-    transition:.3s;
+/* =========================================================
+   HEADER CONTENT
+========================================================= */
+
+.resume-header-content {
+
+    min-width: 0;
+
 }
 
-.upload-btn:hover{
-    background:#5646c9;
-    transform:translateY(-2px);
+
+.resume-eyebrow {
+
+    display: block;
+
+    margin-bottom: 5px;
+
+    color:
+        var(--resume-primary);
+
+    font-size: 9px;
+
+    font-weight: 800;
+
+    line-height: 1.2;
+
+    letter-spacing: 1.3px;
+
+    text-transform: uppercase;
+
 }
 
-.upload-btn:disabled{
-    background:#b8c0ff;
-    cursor:not-allowed;
-    transform:none;
+
+.resume-header h1 {
+
+    margin: 0 0 6px;
+
+    color:
+        var(--resume-heading);
+
+    font-size: 27px;
+
+    font-weight: 800;
+
+    line-height: 1.2;
+
+    letter-spacing: -.55px;
+
 }
 
-/* ===========================
-   Resume Preview
-=========================== */
 
-.resume-preview{
-    margin-top:30px;
-    padding:20px;
-    background:#f9fafb;
-    border:1px solid #e5e7eb;
-    border-radius:14px;
-    display:flex;
-    justify-content:space-between;
-    align-items:center;
-    flex-wrap:wrap;
-    gap:15px;
+.resume-header p {
+
+    max-width: 590px;
+
+    margin: 0;
+
+    color:
+        var(--resume-text-muted);
+
+    font-size: 12px;
+
+    line-height: 1.65;
+
 }
 
-.resume-preview span{
-    font-size:16px;
-    font-weight:600;
-    color:#111827;
+
+/* =========================================================
+   05. INFO BANNER
+========================================================= */
+
+.resume-info-banner {
+
+    display: flex;
+
+    align-items: flex-start;
+
+    gap: 12px;
+
+    margin:
+        24px
+        30px
+        0;
+
+    padding:
+        15px
+        16px;
+
+    border:
+        1px solid
+        #dce3ff;
+
+    border-radius:
+        13px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #f7f8ff,
+            #fbfbff
+        );
+
 }
 
-.resume-preview a{
-    padding:12px 22px;
-    border-radius:10px;
-    background:#10b981;
-    color:#fff;
-    text-decoration:none;
-    font-weight:600;
-    transition:.3s;
+
+.resume-info-icon {
+
+    width: 32px;
+
+    height: 32px;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius: 9px;
+
+    background:
+        #e9edff;
+
+    color:
+        var(--resume-primary);
+
 }
 
-.resume-preview a:hover{
-    background:#059669;
+
+.resume-info-icon svg {
+
+    width: 15px;
+
+    height: 15px;
+
 }
 
-/* ===========================
-   Upload Status
-=========================== */
 
-.upload-status{
-    margin-top:18px;
-    font-size:15px;
-    color:#6b7280;
+.resume-info-banner strong {
+
+    display: block;
+
+    margin-bottom: 3px;
+
+    color:
+        var(--resume-heading);
+
+    font-size: 11px;
+
+    font-weight: 750;
+
+    line-height: 1.35;
+
 }
 
-/* ===========================
-   Responsive
-=========================== */
 
-@media(max-width:768px){
+.resume-info-banner p {
 
-    .resume-upload{
-        padding:20px;
+    margin: 0;
+
+    color:
+        var(--resume-text-muted);
+
+    font-size: 10px;
+
+    line-height: 1.55;
+
+}
+
+
+/* =========================================================
+   06. FORM
+========================================================= */
+
+.resume-form {
+
+    padding:
+        26px
+        30px
+        30px;
+
+}
+
+
+.resume-form-group {
+
+    width: 100%;
+
+}
+
+
+/* =========================================================
+   LABEL
+========================================================= */
+
+.resume-form-group label {
+
+    display: block;
+
+    margin-bottom: 8px;
+
+    color:
+        var(--resume-text-secondary);
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    line-height: 1.35;
+
+}
+
+
+.resume-form-group label span {
+
+    margin-left: 3px;
+
+    color:
+        #ef4444;
+
+    font-weight: 800;
+
+}
+
+
+/* =========================================================
+   INPUT WRAPPER
+========================================================= */
+
+.resume-input-wrapper {
+
+    position: relative;
+
+    display: flex;
+
+    align-items: center;
+
+    width: 100%;
+
+    min-height: 50px;
+
+    border:
+        1px solid
+        var(--resume-border-input);
+
+    border-radius:
+        var(--resume-radius-md);
+
+    background:
+        #ffffff;
+
+    transition:
+        border-color
+        var(--resume-transition),
+
+        box-shadow
+        var(--resume-transition),
+
+        background
+        var(--resume-transition);
+
+}
+
+
+.resume-input-wrapper:hover {
+
+    border-color:
+        #cbd3e3;
+
+}
+
+
+.resume-input-wrapper.is-focused {
+
+    border-color:
+        var(--resume-primary);
+
+    box-shadow:
+        0 0 0 3px
+        rgba(102,126,234,.10);
+
+}
+
+
+/* =========================================================
+   INPUT ICON
+========================================================= */
+
+.resume-input-icon {
+
+    width: 45px;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    color:
+        var(--resume-text-light);
+
+    transition:
+        color
+        var(--resume-transition);
+
+}
+
+
+.resume-input-wrapper.is-focused
+.resume-input-icon {
+
+    color:
+        var(--resume-primary);
+
+}
+
+
+.resume-input-icon svg {
+
+    width: 16px;
+
+    height: 16px;
+
+}
+
+
+/* =========================================================
+   INPUT
+========================================================= */
+
+.resume-input {
+
+    width: 100%;
+
+    min-width: 0;
+
+    height: 48px;
+
+    padding:
+        0 10px;
+
+    border: none;
+
+    outline: none;
+
+    background: transparent;
+
+    color:
+        var(--resume-heading);
+
+    font-family: inherit;
+
+    font-size: 13px;
+
+    font-weight: 450;
+
+}
+
+
+.resume-input::placeholder {
+
+    color:
+        #a8b0bd;
+
+}
+
+
+.resume-input:focus {
+
+    outline: none;
+
+}
+
+
+/* =========================================================
+   CLEAR BUTTON
+========================================================= */
+
+.resume-clear-btn {
+
+    width: 34px;
+
+    height: 34px;
+
+    flex-shrink: 0;
+
+    margin-right: 7px;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border: none;
+
+    border-radius: 8px;
+
+    background:
+        transparent;
+
+    color:
+        var(--resume-text-light);
+
+    cursor: pointer;
+
+    transition:
+        background
+        var(--resume-transition),
+
+        color
+        var(--resume-transition);
+
+}
+
+
+.resume-clear-btn:hover {
+
+    background:
+        #f1f5f9;
+
+    color:
+        var(--resume-danger);
+
+}
+
+
+.resume-clear-btn svg {
+
+    width: 14px;
+
+    height: 14px;
+
+}
+
+
+/* =========================================================
+   HELP TEXT
+========================================================= */
+
+.resume-help {
+
+    display: block;
+
+    margin-top: 7px;
+
+    color:
+        var(--resume-text-light);
+
+    font-size: 10px;
+
+    line-height: 1.5;
+
+}
+
+
+/* =========================================================
+   07. SAVE BUTTON
+========================================================= */
+
+.upload-btn {
+
+    width: 100%;
+
+    min-height: 48px;
+
+    margin-top: 20px;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 8px;
+
+    padding:
+        0 20px;
+
+    border: none;
+
+    border-radius:
+        11px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #667eea 0%,
+            #705ee7 100%
+        );
+
+    color:
+        #ffffff;
+
+    font-family: inherit;
+
+    font-size: 12px;
+
+    font-weight: 700;
+
+    line-height: 1;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 7px 18px
+        rgba(102,126,234,.20);
+
+    transition:
+        background
+        var(--resume-transition),
+
+        transform
+        var(--resume-transition),
+
+        box-shadow
+        var(--resume-transition),
+
+        opacity
+        var(--resume-transition);
+
+}
+
+
+.upload-btn svg {
+
+    width: 15px;
+
+    height: 15px;
+
+}
+
+
+.upload-btn:hover:not(:disabled) {
+
+    background:
+        linear-gradient(
+            135deg,
+            #5d70e5 0%,
+            #5f4fd3 100%
+        );
+
+    transform:
+        translateY(-2px);
+
+    box-shadow:
+        0 10px 24px
+        rgba(102,126,234,.28);
+
+}
+
+
+.upload-btn:active:not(:disabled) {
+
+    transform:
+        translateY(0);
+
+    box-shadow:
+        0 5px 13px
+        rgba(102,126,234,.20);
+
+}
+
+
+.upload-btn:disabled {
+
+    opacity: .55;
+
+    cursor:
+        not-allowed;
+
+    box-shadow:
+        none;
+
+    transform:
+        none;
+
+}
+
+
+/* =========================================================
+   08. BUTTON SPINNER
+========================================================= */
+
+.resume-btn-spinner {
+
+    width: 15px;
+
+    height: 15px;
+
+    flex-shrink: 0;
+
+    border:
+        2px solid
+        rgba(255,255,255,.35);
+
+    border-top-color:
+        #ffffff;
+
+    border-radius: 50%;
+
+    animation:
+        resume-spin
+        .7s
+        linear
+        infinite;
+
+}
+
+
+/* =========================================================
+   09. MESSAGE
+========================================================= */
+
+.resume-message {
+
+    display: flex;
+
+    align-items: flex-start;
+
+    gap: 8px;
+
+    margin-top: 13px;
+
+    padding:
+        11px
+        12px;
+
+    border-radius:
+        10px;
+
+    font-size: 10px;
+
+    font-weight: 600;
+
+    line-height: 1.5;
+
+    animation:
+        resume-message-in
+        .2s
+        ease;
+
+}
+
+
+.resume-message svg {
+
+    width: 15px;
+
+    height: 15px;
+
+    flex-shrink: 0;
+
+    margin-top: 1px;
+
+}
+
+
+.resume-message.success {
+
+    border:
+        1px solid
+        #bbf7d0;
+
+    background:
+        #f0fdf4;
+
+    color:
+        #047857;
+
+}
+
+
+.resume-message.error {
+
+    border:
+        1px solid
+        #fecaca;
+
+    background:
+        #fef2f2;
+
+    color:
+        #b91c1c;
+
+}
+
+
+/* =========================================================
+   10. RESUME PREVIEW
+========================================================= */
+
+.resume-preview {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 18px;
+
+    margin:
+        0
+        30px
+        24px;
+
+    padding:
+        17px;
+
+    border:
+        1px solid
+        #dce3f1;
+
+    border-radius:
+        14px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #f8fafc 0%,
+            #fbfcff 100%
+        );
+
+    animation:
+        resume-preview-in
+        .28s
+        ease;
+
+}
+
+
+/* =========================================================
+   PREVIEW LEFT
+========================================================= */
+
+.resume-preview-left {
+
+    min-width: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 12px;
+
+    flex: 1;
+
+}
+
+
+/* =========================================================
+   DOCUMENT ICON
+========================================================= */
+
+.resume-document-icon {
+
+    width: 42px;
+
+    height: 42px;
+
+    flex-shrink: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    border-radius:
+        11px;
+
+    background:
+        #ecfdf5;
+
+    color:
+        var(--resume-success);
+
+}
+
+
+.resume-document-icon svg {
+
+    width: 20px;
+
+    height: 20px;
+
+}
+
+
+/* =========================================================
+   PREVIEW INFO
+========================================================= */
+
+.resume-preview-info {
+
+    min-width: 0;
+
+}
+
+
+.resume-added {
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    margin-bottom: 3px;
+
+    color:
+        var(--resume-heading);
+
+    font-size: 11px;
+
+    font-weight: 750;
+
+    line-height: 1.3;
+
+}
+
+
+.resume-success-dot {
+
+    width: 7px;
+
+    height: 7px;
+
+    flex-shrink: 0;
+
+    border-radius: 50%;
+
+    background:
+        #10b981;
+
+    box-shadow:
+        0 0 0 3px
+        rgba(16,185,129,.10);
+
+}
+
+
+.resume-preview-info p {
+
+    margin: 0 0 5px;
+
+    color:
+        var(--resume-text-light);
+
+    font-size: 9px;
+
+    line-height: 1.45;
+
+}
+
+
+.resume-url-text {
+
+    display: block;
+
+    max-width: 430px;
+
+    overflow: hidden;
+
+    color:
+        #7c87a4;
+
+    font-size: 9px;
+
+    line-height: 1.4;
+
+    text-overflow: ellipsis;
+
+    white-space: nowrap;
+
+}
+
+
+/* =========================================================
+   VIEW RESUME BUTTON
+========================================================= */
+
+.resume-btn {
+
+    min-height: 39px;
+
+    flex-shrink: 0;
+
+    display: inline-flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 7px;
+
+    padding:
+        0 14px;
+
+    border:
+        1px solid
+        #b7e8d3;
+
+    border-radius:
+        9px;
+
+    background:
+        #ecfdf5;
+
+    color:
+        #047857;
+
+    font-size: 10px;
+
+    font-weight: 750;
+
+    line-height: 1;
+
+    text-decoration: none;
+
+    transition:
+        background
+        var(--resume-transition),
+
+        border-color
+        var(--resume-transition),
+
+        color
+        var(--resume-transition),
+
+        transform
+        var(--resume-transition),
+
+        box-shadow
+        var(--resume-transition);
+
+}
+
+
+.resume-btn svg {
+
+    width: 13px;
+
+    height: 13px;
+
+}
+
+
+.resume-btn:hover {
+
+    border-color:
+        #86efac;
+
+    background:
+        #dff9ed;
+
+    color:
+        #036b4d;
+
+    transform:
+        translateY(-1px);
+
+    box-shadow:
+        0 6px 14px
+        rgba(5,150,105,.10);
+
+}
+
+
+.resume-btn:active {
+
+    transform:
+        translateY(0);
+
+}
+
+
+/* =========================================================
+   11. FOOTER
+========================================================= */
+
+.resume-footer {
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: space-between;
+
+    gap: 15px;
+
+    padding:
+        16px
+        30px;
+
+    border-top:
+        1px solid
+        var(--resume-border-light);
+
+    background:
+        #fafbfc;
+
+}
+
+
+.resume-footer-item {
+
+    min-width: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    gap: 6px;
+
+    color:
+        var(--resume-text-light);
+
+    font-size: 9px;
+
+    line-height: 1.4;
+
+}
+
+
+.resume-footer-item svg {
+
+    width: 13px;
+
+    height: 13px;
+
+    flex-shrink: 0;
+
+    color:
+        var(--resume-primary);
+
+}
+
+
+/* =========================================================
+   12. LOADING CARD
+========================================================= */
+
+.resume-card-loading {
+
+    min-height: 400px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    padding: 40px;
+
+    text-align: center;
+
+}
+
+
+.resume-loading-spinner {
+
+    width: 38px;
+
+    height: 38px;
+
+    margin-bottom: 16px;
+
+    border:
+        3px solid
+        #e5e7eb;
+
+    border-top-color:
+        var(--resume-primary);
+
+    border-radius: 50%;
+
+    animation:
+        resume-spin
+        .8s
+        linear
+        infinite;
+
+}
+
+
+.resume-card-loading h2 {
+
+    margin: 0 0 6px;
+
+    color:
+        var(--resume-heading);
+
+    font-size: 16px;
+
+    font-weight: 750;
+
+}
+
+
+.resume-card-loading p {
+
+    max-width: 350px;
+
+    margin: 0;
+
+    color:
+        var(--resume-text-muted);
+
+    font-size: 11px;
+
+    line-height: 1.6;
+
+}
+
+
+/* =========================================================
+   13. ACCESSIBILITY
+========================================================= */
+
+.resume-upload button:focus-visible,
+.resume-upload input:focus-visible,
+.resume-upload a:focus-visible {
+
+    outline:
+        3px solid
+        rgba(102,126,234,.22);
+
+    outline-offset:
+        2px;
+
+}
+
+
+/* =========================================================
+   14. AUTOFILL
+========================================================= */
+
+.resume-input:-webkit-autofill,
+.resume-input:-webkit-autofill:hover,
+.resume-input:-webkit-autofill:focus {
+
+    -webkit-text-fill-color:
+        var(--resume-heading);
+
+    -webkit-box-shadow:
+        0 0 0 1000px
+        #ffffff
+        inset;
+
+    transition:
+        background-color
+        5000s
+        ease-in-out
+        0s;
+
+}
+
+
+/* =========================================================
+   15. DESKTOP HOVER
+========================================================= */
+
+@media (min-width: 901px) {
+
+    .resume-card:hover {
+
+        box-shadow:
+            0 16px 45px
+            rgba(15,23,42,.075);
+
     }
 
-    .resume-card{
-        padding:25px;
+}
+
+
+/* =========================================================
+   16. TABLET — 900px
+========================================================= */
+
+@media (max-width: 900px) {
+
+    .resume-upload {
+
+        padding:
+            25px;
+
     }
 
-    .resume-card h1{
-        font-size:24px;
+
+    .resume-card {
+
+        max-width:
+            720px;
+
     }
 
-    .resume-preview{
-        flex-direction:column;
-        align-items:flex-start;
+
+    .resume-header {
+
+        padding:
+            27px;
+
     }
 
-    .resume-preview a{
-        width:100%;
-        text-align:center;
+
+    .resume-info-banner {
+
+        margin-left:
+            27px;
+
+        margin-right:
+            27px;
+
+    }
+
+
+    .resume-form {
+
+        padding:
+            24px
+            27px
+            27px;
+
+    }
+
+
+    .resume-preview {
+
+        margin-left:
+            27px;
+
+        margin-right:
+            27px;
+
+    }
+
+
+    .resume-footer {
+
+        padding:
+            15px
+            27px;
+
+    }
+
+}
+
+
+/* =========================================================
+   17. MOBILE — 700px
+========================================================= */
+
+@media (max-width: 700px) {
+
+    .resume-upload {
+
+        padding:
+            15px;
+
+    }
+
+
+    .resume-card {
+
+        border-radius:
+            18px;
+
+    }
+
+
+    .resume-header {
+
+        align-items:
+            flex-start;
+
+        gap:
+            14px;
+
+        padding:
+            22px
+            20px;
+
+    }
+
+
+    .resume-header-icon {
+
+        width:
+            48px;
+
+        height:
+            48px;
+
+        border-radius:
+            13px;
+
+    }
+
+
+    .resume-header-icon svg {
+
+        width:
+            22px;
+
+        height:
+            22px;
+
+    }
+
+
+    .resume-eyebrow {
+
+        font-size:
+            8px;
+
+    }
+
+
+    .resume-header h1 {
+
+        font-size:
+            22px;
+
+        letter-spacing:
+            -.35px;
+
+    }
+
+
+    .resume-header p {
+
+        font-size:
+            10px;
+
+        line-height:
+            1.55;
+
+    }
+
+
+    .resume-info-banner {
+
+        margin:
+            18px
+            20px
+            0;
+
+        padding:
+            13px;
+
+    }
+
+
+    .resume-info-banner p {
+
+        font-size:
+            9px;
+
+    }
+
+
+    .resume-form {
+
+        padding:
+            21px
+            20px
+            23px;
+
+    }
+
+
+    .resume-form-group label {
+
+        font-size:
+            11px;
+
+    }
+
+
+    .resume-input-wrapper {
+
+        min-height:
+            47px;
+
+    }
+
+
+    .resume-input {
+
+        height:
+            45px;
+
+        font-size:
+            12px;
+
+    }
+
+
+    .resume-preview {
+
+        align-items:
+            stretch;
+
+        flex-direction:
+            column;
+
+        margin:
+            0
+            20px
+            20px;
+
+        padding:
+            14px;
+
+    }
+
+
+    .resume-preview-left {
+
+        width:
+            100%;
+
+    }
+
+
+    .resume-url-text {
+
+        max-width:
+            calc(
+                100vw - 105px
+            );
+
+    }
+
+
+    .resume-btn {
+
+        width:
+            100%;
+
+    }
+
+
+    .resume-footer {
+
+        align-items:
+            flex-start;
+
+        flex-direction:
+            column;
+
+        padding:
+            14px
+            20px;
+
+    }
+
+}
+
+
+/* =========================================================
+   18. SMALL MOBILE — 450px
+========================================================= */
+
+@media (max-width: 450px) {
+
+    .resume-upload {
+
+        padding:
+            10px;
+
+    }
+
+
+    .resume-card {
+
+        border-radius:
+            16px;
+
+    }
+
+
+    .resume-header {
+
+        padding:
+            19px
+            16px;
+
+    }
+
+
+    .resume-header-icon {
+
+        width:
+            42px;
+
+        height:
+            42px;
+
+        border-radius:
+            11px;
+
+    }
+
+
+    .resume-header-icon svg {
+
+        width:
+            19px;
+
+        height:
+            19px;
+
+    }
+
+
+    .resume-header h1 {
+
+        font-size:
+            20px;
+
+    }
+
+
+    .resume-header p {
+
+        font-size:
+            9px;
+
+    }
+
+
+    .resume-info-banner {
+
+        margin:
+            15px
+            16px
+            0;
+
+        gap:
+            9px;
+
+    }
+
+
+    .resume-info-icon {
+
+        width:
+            28px;
+
+        height:
+            28px;
+
+    }
+
+
+    .resume-info-banner strong {
+
+        font-size:
+            10px;
+
+    }
+
+
+    .resume-info-banner p {
+
+        font-size:
+            8.5px;
+
+    }
+
+
+    .resume-form {
+
+        padding:
+            18px
+            16px
+            20px;
+
+    }
+
+
+    .resume-input-icon {
+
+        width:
+            39px;
+
+    }
+
+
+    .resume-input {
+
+        font-size:
+            11px;
+
+    }
+
+
+    .resume-help {
+
+        font-size:
+            9px;
+
+    }
+
+
+    .upload-btn {
+
+        min-height:
+            45px;
+
+        font-size:
+            11px;
+
+    }
+
+
+    .resume-preview {
+
+        margin:
+            0
+            16px
+            16px;
+
+    }
+
+
+    .resume-document-icon {
+
+        width:
+            38px;
+
+        height:
+            38px;
+
+    }
+
+
+    .resume-added {
+
+        font-size:
+            10px;
+
+    }
+
+
+    .resume-preview-info p {
+
+        font-size:
+            8px;
+
+    }
+
+
+    .resume-url-text {
+
+        font-size:
+            8px;
+
+    }
+
+
+    .resume-footer {
+
+        padding:
+            13px
+            16px;
+
+    }
+
+}
+
+
+/* =========================================================
+   19. EXTRA SMALL — 360px
+========================================================= */
+
+@media (max-width: 360px) {
+
+    .resume-upload {
+
+        padding:
+            7px;
+
+    }
+
+
+    .resume-header {
+
+        gap:
+            10px;
+
+        padding:
+            17px
+            13px;
+
+    }
+
+
+    .resume-header-icon {
+
+        display:
+            none;
+
+    }
+
+
+    .resume-info-banner {
+
+        margin:
+            13px
+            13px
+            0;
+
+    }
+
+
+    .resume-form {
+
+        padding:
+            17px
+            13px
+            18px;
+
+    }
+
+
+    .resume-preview {
+
+        margin:
+            0
+            13px
+            13px;
+
+    }
+
+
+    .resume-footer {
+
+        padding:
+            12px
+            13px;
+
+    }
+
+}
+
+
+/* =========================================================
+   20. REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .resume-upload *,
+    .resume-upload *::before,
+    .resume-upload *::after {
+
+        animation-duration:
+            .01ms !important;
+
+        animation-iteration-count:
+            1 !important;
+
+        transition-duration:
+            .01ms !important;
+
+        scroll-behavior:
+            auto !important;
+
+    }
+
+}
+
+
+/* =========================================================
+   21. PRINT
+========================================================= */
+
+@media print {
+
+    .resume-upload {
+
+        padding:
+            0;
+
+    }
+
+
+    .resume-card {
+
+        max-width:
+            none;
+
+        border:
+            1px solid
+            #ccc;
+
+        box-shadow:
+            none;
+
+    }
+
+
+    .upload-btn,
+    .resume-footer {
+
+        display:
+            none;
+
+    }
+
+
+    .resume-card::before,
+    .resume-card::after {
+
+        display:
+            none;
+
+    }
+
+}
+
+
+/* =========================================================
+   22. ANIMATIONS
+========================================================= */
+
+@keyframes resume-spin {
+
+    to {
+
+        transform:
+            rotate(360deg);
+
+    }
+
+}
+
+
+@keyframes resume-card-in {
+
+    from {
+
+        opacity:
+            0;
+
+        transform:
+            translateY(18px)
+            scale(.985);
+
+    }
+
+    to {
+
+        opacity:
+            1;
+
+        transform:
+            translateY(0)
+            scale(1);
+
+    }
+
+}
+
+
+@keyframes resume-message-in {
+
+    from {
+
+        opacity:
+            0;
+
+        transform:
+            translateY(-4px);
+
+    }
+
+    to {
+
+        opacity:
+            1;
+
+        transform:
+            translateY(0);
+
+    }
+
+}
+
+
+@keyframes resume-preview-in {
+
+    from {
+
+        opacity:
+            0;
+
+        transform:
+            translateY(7px);
+
+    }
+
+    to {
+
+        opacity:
+            1;
+
+        transform:
+            translateY(0);
+
     }
 
 }

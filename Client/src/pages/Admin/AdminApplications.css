@@ -1206,3 +1206,86 @@
     }
 
 }
+
+
+/* =========================================================
+   APPLICATION ACTION COLUMN
+========================================================= */
+
+.applications-table th:nth-child(7),
+.applications-table td:nth-child(7) {
+    width: 9%;
+}
+
+
+/* =========================================================
+   APPLICATION DELETE BUTTON
+========================================================= */
+
+.application-delete-button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 6px;
+
+    min-width: 76px;
+
+    padding: 7px 10px;
+
+    border: 1px solid #fecaca;
+    border-radius: 8px;
+
+    background: #fff1f2;
+    color: #dc2626;
+
+    font-size: 11px;
+    font-weight: 800;
+
+    cursor: pointer;
+
+    transition:
+        background .2s ease,
+        border-color .2s ease,
+        color .2s ease,
+        transform .2s ease;
+}
+
+.application-delete-button:hover {
+    background: #fee2e2;
+    border-color: #fca5a5;
+    color: #b91c1c;
+
+    transform: translateY(-1px);
+}
+
+.application-delete-button:disabled {
+    opacity: .55;
+    cursor: not-allowed;
+    transform: none;
+}
+
+.application-delete-button svg {
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   TABLE WIDTH
+========================================================= */
+
+.applications-table {
+    min-width: 1380px;
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 700px) {
+
+    .applications-table {
+        min-width: 1380px;
+    }
+
+}

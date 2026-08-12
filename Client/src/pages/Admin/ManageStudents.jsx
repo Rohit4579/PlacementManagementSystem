@@ -1,3 +1,4 @@
+
 import {
     useEffect,
     useState
@@ -12,7 +13,8 @@ import {
     deleteDoc,
     doc,
     getDoc,
-    getDocs
+    getDocs,
+    writeBatch
 } from "firebase/firestore";
 
 import {
@@ -46,17 +48,14 @@ function ManageStudents() {
        STATE
     ========================================================= */
 
-    const [students, setStudents] =
-        useState([]);
+    const [students, setStudents] = useState([]);
 
     const [filteredStudents, setFilteredStudents] =
         useState([]);
 
-    const [loading, setLoading] =
-        useState(true);
+    const [loading, setLoading] = useState(true);
 
-    const [search, setSearch] =
-        useState("");
+    const [search, setSearch] = useState("");
 
     const [selectedStudent, setSelectedStudent] =
         useState(null);
@@ -79,6 +78,7 @@ function ManageStudents() {
         }
 
         return String(value).trim();
+
     };
 
 
@@ -100,7 +100,6 @@ function ManageStudents() {
                     )
                 );
 
-
             const studentList = [];
 
 
@@ -111,16 +110,11 @@ function ManageStudents() {
                 const userData =
                     userDoc.data() || {};
 
-
                 const role =
                     normalize(
                         userData.role
                     ).toLowerCase();
 
-
-                /*
-                 * Only students
-                 */
 
                 if (
                     role &&
@@ -271,11 +265,6 @@ function ManageStudents() {
                         );
 
 
-                    /*
-                     * If not found using document ID,
-                     * try Firebase UID.
-                     */
-
                     if (
                         !profileSnapshot.exists() &&
                         student.uid &&
@@ -302,16 +291,12 @@ function ManageStudents() {
                             profileSnapshot.data() || {};
 
 
-                        /* PERSONAL */
-
                         student.phone =
                             normalize(
                                 profile.phone
                             ) ||
                             student.phone;
 
-
-                        /* DEGREE */
 
                         student.degree =
                             normalize(
@@ -329,16 +314,12 @@ function ManageStudents() {
                             student.degree;
 
 
-                        /* DEPARTMENT */
-
                         student.department =
                             normalize(
                                 profile.department
                             ) ||
                             student.department;
 
-
-                        /* ACADEMICS */
 
                         student.tenthPercentage =
                             normalize(
@@ -396,8 +377,6 @@ function ManageStudents() {
                             student.graduationYear;
 
 
-                        /* PHOTO */
-
                         student.profilePhotoURL =
                             normalize(
                                 profile.profilePhotoURL
@@ -418,8 +397,6 @@ function ManageStudents() {
                             student.profilePhotoPublicId;
 
 
-                        /* RESUME */
-
                         student.resumeURL =
                             normalize(
                                 profile.resumeURL
@@ -432,10 +409,6 @@ function ManageStudents() {
                             ) ||
                             student.resumeURL;
 
-
-                        /*
-                         * Explicit completion value
-                         */
 
                         if (
                             typeof profile.profileCompleted ===
@@ -468,19 +441,12 @@ function ManageStudents() {
                 const requiredFields = [
 
                     student.phone,
-
                     student.degree,
-
                     student.department,
-
                     student.tenthPercentage,
-
                     student.twelfthPercentage,
-
                     student.cgpa,
-
                     student.skills,
-
                     student.graduationYear
 
                 ];
@@ -507,10 +473,6 @@ function ManageStudents() {
 
             }
 
-
-            /*
-             * Alphabetical sorting
-             */
 
             studentList.sort(
                 (a, b) =>
@@ -594,23 +556,14 @@ function ManageStudents() {
                     const searchableText = [
 
                         student.name,
-
                         student.email,
-
                         student.phone,
-
                         student.department,
-
                         student.degree,
-
                         student.cgpa,
-
                         student.tenthPercentage,
-
                         student.twelfthPercentage,
-
                         student.graduationYear,
-
                         student.skills
 
                     ]
@@ -656,14 +609,6 @@ function ManageStudents() {
 
     };
 
-
-    /*
-     * Two-letter avatar.
-     *
-     * Example:
-     * Rahul Thorat -> RT
-     * Amit -> A
-     */
 
     const getInitials = (
         name
@@ -741,6 +686,147 @@ function ManageStudents() {
         );
 
     };
+
+
+    /* =========================================================
+       DELETE ALL APPLICATIONS FOR STUDENT
+    ========================================================= */
+
+    const deleteStudentApplications =
+        async (
+            student
+        ) => {
+
+            const studentIdentifiers =
+                new Set(
+                    [
+                        student?.id,
+                        student?.uid
+                    ]
+                        .map(
+                            normalize
+                        )
+                        .filter(Boolean)
+                );
+
+
+            if (
+                studentIdentifiers.size === 0
+            ) {
+
+                return 0;
+
+            }
+
+
+            const applicationsSnapshot =
+                await getDocs(
+                    collection(
+                        db,
+                        "applications"
+                    )
+                );
+
+
+            const applicationDocuments =
+                applicationsSnapshot.docs.filter(
+                    (applicationDoc) => {
+
+                        const application =
+                            applicationDoc.data() || {};
+
+
+                        const applicationIdentifiers = [
+
+                            application.studentId,
+                            application.uid,
+                            application.userId,
+                            application.studentUid,
+                            application.studentUID,
+                            application.studentProfileId
+
+                        ]
+                            .map(
+                                normalize
+                            )
+                            .filter(Boolean);
+
+
+                        return applicationIdentifiers.some(
+                            (identifier) =>
+                                studentIdentifiers.has(
+                                    identifier
+                                )
+                        );
+
+                    }
+                );
+
+
+            if (
+                applicationDocuments.length === 0
+            ) {
+
+                return 0;
+
+            }
+
+
+            /*
+             * Firestore allows a maximum of 500 writes
+             * in one batch, so process applications in
+             * groups of 500.
+             */
+
+            const BATCH_SIZE = 500;
+
+            let deletedCount = 0;
+
+
+            for (
+                let index = 0;
+                index < applicationDocuments.length;
+                index += BATCH_SIZE
+            ) {
+
+                const batch =
+                    writeBatch(db);
+
+
+                const currentBatch =
+                    applicationDocuments.slice(
+                        index,
+                        index + BATCH_SIZE
+                    );
+
+
+                currentBatch.forEach(
+                    (applicationDoc) => {
+
+                        batch.delete(
+                            doc(
+                                db,
+                                "applications",
+                                applicationDoc.id
+                            )
+                        );
+
+                    }
+                );
+
+
+                await batch.commit();
+
+
+                deletedCount +=
+                    currentBatch.length;
+
+            }
+
+
+            return deletedCount;
+
+        };
 
 
     /* =========================================================
@@ -851,9 +937,11 @@ function ManageStudents() {
 
                     `Are you sure you want to delete ${student.name}?\n\n` +
 
-                    "This will permanently remove the student's " +
+                    "This will permanently delete the student's " +
 
-                    "account record and profile information from Firestore."
+                    "account, profile information, and ALL applications " +
+
+                    "submitted by this student."
 
                 );
 
@@ -870,6 +958,17 @@ function ManageStudents() {
                 setDeletingId(
                     student.id
                 );
+
+
+                /*
+                 * FIRST DELETE ALL APPLICATIONS
+                 * BELONGING TO THIS STUDENT.
+                 */
+
+                const deletedApplications =
+                    await deleteStudentApplications(
+                        student
+                    );
 
 
                 /*
@@ -969,7 +1068,8 @@ function ManageStudents() {
 
 
                 alert(
-                    "Student deleted successfully."
+                    `Student deleted successfully.` +
+                    ` ${deletedApplications} application(s) also deleted.`
                 );
 
             }
@@ -983,7 +1083,7 @@ function ManageStudents() {
 
 
                 alert(
-                    "Unable to delete this student. " +
+                    "Unable to delete this student and related applications. " +
                     "Please check your Firebase permissions."
                 );
 
@@ -1062,12 +1162,6 @@ function ManageStudents() {
 
     /* =========================================================
        STUDENT PROFILE MODAL
-       
-       IMPORTANT:
-       Render directly into document.body.
-       
-       This prevents parent containers from clipping
-       or hiding the overlay.
     ========================================================= */
 
     const studentModal =
@@ -1100,10 +1194,6 @@ function ManageStudents() {
                         }
                     >
 
-                        {/* =================================================
-                            MODAL HEADER
-                        ================================================= */}
-
                         <div className="modal-header">
 
                             <div className="modal-header-left">
@@ -1113,7 +1203,6 @@ function ManageStudents() {
                                     <FaUserGraduate />
 
                                 </div>
-
 
                                 <div className="modal-header-title">
 
@@ -1152,16 +1241,7 @@ function ManageStudents() {
                         </div>
 
 
-                        {/* =================================================
-                            SCROLLABLE CONTENT
-                        ================================================= */}
-
                         <div className="student-modal-content">
-
-
-                            {/* =================================================
-                                PROFILE HERO
-                            ================================================= */}
 
                             <div className="modal-profile">
 
@@ -1280,10 +1360,6 @@ function ManageStudents() {
                             </div>
 
 
-                            {/* =================================================
-                                PERSONAL INFORMATION
-                            ================================================= */}
-
                             <div className="modal-section">
 
                                 <div className="modal-section-heading">
@@ -1293,7 +1369,6 @@ function ManageStudents() {
                                         <FaUserGraduate />
 
                                     </div>
-
 
                                     <div>
 
@@ -1395,10 +1470,6 @@ function ManageStudents() {
                             </div>
 
 
-                            {/* =================================================
-                                ACADEMIC INFORMATION
-                            ================================================= */}
-
                             <div className="modal-section">
 
                                 <div className="modal-section-heading">
@@ -1408,7 +1479,6 @@ function ManageStudents() {
                                         <FaGraduationCap />
 
                                     </div>
-
 
                                     <div>
 
@@ -1491,10 +1561,6 @@ function ManageStudents() {
                             </div>
 
 
-                            {/* =================================================
-                                SKILLS
-                            ================================================= */}
-
                             <div className="modal-section">
 
                                 <div className="modal-section-heading">
@@ -1504,7 +1570,6 @@ function ManageStudents() {
                                         <FaCode />
 
                                     </div>
-
 
                                     <div>
 
@@ -1576,10 +1641,6 @@ function ManageStudents() {
                             </div>
 
 
-                            {/* =================================================
-                                RESUME
-                            ================================================= */}
-
                             <div className="modal-section">
 
                                 <div className="modal-section-heading">
@@ -1589,7 +1650,6 @@ function ManageStudents() {
                                         <FaFilePdf />
 
                                     </div>
-
 
                                     <div>
 
@@ -1642,10 +1702,6 @@ function ManageStudents() {
                             </div>
 
 
-                            {/* =================================================
-                                DELETE
-                            ================================================= */}
-
                             <div className="modal-delete-area">
 
                                 <button
@@ -1666,20 +1722,15 @@ function ManageStudents() {
 
                                     {deletingId ===
                                     selectedStudent.id
-                                        ? "Deleting..."
-                                        : "Delete Student"}
+                                        ? "Deleting Student & Applications..."
+                                        : "Delete Student & Applications"}
 
                                 </button>
 
                             </div>
 
-
                         </div>
 
-
-                        {/* =================================================
-                            FOOTER
-                        ================================================= */}
 
                         <div className="modal-footer">
 
@@ -1722,11 +1773,6 @@ function ManageStudents() {
 
         <div className="manage-students-page">
 
-
-            {/* =================================================
-                HEADER
-            ================================================= */}
-
             <div className="students-page-header">
 
                 <div className="students-header-content">
@@ -1735,11 +1781,9 @@ function ManageStudents() {
                         TPO / STUDENT MANAGEMENT
                     </span>
 
-
                     <h1>
                         Manage Students
                     </h1>
-
 
                     <p>
                         Manage student accounts, academic
@@ -1764,20 +1808,13 @@ function ManageStudents() {
             </div>
 
 
-            {/* =================================================
-                STATISTICS
-            ================================================= */}
-
             <div className="student-stat-grid">
 
                 <div className="student-stat-card">
 
                     <div className="stat-icon blue">
-
                         <FaUsers />
-
                     </div>
-
 
                     <div>
 
@@ -1797,11 +1834,8 @@ function ManageStudents() {
                 <div className="student-stat-card">
 
                     <div className="stat-icon green">
-
                         <FaCheckCircle />
-
                     </div>
-
 
                     <div>
 
@@ -1821,11 +1855,8 @@ function ManageStudents() {
                 <div className="student-stat-card">
 
                     <div className="stat-icon purple">
-
                         <FaFilePdf />
-
                     </div>
-
 
                     <div>
 
@@ -1845,11 +1876,8 @@ function ManageStudents() {
                 <div className="student-stat-card">
 
                     <div className="stat-icon orange">
-
                         <FaBuilding />
-
                     </div>
-
 
                     <div>
 
@@ -1867,10 +1895,6 @@ function ManageStudents() {
 
             </div>
 
-
-            {/* =================================================
-                SEARCH
-            ================================================= */}
 
             <div className="students-toolbar">
 
@@ -1931,10 +1955,6 @@ function ManageStudents() {
             </div>
 
 
-            {/* =================================================
-                STUDENT TABLE
-            ================================================= */}
-
             <div className="students-table-card">
 
                 <div className="students-table-scroll">
@@ -1990,16 +2010,12 @@ function ManageStudents() {
                                     >
 
                                         <div className="empty-icon">
-
                                             <FaUserCircle />
-
                                         </div>
-
 
                                         <h3>
                                             No students found
                                         </h3>
-
 
                                         <p>
                                             Try changing your search.
@@ -2019,8 +2035,6 @@ function ManageStudents() {
                                                 student.id
                                             }
                                         >
-
-                                            {/* STUDENT */}
 
                                             <td>
 
@@ -2120,31 +2134,23 @@ function ManageStudents() {
                                             </td>
 
 
-                                            {/* CONTACT */}
-
                                             <td>
 
                                                 <div className="contact-cell">
 
                                                     <span>
-
                                                         <FaEnvelope />
-
                                                         {displayValue(
                                                             student.email
                                                         )}
-
                                                     </span>
 
 
                                                     <span>
-
                                                         <FaPhone />
-
                                                         {displayValue(
                                                             student.phone
                                                         )}
-
                                                     </span>
 
                                                 </div>
@@ -2152,22 +2158,16 @@ function ManageStudents() {
                                             </td>
 
 
-                                            {/* DEGREE */}
-
                                             <td>
 
                                                 <span className="table-primary-text">
-
                                                     {displayValue(
                                                         student.degree
                                                     )}
-
                                                 </span>
 
                                             </td>
 
-
-                                            {/* DEPARTMENT */}
 
                                             <td>
 
@@ -2177,17 +2177,13 @@ function ManageStudents() {
                                                         student.department
                                                     }
                                                 >
-
                                                     {displayValue(
                                                         student.department
                                                     )}
-
                                                 </span>
 
                                             </td>
 
-
-                                            {/* CGPA */}
 
                                             <td>
 
@@ -2201,8 +2197,6 @@ function ManageStudents() {
 
                                             </td>
 
-
-                                            {/* PROFILE */}
 
                                             <td>
 
@@ -2228,8 +2222,6 @@ function ManageStudents() {
 
                                             </td>
 
-
-                                            {/* ACTIONS */}
 
                                             <td>
 
@@ -2301,10 +2293,6 @@ function ManageStudents() {
 
             </div>
 
-
-            {/* =================================================
-                PORTAL MODAL
-            ================================================= */}
 
             {studentModal &&
                 createPortal(

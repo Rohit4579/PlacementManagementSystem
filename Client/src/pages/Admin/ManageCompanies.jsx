@@ -4,7 +4,10 @@ import {
     collection,
     getDocs,
     deleteDoc,
-    doc
+    doc,
+    query,
+    where,
+    writeBatch
 } from "firebase/firestore";
 
 import {
@@ -32,10 +35,16 @@ import "./ManageCompanies.css";
 function ManageCompanies() {
 
     const [companies, setCompanies] = useState([]);
+
     const [loading, setLoading] = useState(true);
+
     const [search, setSearch] = useState("");
-    const [selectedCompany, setSelectedCompany] = useState(null);
-    const [deletingId, setDeletingId] = useState(null);
+
+    const [selectedCompany, setSelectedCompany] =
+        useState(null);
+
+    const [deletingId, setDeletingId] =
+        useState(null);
 
 
     /* =========================================================
@@ -44,7 +53,10 @@ function ManageCompanies() {
 
     const normalize = (value) => {
 
-        if (value === undefined || value === null) {
+        if (
+            value === undefined ||
+            value === null
+        ) {
             return "";
         }
 
@@ -62,7 +74,8 @@ function ManageCompanies() {
 
     const getWebsiteUrl = (website) => {
 
-        const value = normalize(website).trim();
+        const value =
+            normalize(website).trim();
 
         if (!value) {
             return "";
@@ -85,11 +98,10 @@ function ManageCompanies() {
 
     const getWebsiteDisplay = (website) => {
 
-        const value = normalize(website)
+        return normalize(website)
             .replace(/^https?:\/\//, "")
             .replace(/\/$/, "");
 
-        return value;
     };
 
 
@@ -99,13 +111,17 @@ function ManageCompanies() {
 
     const getCompanyInitial = (companyName) => {
 
-        const name = normalize(companyName).trim();
+        const name =
+            normalize(companyName).trim();
 
         if (!name) {
             return "C";
         }
 
-        return name.charAt(0).toUpperCase();
+        return name
+            .charAt(0)
+            .toUpperCase();
+
     };
 
 
@@ -119,51 +135,78 @@ function ManageCompanies() {
 
             setLoading(true);
 
-            const companiesRef = collection(
-                db,
-                "companies"
+            const companiesRef =
+                collection(
+                    db,
+                    "companies"
+                );
+
+            const snapshot =
+                await getDocs(
+                    companiesRef
+                );
+
+
+            const companiesData =
+                snapshot.docs.map(
+                    (item) => {
+
+                        const data =
+                            item.data() || {};
+
+                        return {
+
+                            id:
+                                item.id,
+
+                            companyName:
+                                normalize(
+                                    data.companyName
+                                ),
+
+                            email:
+                                normalize(
+                                    data.email
+                                ),
+
+                            phone:
+                                normalize(
+                                    data.phone
+                                ),
+
+                            industry:
+                                normalize(
+                                    data.industry
+                                ),
+
+                            website:
+                                normalize(
+                                    data.website
+                                ),
+
+                            location:
+                                normalize(
+                                    data.location
+                                ),
+
+                            description:
+                                normalize(
+                                    data.description
+                                )
+
+                        };
+
+                    }
+                );
+
+
+            setCompanies(
+                companiesData
             );
 
-            const snapshot = await getDocs(
-                companiesRef
-            );
+        }
 
-            const companiesData = snapshot.docs.map(
-                (item) => {
-
-                    const data = item.data() || {};
-
-                    return {
-
-                        id: item.id,
-
-                        companyName:
-                            normalize(data.companyName),
-
-                        email:
-                            normalize(data.email),
-
-                        phone:
-                            normalize(data.phone),
-
-                        industry:
-                            normalize(data.industry),
-
-                        website:
-                            normalize(data.website),
-
-                        location:
-                            normalize(data.location),
-
-                        description:
-                            normalize(data.description)
-                    };
-                }
-            );
-
-            setCompanies(companiesData);
-
-        } catch (error) {
+        catch (error) {
 
             console.error(
                 "Admin Companies Error:",
@@ -175,10 +218,14 @@ function ManageCompanies() {
                 "Unable to load companies."
             );
 
-        } finally {
+        }
+
+        finally {
 
             setLoading(false);
+
         }
+
     };
 
 
@@ -201,10 +248,18 @@ function ManageCompanies() {
 
         const handleEscape = (event) => {
 
-            if (event.key === "Escape") {
-                setSelectedCompany(null);
+            if (
+                event.key === "Escape"
+            ) {
+
+                setSelectedCompany(
+                    null
+                );
+
             }
+
         };
+
 
         if (selectedCompany) {
 
@@ -212,7 +267,9 @@ function ManageCompanies() {
                 "keydown",
                 handleEscape
             );
+
         }
+
 
         return () => {
 
@@ -220,6 +277,7 @@ function ManageCompanies() {
                 "keydown",
                 handleEscape
             );
+
         };
 
     }, [selectedCompany]);
@@ -229,59 +287,590 @@ function ManageCompanies() {
        FILTER COMPANIES
     ========================================================= */
 
-    const filteredCompanies = companies.filter(
-        (company) => {
+    const filteredCompanies =
+        companies.filter(
+            (company) => {
 
-            const searchText =
-                search.trim().toLowerCase();
+                const searchText =
+                    search
+                        .trim()
+                        .toLowerCase();
 
-            if (!searchText) {
-                return true;
+
+                if (!searchText) {
+                    return true;
+                }
+
+
+                const searchableText = [
+
+                    company.companyName,
+                    company.email,
+                    company.phone,
+                    company.industry,
+                    company.website,
+                    company.location,
+                    company.description
+
+                ]
+                    .map(normalize)
+                    .join(" ")
+                    .toLowerCase();
+
+
+                return searchableText.includes(
+                    searchText
+                );
+
+            }
+        );
+
+
+    /* =========================================================
+       DELETE ALL DOCUMENTS IN BATCHES
+       
+       Firestore batch limit is 500 operations.
+       Therefore we process large companies safely.
+    ========================================================= */
+
+    const deleteDocumentsInBatches = async (
+        documentReferences
+    ) => {
+
+        if (
+            !documentReferences ||
+            documentReferences.length === 0
+        ) {
+
+            return;
+
+        }
+
+
+        const BATCH_SIZE = 450;
+
+
+        for (
+            let start = 0;
+            start < documentReferences.length;
+            start += BATCH_SIZE
+        ) {
+
+            const batch =
+                writeBatch(db);
+
+
+            const currentBatch =
+                documentReferences.slice(
+                    start,
+                    start + BATCH_SIZE
+                );
+
+
+            currentBatch.forEach(
+                (reference) => {
+
+                    batch.delete(
+                        reference
+                    );
+
+                }
+            );
+
+
+            await batch.commit();
+
+        }
+
+    };
+
+
+    /* =========================================================
+       GET JOBS BELONGING TO COMPANY
+       
+       Normal/new jobs:
+       
+           companyId == company.id
+       
+       Legacy jobs:
+       
+           Some old jobs may not have companyId.
+           For those we also check companyEmail.
+    ========================================================= */
+
+    const getCompanyJobs =
+        async (companyId, companyEmail) => {
+
+            const jobsRef =
+                collection(
+                    db,
+                    "jobs"
+                );
+
+
+            const jobReferences = [];
+
+            const jobIds = new Set();
+
+            const jobDocuments = [];
+
+
+            /* =================================================
+               FIND JOBS BY COMPANY ID
+            ================================================= */
+
+            try {
+
+                const companyIdQuery =
+                    query(
+                        jobsRef,
+                        where(
+                            "companyId",
+                            "==",
+                            companyId
+                        )
+                    );
+
+
+                const companyIdSnapshot =
+                    await getDocs(
+                        companyIdQuery
+                    );
+
+
+                companyIdSnapshot.forEach(
+                    (jobDocument) => {
+
+                        if (
+                            !jobIds.has(
+                                jobDocument.id
+                            )
+                        ) {
+
+                            jobIds.add(
+                                jobDocument.id
+                            );
+
+                            jobDocuments.push(
+                                jobDocument
+                            );
+
+                            jobReferences.push(
+                                jobDocument.ref
+                            );
+
+                        }
+
+                    }
+                );
+
             }
 
-            const searchableText = [
+            catch (error) {
 
-                company.companyName,
-                company.email,
-                company.phone,
-                company.industry,
-                company.website,
-                company.location,
-                company.description
+                console.error(
+                    "Error finding jobs by companyId:",
+                    error
+                );
 
-            ]
-                .map(normalize)
-                .join(" ")
-                .toLowerCase();
+            }
 
-            return searchableText.includes(
-                searchText
-            );
-        }
-    );
+
+            /* =================================================
+               FIND LEGACY JOBS BY COMPANY EMAIL
+               
+               This helps remove older jobs created before
+               companyId was properly stored.
+            ================================================= */
+
+            if (
+                companyEmail &&
+                companyEmail.trim()
+            ) {
+
+                try {
+
+                    const companyEmailQuery =
+                        query(
+                            jobsRef,
+                            where(
+                                "companyEmail",
+                                "==",
+                                companyEmail.trim()
+                            )
+                        );
+
+
+                    const emailSnapshot =
+                        await getDocs(
+                            companyEmailQuery
+                        );
+
+
+                    emailSnapshot.forEach(
+                        (jobDocument) => {
+
+                            if (
+                                !jobIds.has(
+                                    jobDocument.id
+                                )
+                            ) {
+
+                                jobIds.add(
+                                    jobDocument.id
+                                );
+
+                                jobDocuments.push(
+                                    jobDocument
+                                );
+
+                                jobReferences.push(
+                                    jobDocument.ref
+                                );
+
+                            }
+
+                        }
+                    );
+
+                }
+
+                catch (error) {
+
+                    console.error(
+                        "Error finding legacy jobs:",
+                        error
+                    );
+
+                }
+
+            }
+
+
+            return {
+
+                jobReferences,
+
+                jobDocuments,
+
+                jobIds: Array.from(
+                    jobIds
+                )
+
+            };
+
+        };
 
 
     /* =========================================================
        DELETE COMPANY
+       
+       THIS NOW DELETES:
+       
+       1. companies/{companyId}
+       2. jobs belonging to company
+       3. notifications belonging to company
+       4. notifications belonging to deleted jobs
+       5. users/{companyId}
+       
+       Firebase Authentication account:
+       handled separately on backend.
     ========================================================= */
 
-    const deleteCompany = async (companyId) => {
+    const deleteCompany = async (
+        companyId
+    ) => {
 
         if (!companyId) {
+
+            alert(
+                "Invalid company selected."
+            );
+
+            return;
+
+        }
+
+
+        const company =
+            companies.find(
+                (item) =>
+                    item.id === companyId
+            );
+
+
+        if (!company) {
+
+            alert(
+                "Company information could not be found."
+            );
+
+            return;
+
+        }
+
+
+        const companyName =
+            company.companyName ||
+            "this company";
+
+
+        const confirmation =
+            window.confirm(
+
+                `Are you sure you want to permanently delete "${companyName}"?\n\n` +
+
+                `The following data will be deleted:\n` +
+
+                `• Company profile\n` +
+
+                `• All jobs posted by this company\n` +
+
+                `• Job notifications\n` +
+
+                `• Company user profile\n\n` +
+
+                `This action cannot be undone.`
+
+            );
+
+
+        if (!confirmation) {
             return;
         }
 
-        const confirmDelete = window.confirm(
-            "Are you sure you want to delete this company? This action cannot be undone."
-        );
-
-        if (!confirmDelete) {
-            return;
-        }
 
         try {
 
-            setDeletingId(companyId);
+            setDeletingId(
+                companyId
+            );
+
+
+            console.log(
+                "================================"
+            );
+
+            console.log(
+                "STARTING COMPANY DELETION"
+            );
+
+            console.log(
+                "Company:",
+                companyName
+            );
+
+            console.log(
+                "Company ID:",
+                companyId
+            );
+
+            console.log(
+                "================================"
+            );
+
+
+            /* =================================================
+               1. FIND COMPANY JOBS
+            ================================================= */
+
+            const companyJobs =
+                await getCompanyJobs(
+                    companyId,
+                    company.email
+                );
+
+
+            console.log(
+                "Jobs found:",
+                companyJobs.jobIds.length
+            );
+
+
+            /* =================================================
+               2. DELETE JOB NOTIFICATIONS
+               
+               First get notifications by companyId.
+            ================================================= */
+
+            const notificationsRef =
+                collection(
+                    db,
+                    "notifications"
+                );
+
+
+            const notificationReferences = [];
+
+            const notificationIds =
+                new Set();
+
+
+            /* =================================================
+               NOTIFICATIONS BY COMPANY ID
+            ================================================= */
+
+            try {
+
+                const notificationCompanyQuery =
+                    query(
+                        notificationsRef,
+                        where(
+                            "companyId",
+                            "==",
+                            companyId
+                        )
+                    );
+
+
+                const notificationSnapshot =
+                    await getDocs(
+                        notificationCompanyQuery
+                    );
+
+
+                notificationSnapshot.forEach(
+                    (notificationDocument) => {
+
+                        if (
+                            !notificationIds.has(
+                                notificationDocument.id
+                            )
+                        ) {
+
+                            notificationIds.add(
+                                notificationDocument.id
+                            );
+
+                            notificationReferences.push(
+                                notificationDocument.ref
+                            );
+
+                        }
+
+                    }
+                );
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "Error finding company notifications:",
+                    error
+                );
+
+            }
+
+
+            /* =================================================
+               NOTIFICATIONS BY JOB ID
+               
+               This catches notifications belonging to old
+               jobs even if companyId wasn't stored correctly.
+            ================================================= */
+
+            for (
+                const jobId
+                of companyJobs.jobIds
+            ) {
+
+                try {
+
+                    const jobNotificationQuery =
+                        query(
+                            notificationsRef,
+                            where(
+                                "jobId",
+                                "==",
+                                jobId
+                            )
+                        );
+
+
+                    const jobNotificationSnapshot =
+                        await getDocs(
+                            jobNotificationQuery
+                        );
+
+
+                    jobNotificationSnapshot.forEach(
+                        (
+                            notificationDocument
+                        ) => {
+
+                            if (
+                                !notificationIds.has(
+                                    notificationDocument.id
+                                )
+                            ) {
+
+                                notificationIds.add(
+                                    notificationDocument.id
+                                );
+
+                                notificationReferences.push(
+                                    notificationDocument.ref
+                                );
+
+                            }
+
+                        }
+                    );
+
+                }
+
+                catch (error) {
+
+                    console.error(
+                        `Error finding notifications for job ${jobId}:`,
+                        error
+                    );
+
+                }
+
+            }
+
+
+            console.log(
+                "Notifications found:",
+                notificationReferences.length
+            );
+
+
+            /* =================================================
+               3. DELETE NOTIFICATIONS
+            ================================================= */
+
+            await deleteDocumentsInBatches(
+                notificationReferences
+            );
+
+
+            console.log(
+                "Notifications deleted."
+            );
+
+
+            /* =================================================
+               4. DELETE JOBS
+            ================================================= */
+
+            await deleteDocumentsInBatches(
+                companyJobs.jobReferences
+            );
+
+
+            console.log(
+                "Jobs deleted."
+            );
+
+
+            /* =================================================
+               5. DELETE COMPANY PROFILE
+               
+               companies/{companyId}
+            ================================================= */
 
             await deleteDoc(
                 doc(
@@ -291,37 +880,135 @@ function ManageCompanies() {
                 )
             );
 
+
+            console.log(
+                "Company profile deleted."
+            );
+
+
+            /* =================================================
+               6. DELETE USER FIRESTORE PROFILE
+               
+               users/{companyId}
+               
+               This removes the Firestore user document.
+            ================================================= */
+
+            try {
+
+                await deleteDoc(
+                    doc(
+                        db,
+                        "users",
+                        companyId
+                    )
+                );
+
+
+                console.log(
+                    "User Firestore profile deleted."
+                );
+
+            }
+
+            catch (error) {
+
+                /*
+                 * The user document may not exist.
+                 * That should NOT make the whole company
+                 * deletion fail.
+                 */
+
+                console.log(
+                    "No users document found or unable to delete it:",
+                    error
+                );
+
+            }
+
+
+            /* =================================================
+               7. REMOVE FROM UI
+            ================================================= */
+
             setCompanies(
                 (previousCompanies) =>
                     previousCompanies.filter(
-                        (company) =>
-                            company.id !== companyId
+                        (item) =>
+                            item.id !==
+                            companyId
                     )
             );
 
+
+            /* =================================================
+               8. CLOSE MODAL
+            ================================================= */
+
             if (
                 selectedCompany &&
-                selectedCompany.id === companyId
+                selectedCompany.id ===
+                    companyId
             ) {
-                setSelectedCompany(null);
+
+                setSelectedCompany(
+                    null
+                );
+
             }
 
-        } catch (error) {
+
+            console.log(
+                "================================"
+            );
+
+            console.log(
+                "COMPANY DELETION COMPLETE"
+            );
+
+            console.log(
+                "================================"
+            );
+
+
+            alert(
+                `"${companyName}" and its Firestore data were deleted successfully.`
+            );
+
+
+        }
+
+        catch (error) {
 
             console.error(
-                "Delete Company Error:",
+                "================================"
+            );
+
+            console.error(
+                "DELETE COMPANY ERROR:",
                 error
             );
 
-            alert(
-                error?.message ||
-                "Unable to delete company."
+            console.error(
+                "================================"
             );
 
-        } finally {
 
-            setDeletingId(null);
+            alert(
+                error?.message ||
+                "Unable to completely delete the company."
+            );
+
         }
+
+        finally {
+
+            setDeletingId(
+                null
+            );
+
+        }
+
     };
 
 
@@ -329,8 +1016,14 @@ function ManageCompanies() {
        VIEW COMPANY
     ========================================================= */
 
-    const viewCompany = (company) => {
-        setSelectedCompany(company);
+    const viewCompany = (
+        company
+    ) => {
+
+        setSelectedCompany(
+            company
+        );
+
     };
 
 
@@ -339,7 +1032,11 @@ function ManageCompanies() {
     ========================================================= */
 
     const closeModal = () => {
-        setSelectedCompany(null);
+
+        setSelectedCompany(
+            null
+        );
+
     };
 
 
@@ -368,7 +1065,9 @@ function ManageCompanies() {
                 </div>
 
             </div>
+
         );
+
     }
 
 
@@ -379,6 +1078,7 @@ function ManageCompanies() {
     return (
 
         <div className="manage-companies-page">
+
 
             {/* =====================================================
                 HEADER
@@ -442,7 +1142,9 @@ function ManageCompanies() {
                         value={search}
                         placeholder="Search by company, email, industry, location..."
                         onChange={(event) =>
-                            setSearch(event.target.value)
+                            setSearch(
+                                event.target.value
+                            )
                         }
                     />
 
@@ -451,10 +1153,14 @@ function ManageCompanies() {
                         <button
                             type="button"
                             className="companies-clear-search"
-                            onClick={() => setSearch("")}
+                            onClick={() =>
+                                setSearch("")
+                            }
                             aria-label="Clear search"
                         >
+
                             <FaTimes />
+
                         </button>
 
                     )}
@@ -486,7 +1192,9 @@ function ManageCompanies() {
                     <button
                         type="button"
                         className="companies-refresh-btn"
-                        onClick={fetchCompanies}
+                        onClick={
+                            fetchCompanies
+                        }
                         disabled={loading}
                     >
 
@@ -528,12 +1236,15 @@ function ManageCompanies() {
 
                     </p>
 
+
                     {search && (
 
                         <button
                             type="button"
                             className="companies-empty-clear"
-                            onClick={() => setSearch("")}
+                            onClick={() =>
+                                setSearch("")
+                            }
                         >
                             Clear Search
                         </button>
@@ -541,6 +1252,7 @@ function ManageCompanies() {
                     )}
 
                 </div>
+
             )}
 
 
@@ -598,7 +1310,12 @@ function ManageCompanies() {
                                 {filteredCompanies.map(
                                     (company) => (
 
-                                        <tr key={company.id}>
+                                        <tr
+                                            key={
+                                                company.id
+                                            }
+                                        >
+
 
                                             {/* COMPANY */}
 
@@ -607,10 +1324,13 @@ function ManageCompanies() {
                                                 <div className="company-table-profile">
 
                                                     <div className="company-table-avatar">
+
                                                         {getCompanyInitial(
                                                             company.companyName
                                                         )}
+
                                                     </div>
+
 
                                                     <div className="company-table-name">
 
@@ -646,7 +1366,9 @@ function ManageCompanies() {
 
                                                         <div
                                                             className="company-contact-item"
-                                                            title={company.email}
+                                                            title={
+                                                                company.email
+                                                            }
                                                         >
 
                                                             <span className="contact-icon">
@@ -654,7 +1376,9 @@ function ManageCompanies() {
                                                             </span>
 
                                                             <span className="contact-value">
-                                                                {company.email}
+                                                                {
+                                                                    company.email
+                                                                }
                                                             </span>
 
                                                         </div>
@@ -666,7 +1390,9 @@ function ManageCompanies() {
 
                                                         <div
                                                             className="company-contact-item"
-                                                            title={company.phone}
+                                                            title={
+                                                                company.phone
+                                                            }
                                                         >
 
                                                             <span className="contact-icon">
@@ -674,7 +1400,9 @@ function ManageCompanies() {
                                                             </span>
 
                                                             <span className="contact-value">
-                                                                {company.phone}
+                                                                {
+                                                                    company.phone
+                                                                }
                                                             </span>
 
                                                         </div>
@@ -711,7 +1439,9 @@ function ManageCompanies() {
                                                                 company.industry
                                                             }
                                                         >
-                                                            {company.industry}
+                                                            {
+                                                                company.industry
+                                                            }
                                                         </span>
 
                                                     </span>
@@ -735,13 +1465,17 @@ function ManageCompanies() {
 
                                                     <div
                                                         className="company-location"
-                                                        title={company.location}
+                                                        title={
+                                                            company.location
+                                                        }
                                                     >
 
                                                         <FaMapMarkerAlt />
 
                                                         <span>
-                                                            {company.location}
+                                                            {
+                                                                company.location
+                                                            }
                                                         </span>
 
                                                     </div>
@@ -764,9 +1498,11 @@ function ManageCompanies() {
                                                 {company.website ? (
 
                                                     <a
-                                                        href={getWebsiteUrl(
-                                                            company.website
-                                                        )}
+                                                        href={
+                                                            getWebsiteUrl(
+                                                                company.website
+                                                            )
+                                                        }
                                                         target="_blank"
                                                         rel="noopener noreferrer"
                                                         className="company-website"
@@ -778,9 +1514,11 @@ function ManageCompanies() {
                                                         <FaGlobe />
 
                                                         <span>
-                                                            {getWebsiteDisplay(
-                                                                company.website
-                                                            )}
+                                                            {
+                                                                getWebsiteDisplay(
+                                                                    company.website
+                                                                )
+                                                            }
                                                         </span>
 
                                                         <FaExternalLinkAlt className="website-external-icon" />
@@ -880,6 +1618,7 @@ function ManageCompanies() {
                     </div>
 
                 </section>
+
             )}
 
 
@@ -896,7 +1635,9 @@ function ManageCompanies() {
 
                             <article
                                 className="company-mobile-card"
-                                key={company.id}
+                                key={
+                                    company.id
+                                }
                             >
 
                                 <div className="company-mobile-top">
@@ -904,10 +1645,13 @@ function ManageCompanies() {
                                     <div className="company-mobile-profile">
 
                                         <div className="company-mobile-avatar">
+
                                             {getCompanyInitial(
                                                 company.companyName
                                             )}
+
                                         </div>
+
 
                                         <div>
 
@@ -928,8 +1672,11 @@ function ManageCompanies() {
 
 
                                     <span className="company-status-badge">
+
                                         <FaCheckCircle />
+
                                         Registered
+
                                     </span>
 
                                 </div>
@@ -940,13 +1687,18 @@ function ManageCompanies() {
                                     <div className="mobile-detail-item">
 
                                         <span className="mobile-detail-label">
+
                                             <FaEnvelope />
+
                                             Email
+
                                         </span>
 
                                         <strong>
-                                            {company.email ||
-                                                "Not available"}
+                                            {
+                                                company.email ||
+                                                "Not available"
+                                            }
                                         </strong>
 
                                     </div>
@@ -955,13 +1707,18 @@ function ManageCompanies() {
                                     <div className="mobile-detail-item">
 
                                         <span className="mobile-detail-label">
+
                                             <FaPhone />
+
                                             Phone
+
                                         </span>
 
                                         <strong>
-                                            {company.phone ||
-                                                "Not available"}
+                                            {
+                                                company.phone ||
+                                                "Not available"
+                                            }
                                         </strong>
 
                                     </div>
@@ -970,13 +1727,18 @@ function ManageCompanies() {
                                     <div className="mobile-detail-item">
 
                                         <span className="mobile-detail-label">
+
                                             <FaIndustry />
+
                                             Industry
+
                                         </span>
 
                                         <strong>
-                                            {company.industry ||
-                                                "Not specified"}
+                                            {
+                                                company.industry ||
+                                                "Not specified"
+                                            }
                                         </strong>
 
                                     </div>
@@ -985,13 +1747,18 @@ function ManageCompanies() {
                                     <div className="mobile-detail-item">
 
                                         <span className="mobile-detail-label">
+
                                             <FaMapMarkerAlt />
+
                                             Location
+
                                         </span>
 
                                         <strong>
-                                            {company.location ||
-                                                "Not available"}
+                                            {
+                                                company.location ||
+                                                "Not available"
+                                            }
                                         </strong>
 
                                     </div>
@@ -1002,20 +1769,30 @@ function ManageCompanies() {
                                         <div className="mobile-detail-item mobile-website-item">
 
                                             <span className="mobile-detail-label">
+
                                                 <FaGlobe />
+
                                                 Website
+
                                             </span>
 
+
                                             <a
-                                                href={getWebsiteUrl(
-                                                    company.website
-                                                )}
+                                                href={
+                                                    getWebsiteUrl(
+                                                        company.website
+                                                    )
+                                                }
                                                 target="_blank"
                                                 rel="noopener noreferrer"
                                             >
-                                                {getWebsiteDisplay(
-                                                    company.website
-                                                )}
+
+                                                {
+                                                    getWebsiteDisplay(
+                                                        company.website
+                                                    )
+                                                }
+
                                             </a>
 
                                         </div>
@@ -1060,7 +1837,8 @@ function ManageCompanies() {
 
                                         <FaTrash />
 
-                                        {deletingId === company.id
+                                        {deletingId ===
+                                        company.id
                                             ? "Deleting..."
                                             : "Delete"
                                         }
@@ -1087,7 +1865,9 @@ function ManageCompanies() {
 
                 <div
                     className="company-modal-overlay"
-                    onClick={closeModal}
+                    onClick={
+                        closeModal
+                    }
                 >
 
                     <div
@@ -1097,14 +1877,17 @@ function ManageCompanies() {
                         }
                     >
 
+
                         {/* HEADER */}
 
                         <div className="company-modal-header">
 
                             <div className="company-modal-avatar">
+
                                 {getCompanyInitial(
                                     selectedCompany.companyName
                                 )}
+
                             </div>
 
 
@@ -1131,10 +1914,14 @@ function ManageCompanies() {
                             <button
                                 type="button"
                                 className="company-modal-close"
-                                onClick={closeModal}
+                                onClick={
+                                    closeModal
+                                }
                                 aria-label="Close company details"
                             >
+
                                 <FaTimes />
+
                             </button>
 
                         </div>
@@ -1144,6 +1931,7 @@ function ManageCompanies() {
 
                         <div className="company-modal-body">
 
+
                             {/* BASIC INFORMATION */}
 
                             <section className="company-modal-section">
@@ -1151,8 +1939,11 @@ function ManageCompanies() {
                                 <div className="company-modal-section-heading">
 
                                     <div className="company-section-icon">
+
                                         <FaBuilding />
+
                                     </div>
+
 
                                     <div>
 
@@ -1174,8 +1965,11 @@ function ManageCompanies() {
                                     <div className="company-detail-item">
 
                                         <span>
+
                                             <FaBuilding />
+
                                             Company Name
+
                                         </span>
 
                                         <strong>
@@ -1191,8 +1985,11 @@ function ManageCompanies() {
                                     <div className="company-detail-item">
 
                                         <span>
+
                                             <FaIndustry />
+
                                             Industry
+
                                         </span>
 
                                         <strong>
@@ -1208,8 +2005,11 @@ function ManageCompanies() {
                                     <div className="company-detail-item">
 
                                         <span>
+
                                             <FaEnvelope />
+
                                             Email
+
                                         </span>
 
                                         <strong className="long-value">
@@ -1225,8 +2025,11 @@ function ManageCompanies() {
                                     <div className="company-detail-item">
 
                                         <span>
+
                                             <FaPhone />
+
                                             Phone
+
                                         </span>
 
                                         <strong>
@@ -1242,8 +2045,11 @@ function ManageCompanies() {
                                     <div className="company-detail-item full-width">
 
                                         <span>
+
                                             <FaMapMarkerAlt />
+
                                             Location
+
                                         </span>
 
                                         <strong>
@@ -1267,8 +2073,11 @@ function ManageCompanies() {
                                 <div className="company-modal-section-heading">
 
                                     <div className="company-section-icon">
+
                                         <FaGlobe />
+
                                     </div>
+
 
                                     <div>
 
@@ -1301,18 +2110,22 @@ function ManageCompanies() {
                                     {selectedCompany.website ? (
 
                                         <a
-                                            href={getWebsiteUrl(
-                                                selectedCompany.website
-                                            )}
+                                            href={
+                                                getWebsiteUrl(
+                                                    selectedCompany.website
+                                                )
+                                            }
                                             target="_blank"
                                             rel="noopener noreferrer"
                                             className="company-modal-website-link"
                                         >
 
                                             <span>
-                                                {getWebsiteDisplay(
-                                                    selectedCompany.website
-                                                )}
+                                                {
+                                                    getWebsiteDisplay(
+                                                        selectedCompany.website
+                                                    )
+                                                }
                                             </span>
 
                                             <FaExternalLinkAlt />
@@ -1339,8 +2152,11 @@ function ManageCompanies() {
                                 <div className="company-modal-section-heading">
 
                                     <div className="company-section-icon">
+
                                         <FaAlignLeft />
+
                                     </div>
+
 
                                     <div>
 
@@ -1422,7 +2238,9 @@ function ManageCompanies() {
                                 <button
                                     type="button"
                                     className="company-modal-close-btn"
-                                    onClick={closeModal}
+                                    onClick={
+                                        closeModal
+                                    }
                                 >
                                     Close
                                 </button>
@@ -1438,7 +2256,9 @@ function ManageCompanies() {
             )}
 
         </div>
+
     );
+
 }
 
 

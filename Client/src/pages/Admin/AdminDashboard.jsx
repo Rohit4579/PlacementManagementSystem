@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 
 import {
     collection,
-    getDocs
+    onSnapshot
 } from "firebase/firestore";
 
 import {
@@ -42,14 +42,21 @@ function AdminDashboard() {
     ===================================================== */
 
     const [totalJobs, setTotalJobs] = useState(0);
+
     const [totalApplicants, setTotalApplicants] = useState(0);
+
     const [selected, setSelected] = useState(0);
+
     const [placed, setPlaced] = useState(0);
+
     const [pending, setPending] = useState(0);
+
     const [placementRate, setPlacementRate] = useState(0);
 
     const [jobs, setJobs] = useState([]);
+
     const [selectedStudents, setSelectedStudents] = useState([]);
+
     const [placedStudents, setPlacedStudents] = useState([]);
 
     const [loading, setLoading] = useState(true);
@@ -80,6 +87,7 @@ function AdminDashboard() {
             ) {
                 return value;
             }
+
         }
 
         return fallback;
@@ -87,7 +95,27 @@ function AdminDashboard() {
 
 
     /* =====================================================
-       GET PROFILE PHOTO
+       NORMALIZE TEXT
+    ===================================================== */
+
+    const normalizeText = (value) => {
+
+        if (
+            value === undefined ||
+            value === null
+        ) {
+            return "";
+        }
+
+        return String(value)
+            .trim()
+            .toLowerCase();
+
+    };
+
+
+    /* =====================================================
+       PROFILE PHOTO
     ===================================================== */
 
     const getProfilePhoto = (
@@ -96,6 +124,7 @@ function AdminDashboard() {
     ) => {
 
         const photoFields = [
+
             "photoURL",
             "photoUrl",
 
@@ -115,25 +144,30 @@ function AdminDashboard() {
 
             "avatar",
             "avatarUrl"
+
         ];
 
 
-        const profilePhoto = getFirstValue(
-            profile,
-            photoFields,
-            ""
-        );
+        const profilePhoto =
+            getFirstValue(
+                profile,
+                photoFields,
+                ""
+            );
+
 
         if (profilePhoto) {
             return String(profilePhoto).trim();
         }
 
 
-        const applicationPhoto = getFirstValue(
-            application,
-            photoFields,
-            ""
-        );
+        const applicationPhoto =
+            getFirstValue(
+                application,
+                photoFields,
+                ""
+            );
+
 
         if (applicationPhoto) {
             return String(applicationPhoto).trim();
@@ -141,11 +175,12 @@ function AdminDashboard() {
 
 
         return "";
+
     };
 
 
     /* =====================================================
-       DATE
+       DATE FORMAT
     ===================================================== */
 
     const formatDate = (value) => {
@@ -160,8 +195,13 @@ function AdminDashboard() {
                 value &&
                 typeof value.toDate === "function"
             ) {
-                return value.toDate().toLocaleDateString();
+
+                return value
+                    .toDate()
+                    .toLocaleDateString();
+
             }
+
 
             const date = new Date(value);
 
@@ -169,11 +209,15 @@ function AdminDashboard() {
                 return "Not Available";
             }
 
+
             return date.toLocaleDateString();
 
         } catch {
+
             return "Not Available";
+
         }
+
     };
 
 
@@ -193,8 +237,13 @@ function AdminDashboard() {
                 value &&
                 typeof value.toDate === "function"
             ) {
-                return value.toDate().getTime();
+
+                return value
+                    .toDate()
+                    .getTime();
+
             }
+
 
             const date = new Date(value);
 
@@ -202,461 +251,1214 @@ function AdminDashboard() {
                 return 0;
             }
 
+
             return date.getTime();
 
         } catch {
+
             return 0;
+
         }
+
     };
 
 
     /* =====================================================
-       FETCH DASHBOARD
+       FIND COMPANY
+       
+       IMPORTANT:
+       Company must still exist in companies collection.
+       
+       Matching order:
+       1. Company ID
+       2. Company email
+       3. Company name
+       
+       record.email is NOT used because that can be
+       the student's email.
+    ===================================================== */
+
+    const findCompanyForRecord = (
+        record,
+        companies
+    ) => {
+
+        if (
+            !record ||
+            !companies ||
+            companies.length === 0
+        ) {
+            return null;
+        }
+
+
+        /* =================================================
+           COMPANY ID VALUES
+        ================================================= */
+
+        const companyIdValues = [
+
+            record.companyId,
+            record.companyID,
+
+            record.companyUid,
+            record.companyUID,
+
+            record.companyUserId,
+            record.companyUserID,
+
+            record.employerId,
+            record.employerID,
+
+            record.recruiterId,
+            record.recruiterID
+
+        ]
+            .filter(
+                value =>
+                    value !== undefined &&
+                    value !== null &&
+                    String(value).trim() !== ""
+            )
+            .map(normalizeText);
+
+
+        /* =================================================
+           COMPANY EMAIL VALUES
+           
+           IMPORTANT:
+           DO NOT USE record.email HERE.
+        ================================================= */
+
+        const companyEmailValues = [
+
+            record.companyEmail,
+
+            record.recruiterEmail,
+
+            record.employerEmail
+
+        ]
+            .filter(
+                value =>
+                    value !== undefined &&
+                    value !== null &&
+                    String(value).trim() !== ""
+            )
+            .map(normalizeText);
+
+
+        /* =================================================
+           COMPANY NAME VALUES
+        ================================================= */
+
+        const companyNameValues = [
+
+            record.companyName,
+
+            record.company,
+
+            record.employerName,
+
+            record.recruiterName
+
+        ]
+            .filter(
+                value =>
+                    value !== undefined &&
+                    value !== null &&
+                    String(value).trim() !== ""
+            )
+            .map(normalizeText);
+
+
+        /* =================================================
+           FIRST: COMPANY ID
+        ================================================= */
+
+        if (companyIdValues.length > 0) {
+
+            const companyById =
+                companies.find(
+                    (company) => {
+
+                        const companyDocumentId =
+                            normalizeText(
+                                company.id
+                            );
+
+                        const companyUid =
+                            normalizeText(
+                                company.uid
+                            );
+
+                        const companyUserId =
+                            normalizeText(
+                                company.userId
+                            );
+
+                        const companyCompanyId =
+                            normalizeText(
+                                company.companyId
+                            );
+
+                        return (
+
+                            companyIdValues.includes(
+                                companyDocumentId
+                            ) ||
+
+                            companyIdValues.includes(
+                                companyUid
+                            ) ||
+
+                            companyIdValues.includes(
+                                companyUserId
+                            ) ||
+
+                            companyIdValues.includes(
+                                companyCompanyId
+                            )
+
+                        );
+
+                    }
+                );
+
+
+            if (companyById) {
+                return companyById;
+            }
+
+        }
+
+
+        /* =================================================
+           SECOND: COMPANY EMAIL
+        ================================================= */
+
+        if (companyEmailValues.length > 0) {
+
+            const companyByEmail =
+                companies.find(
+                    (company) => {
+
+                        const emails = [
+
+                            company.email,
+
+                            company.companyEmail,
+
+                            company.contactEmail,
+
+                            company.recruiterEmail
+
+                        ]
+                            .filter(Boolean)
+                            .map(normalizeText);
+
+
+                        return emails.some(
+                            email =>
+                                companyEmailValues.includes(
+                                    email
+                                )
+                        );
+
+                    }
+                );
+
+
+            if (companyByEmail) {
+                return companyByEmail;
+            }
+
+        }
+
+
+        /* =================================================
+           THIRD: COMPANY NAME
+        ================================================= */
+
+        if (companyNameValues.length > 0) {
+
+            const companyByName =
+                companies.find(
+                    (company) => {
+
+                        const names = [
+
+                            company.companyName,
+
+                            company.name,
+
+                            company.company,
+
+                            company.displayName,
+
+                            company.businessName
+
+                        ]
+                            .filter(Boolean)
+                            .map(normalizeText);
+
+
+                        return names.some(
+                            name =>
+                                companyNameValues.includes(
+                                    name
+                                )
+                        );
+
+                    }
+                );
+
+
+            if (companyByName) {
+                return companyByName;
+            }
+
+        }
+
+
+        /* =================================================
+           COMPANY DOES NOT EXIST
+        ================================================= */
+
+        return null;
+
+    };
+
+
+    /* =====================================================
+       REALTIME DASHBOARD
     ===================================================== */
 
     useEffect(() => {
-        fetchDashboard();
-    }, []);
+
+        let jobsData = [];
+
+        let applicationsData = [];
+
+        let profilesData = [];
+
+        let companiesData = [];
 
 
-    const fetchDashboard = async () => {
+        let jobsLoaded = false;
 
-        try {
+        let applicationsLoaded = false;
 
-            setLoading(true);
+        let profilesLoaded = false;
 
-
-            /* =================================================
-               JOBS
-            ================================================= */
-
-            const jobsSnapshot = await getDocs(
-                collection(db, "jobs")
-            );
-
-            const jobList = jobsSnapshot.docs.map(
-                (document) => ({
-                    id: document.id,
-                    ...document.data()
-                })
-            );
+        let companiesLoaded = false;
 
 
-            jobList.sort(
-                (a, b) =>
-                    getDateTime(b.createdAt) -
-                    getDateTime(a.createdAt)
-            );
+        /* =================================================
+           PROCESS DASHBOARD
+        ================================================= */
+
+        const processDashboard = () => {
+
+            try {
+
+                /* =========================================
+                   WAIT UNTIL ALL COLLECTIONS LOAD
+                ========================================= */
+
+                if (
+                    !jobsLoaded ||
+                    !applicationsLoaded ||
+                    !profilesLoaded ||
+                    !companiesLoaded
+                ) {
+                    return;
+                }
 
 
-            setJobs(jobList);
-            setTotalJobs(jobList.length);
+                /* =========================================
+                   VALID JOBS
+                   
+                   A job is valid only when its company
+                   still exists.
+                ========================================= */
+
+                const validJobs =
+                    jobsData
+                        .map((job) => {
+
+                            const company =
+                                findCompanyForRecord(
+                                    job,
+                                    companiesData
+                                );
 
 
-            /* =================================================
-               APPLICATIONS
-            ================================================= */
-
-            const applicationsSnapshot = await getDocs(
-                collection(db, "applications")
-            );
-
-            const applications = applicationsSnapshot.docs.map(
-                (document) => ({
-                    id: document.id,
-                    ...document.data()
-                })
-            );
+                            if (!company) {
+                                return null;
+                            }
 
 
-            /* =================================================
-               STUDENT PROFILES
-            ================================================= */
+                            return {
 
-            const profilesSnapshot = await getDocs(
-                collection(db, "studentProfiles")
-            );
+                                ...job,
 
-            const profilesById = {};
-            const profilesByUid = {};
+                                companyData:
+                                    company
 
+                            };
 
-            profilesSnapshot.docs.forEach(
-                (document) => {
-
-                    const profile = document.data();
+                        })
+                        .filter(Boolean);
 
 
-                    profilesById[document.id] = {
-                        id: document.id,
-                        ...profile
+                /* =========================================
+                   SORT JOBS
+                ========================================= */
+
+                validJobs.sort(
+                    (a, b) =>
+                        getDateTime(
+                            b.createdAt
+                        ) -
+                        getDateTime(
+                            a.createdAt
+                        )
+                );
+
+
+                /* =========================================
+                   SET JOBS
+                ========================================= */
+
+                setJobs(validJobs);
+
+                setTotalJobs(
+                    validJobs.length
+                );
+
+
+                /* =========================================
+                   BUILD PROFILE MAPS
+                ========================================= */
+
+                const profilesById = {};
+
+                const profilesByUid = {};
+
+
+                profilesData.forEach(
+                    (profile) => {
+
+                        profilesById[
+                            profile.id
+                        ] = profile;
+
+
+                        if (profile.uid) {
+
+                            profilesByUid[
+                                profile.uid
+                            ] = profile;
+
+                        }
+
+                    }
+                );
+
+
+                /* =========================================
+                   FIND STUDENT PROFILE
+                   
+                   IMPORTANT:
+                   If profile is deleted, returns null.
+                ========================================= */
+
+                const findStudentProfile =
+                    (application) => {
+
+                        const studentId =
+                            application.studentId ||
+                            application.uid ||
+                            application.userId;
+
+
+                        if (!studentId) {
+                            return null;
+                        }
+
+
+                        if (
+                            profilesById[
+                                studentId
+                            ]
+                        ) {
+
+                            return profilesById[
+                                studentId
+                            ];
+
+                        }
+
+
+                        if (
+                            profilesByUid[
+                                studentId
+                            ]
+                        ) {
+
+                            return profilesByUid[
+                                studentId
+                            ];
+
+                        }
+
+
+                        return null;
+
                     };
 
 
-                    if (profile.uid) {
+                /* =========================================
+                   COUNTERS
+                ========================================= */
 
-                        profilesByUid[profile.uid] = {
-                            id: document.id,
-                            ...profile
-                        };
+                let selectedCount = 0;
+
+                let placedCount = 0;
+
+                let pendingCount = 0;
+
+
+                const processedApplications = [];
+
+
+                /* =========================================
+                   PROCESS APPLICATIONS
+                ========================================= */
+
+                for (
+                    const application
+                    of applicationsData
+                ) {
+
+
+                    /* =====================================
+                       STEP 1:
+                       COMPANY MUST EXIST
+                    ===================================== */
+
+                    const company =
+                        findCompanyForRecord(
+                            application,
+                            companiesData
+                        );
+
+
+                    if (!company) {
+
+                        /*
+                         * Company deleted.
+                         *
+                         * Ignore this application
+                         * completely.
+                         */
+
+                        continue;
 
                     }
-                }
-            );
 
 
-            /* =================================================
-               FIND STUDENT PROFILE
-            ================================================= */
+                    /* =====================================
+                       STEP 2:
+                       STUDENT PROFILE MUST EXIST
+                    ===================================== */
 
-            const findStudentProfile = (application) => {
-
-                const studentId =
-                    application.studentId ||
-                    application.uid ||
-                    application.userId;
-
-
-                if (!studentId) {
-                    return null;
-                }
+                    const profile =
+                        findStudentProfile(
+                            application
+                        );
 
 
-                if (profilesById[studentId]) {
-                    return profilesById[studentId];
-                }
+                    if (!profile) {
+
+                        /*
+                         * Student profile deleted.
+                         *
+                         * Ignore this application
+                         * completely.
+                         *
+                         * This is the important fix.
+                         */
+
+                        continue;
+
+                    }
 
 
-                if (profilesByUid[studentId]) {
-                    return profilesByUid[studentId];
-                }
+                    /* =====================================
+                       STEP 3:
+                       STATUS
+                    ===================================== */
+
+                    const status =
+                        String(
+                            application.status ||
+                            "pending"
+                        )
+                            .trim()
+                            .toLowerCase();
 
 
-                return null;
-            };
+                    /* =====================================
+                       SELECTED
+                    ===================================== */
+
+                    const isSelected =
+                        status === "accepted" ||
+                        status === "selected";
 
 
-            /* =================================================
-               COUNTERS
-            ================================================= */
+                    /* =====================================
+                       PLACED
+                    ===================================== */
 
-            let selectedCount = 0;
-            let placedCount = 0;
-            let pendingCount = 0;
-
-
-            const processedApplications = [];
+                    const isPlaced =
+                        application.placedStudent === true ||
+                        status === "placed";
 
 
-            /* =================================================
-               PROCESS APPLICATIONS
-            ================================================= */
+                    /* =====================================
+                       PENDING
+                    ===================================== */
 
-            for (const application of applications) {
-
-                const status = String(
-                    application.status || "pending"
-                )
-                    .trim()
-                    .toLowerCase();
+                    const isPending =
+                        status === "applied" ||
+                        status === "pending";
 
 
-                const isSelected =
-                    status === "accepted" ||
-                    status === "selected";
+                    /* =====================================
+                       COUNTERS
+                    ===================================== */
+
+                    if (isSelected) {
+                        selectedCount++;
+                    }
 
 
-                const isPlaced =
-                    application.placedStudent === true ||
-                    status === "placed";
+                    if (isPlaced) {
+                        placedCount++;
+                    }
 
 
-                const isPending =
-                    status === "applied" ||
-                    status === "pending";
+                    if (
+                        isPending &&
+                        !isSelected
+                    ) {
+                        pendingCount++;
+                    }
 
 
-                if (isSelected) {
-                    selectedCount++;
-                }
+                    /* =====================================
+                       ONLY SELECTED / PLACED
+                    ===================================== */
+
+                    if (
+                        !isSelected &&
+                        !isPlaced
+                    ) {
+                        continue;
+                    }
 
 
-                if (isPlaced) {
-                    placedCount++;
-                }
+                    /* =====================================
+                       STUDENT NAME
+                    ===================================== */
+
+                    const studentName =
+                        getFirstValue(
+                            profile,
+                            [
+                                "studentName",
+                                "name",
+                                "fullName",
+                                "displayName"
+                            ],
+                            "Student"
+                        );
 
 
-                if (isPending && !isSelected) {
-                    pendingCount++;
-                }
+                    /* =====================================
+                       EMAIL
+                    ===================================== */
+
+                    const email =
+                        getFirstValue(
+                            profile,
+                            [
+                                "email",
+                                "studentEmail",
+                                "emailAddress"
+                            ],
+                            "Not Available"
+                        );
 
 
-                if (!isSelected && !isPlaced) {
-                    continue;
-                }
+                    /* =====================================
+                       COLLEGE
+                    ===================================== */
+
+                    const college =
+                        getFirstValue(
+                            profile,
+                            [
+                                "college",
+                                "collegeName",
+                                "college_name",
+
+                                "institute",
+                                "instituteName",
+
+                                "university",
+                                "universityName",
+
+                                "institution",
+                                "institutionName"
+                            ],
+                            "Not Available"
+                        );
 
 
-                const profile =
-                    findStudentProfile(application);
+                    /* =====================================
+                       DEGREE
+                    ===================================== */
+
+                    const degree =
+                        getFirstValue(
+                            profile,
+                            [
+                                "degree",
+                                "course",
+                                "program",
+                                "qualification",
+                                "education",
+
+                                "highestQualification",
+
+                                "degreeName",
+                                "courseName",
+                                "programName"
+                            ],
+                            "Not Available"
+                        );
 
 
-                /* =================================================
-                   STUDENT DATA
-                ================================================= */
+                    /* =====================================
+                       DEPARTMENT
+                    ===================================== */
 
-                const studentName = getFirstValue(
-                    profile,
-                    [
-                        "studentName",
-                        "name",
-                        "fullName",
-                        "displayName"
-                    ],
-                    application.studentName ||
-                    application.name ||
-                    "Student"
-                );
-
-
-                const email = getFirstValue(
-                    profile,
-                    [
-                        "email",
-                        "studentEmail",
-                        "emailAddress"
-                    ],
-                    application.studentEmail ||
-                    application.email ||
-                    "Not Available"
-                );
+                    const department =
+                        getFirstValue(
+                            profile,
+                            [
+                                "department",
+                                "branch",
+                                "stream",
+                                "specialization"
+                            ],
+                            "Not Available"
+                        );
 
 
-                const college = getFirstValue(
-                    profile,
-                    [
-                        "college",
-                        "collegeName",
-                        "college_name",
-                        "institute",
-                        "instituteName",
-                        "university",
-                        "universityName",
-                        "institution",
-                        "institutionName"
-                    ],
-                    application.college ||
-                    application.collegeName ||
-                    "Not Available"
-                );
+                    /* =====================================
+                       PHONE
+                    ===================================== */
+
+                    const phone =
+                        getFirstValue(
+                            profile,
+                            [
+                                "phone",
+                                "mobile",
+                                "mobileNumber",
+                                "phoneNumber",
+                                "contactNumber"
+                            ],
+                            "Not Available"
+                        );
 
 
-                const degree = getFirstValue(
-                    profile,
-                    [
-                        "degree",
-                        "course",
-                        "program",
-                        "qualification",
-                        "education",
-                        "highestQualification",
-                        "degreeName",
-                        "courseName",
-                        "programName"
-                    ],
-                    application.degree ||
-                    application.course ||
-                    "Not Available"
-                );
+                    /* =====================================
+                       PHOTO
+                    ===================================== */
+
+                    const profilePhoto =
+                        getProfilePhoto(
+                            profile,
+                            application
+                        );
 
 
-                const department = getFirstValue(
-                    profile,
-                    [
-                        "department",
-                        "branch",
-                        "stream",
-                        "specialization"
-                    ],
-                    application.department ||
-                    application.branch ||
-                    "Not Available"
-                );
+                    /* =====================================
+                       JOB TITLE
+                    ===================================== */
+
+                    const jobTitle =
+                        application.jobTitle ||
+                        application.jobName ||
+                        application.title ||
+                        "Job Not Available";
 
 
-                const phone = getFirstValue(
-                    profile,
-                    [
-                        "phone",
-                        "mobile",
-                        "mobileNumber",
-                        "phoneNumber",
-                        "contactNumber"
-                    ],
-                    application.phone ||
-                    "Not Available"
-                );
+                    /* =====================================
+                       COMPANY NAME
+                    ===================================== */
+
+                    const companyName =
+                        application.companyName ||
+                        application.company ||
+                        company.companyName ||
+                        company.name ||
+                        company.displayName ||
+                        "Company";
 
 
-                const profilePhoto =
-                    getProfilePhoto(
+                    /* =====================================
+                       PROCESSED APPLICATION
+                    ===================================== */
+
+                    processedApplications.push({
+
+                        ...application,
+
                         profile,
-                        application
-                    );
 
+                        companyData:
+                            company,
 
-                const jobTitle =
-                    application.jobTitle ||
-                    application.jobName ||
-                    application.title ||
-                    "Job Not Available";
+                        studentProfileId:
+                            profile.id || null,
 
+                        studentName,
 
-                const companyName =
-                    application.companyName ||
-                    application.company ||
-                    "Company";
-
-
-                processedApplications.push({
-
-                    ...application,
-
-                    profile,
-
-                    studentProfileId:
-                        profile?.id || null,
-
-                    studentName,
-
-                    email,
-
-                    studentEmail:
                         email,
 
-                    college,
+                        studentEmail:
+                            email,
 
-                    degree,
+                        college,
 
-                    department,
+                        degree,
 
-                    phone,
+                        department,
 
-                    profilePhoto,
+                        phone,
 
-                    jobTitle,
+                        profilePhoto,
 
-                    companyName,
+                        jobTitle,
 
-                    isSelected,
+                        companyName,
 
-                    isPlaced
-                });
+                        isSelected,
+
+                        isPlaced
+
+                    });
+
+                }
+
+
+                /* =========================================
+                   TOTAL APPLICANTS
+                   
+                   IMPORTANT:
+                   Only applications with both:
+                   - existing company
+                   - existing student
+                ========================================= */
+
+                const validApplicationCount =
+                    applicationsData.filter(
+                        (application) => {
+
+                            const company =
+                                findCompanyForRecord(
+                                    application,
+                                    companiesData
+                                );
+
+
+                            if (!company) {
+                                return false;
+                            }
+
+
+                            const profile =
+                                findStudentProfile(
+                                    application
+                                );
+
+
+                            if (!profile) {
+                                return false;
+                            }
+
+
+                            return true;
+
+                        }
+                    ).length;
+
+
+                setTotalApplicants(
+                    validApplicationCount
+                );
+
+
+                /* =========================================
+                   PLACEMENT RATE
+                ========================================= */
+
+                const calculatedPlacementRate =
+                    selectedCount > 0
+                        ? Math.round(
+                            (
+                                placedCount /
+                                selectedCount
+                            ) * 100
+                        )
+                        : 0;
+
+
+                setSelected(
+                    selectedCount
+                );
+
+
+                setPlaced(
+                    placedCount
+                );
+
+
+                setPending(
+                    pendingCount
+                );
+
+
+                setPlacementRate(
+                    calculatedPlacementRate
+                );
+
+
+                /* =========================================
+                   SELECTED STUDENTS
+                ========================================= */
+
+                const selectedList =
+                    processedApplications
+                        .filter(
+                            application =>
+                                application.isSelected
+                        )
+                        .sort(
+                            (a, b) =>
+                                getDateTime(
+                                    b.appliedAt ||
+                                    b.createdAt
+                                ) -
+                                getDateTime(
+                                    a.appliedAt ||
+                                    a.createdAt
+                                )
+                        );
+
+
+                /* =========================================
+                   PLACED STUDENTS
+                ========================================= */
+
+                const placedList =
+                    processedApplications
+                        .filter(
+                            application =>
+                                application.isPlaced
+                        )
+                        .sort(
+                            (a, b) =>
+                                getDateTime(
+                                    b.appliedAt ||
+                                    b.createdAt
+                                ) -
+                                getDateTime(
+                                    a.appliedAt ||
+                                    a.createdAt
+                                )
+                        );
+
+
+                /* =========================================
+                   ONLY SHOW 5
+                ========================================= */
+
+                setSelectedStudents(
+                    selectedList.slice(0, 5)
+                );
+
+
+                setPlacedStudents(
+                    placedList.slice(0, 5)
+                );
+
+
+                /* =========================================
+                   LOADING COMPLETE
+                ========================================= */
+
+                setLoading(false);
+
+            } catch (error) {
+
+                console.error(
+                    "Dashboard processing error:",
+                    error
+                );
+
+                setLoading(false);
+
             }
 
-
-            /* =================================================
-               PLACEMENT RATE
-            ================================================= */
-
-            const calculatedPlacementRate =
-                selectedCount > 0
-                    ? Math.round(
-                        (placedCount / selectedCount) * 100
-                    )
-                    : 0;
+        };
 
 
-            /* =================================================
-               SET COUNTERS
-            ================================================= */
+        /* =================================================
+           JOBS REALTIME LISTENER
+        ================================================= */
 
-            setTotalApplicants(applications.length);
-            setSelected(selectedCount);
-            setPlaced(placedCount);
-            setPending(pendingCount);
-            setPlacementRate(calculatedPlacementRate);
+        const unsubscribeJobs =
+            onSnapshot(
+
+                collection(
+                    db,
+                    "jobs"
+                ),
+
+                (snapshot) => {
+
+                    jobsData =
+                        snapshot.docs.map(
+                            (document) => ({
+
+                                id:
+                                    document.id,
+
+                                ...document.data()
+
+                            })
+                        );
 
 
-            /* =================================================
-               SELECTED STUDENTS
-            ================================================= */
+                    jobsLoaded = true;
 
-            const selectedList =
-                processedApplications
-                    .filter(
-                        (application) =>
-                            application.isSelected
-                    )
-                    .sort(
-                        (a, b) =>
-                            getDateTime(
-                                b.appliedAt ||
-                                b.createdAt
-                            ) -
-                            getDateTime(
-                                a.appliedAt ||
-                                a.createdAt
-                            )
+                    processDashboard();
+
+                },
+
+                (error) => {
+
+                    console.error(
+                        "Jobs realtime listener error:",
+                        error
                     );
 
+                    jobsLoaded = true;
 
-            /* =================================================
-               PLACED STUDENTS
-            ================================================= */
+                    processDashboard();
 
-            const placedList =
-                processedApplications
-                    .filter(
-                        (application) =>
-                            application.isPlaced
-                    )
-                    .sort(
-                        (a, b) =>
-                            getDateTime(
-                                b.appliedAt ||
-                                b.createdAt
-                            ) -
-                            getDateTime(
-                                a.appliedAt ||
-                                a.createdAt
-                            )
+                }
+
+            );
+
+
+        /* =================================================
+           APPLICATIONS REALTIME LISTENER
+        ================================================= */
+
+        const unsubscribeApplications =
+            onSnapshot(
+
+                collection(
+                    db,
+                    "applications"
+                ),
+
+                (snapshot) => {
+
+                    applicationsData =
+                        snapshot.docs.map(
+                            (document) => ({
+
+                                id:
+                                    document.id,
+
+                                ...document.data()
+
+                            })
+                        );
+
+
+                    applicationsLoaded = true;
+
+                    processDashboard();
+
+                },
+
+                (error) => {
+
+                    console.error(
+                        "Applications realtime listener error:",
+                        error
                     );
 
+                    applicationsLoaded = true;
 
-            setSelectedStudents(
-                selectedList.slice(0, 5)
+                    processDashboard();
+
+                }
+
             );
 
-            setPlacedStudents(
-                placedList.slice(0, 5)
+
+        /* =================================================
+           STUDENT PROFILES REALTIME LISTENER
+           
+           IMPORTANT:
+           When student profile is deleted,
+           this listener fires.
+           
+           processDashboard() then removes that
+           student's application from the dashboard.
+        ================================================= */
+
+        const unsubscribeProfiles =
+            onSnapshot(
+
+                collection(
+                    db,
+                    "studentProfiles"
+                ),
+
+                (snapshot) => {
+
+                    profilesData =
+                        snapshot.docs.map(
+                            (document) => ({
+
+                                id:
+                                    document.id,
+
+                                ...document.data()
+
+                            })
+                        );
+
+
+                    profilesLoaded = true;
+
+                    processDashboard();
+
+                },
+
+                (error) => {
+
+                    console.error(
+                        "Student profiles realtime listener error:",
+                        error
+                    );
+
+                    profilesLoaded = true;
+
+                    processDashboard();
+
+                }
+
             );
 
-        } catch (error) {
 
-            console.error(
-                "Admin dashboard error:",
-                error
+        /* =================================================
+           COMPANIES REALTIME LISTENER
+           
+           When company is deleted, this fires and
+           processDashboard removes that company's
+           jobs/applications.
+        ================================================= */
+
+        const unsubscribeCompanies =
+            onSnapshot(
+
+                collection(
+                    db,
+                    "companies"
+                ),
+
+                (snapshot) => {
+
+                    companiesData =
+                        snapshot.docs.map(
+                            (document) => ({
+
+                                id:
+                                    document.id,
+
+                                ...document.data()
+
+                            })
+                        );
+
+
+                    companiesLoaded = true;
+
+                    processDashboard();
+
+                },
+
+                (error) => {
+
+                    console.error(
+                        "Companies realtime listener error:",
+                        error
+                    );
+
+                    companiesLoaded = true;
+
+                    processDashboard();
+
+                }
+
             );
 
-        } finally {
 
-            setLoading(false);
+        /* =================================================
+           CLEANUP
+        ================================================= */
 
-        }
-    };
+        return () => {
+
+            unsubscribeJobs();
+
+            unsubscribeApplications();
+
+            unsubscribeProfiles();
+
+            unsubscribeCompanies();
+
+        };
+
+    }, []);
 
 
     /* =====================================================
        STUDENT AVATAR
-       
-       PHOTO EXISTS:
-       -> Show photo
-
-       NO PHOTO:
-       -> Show initials
-
-       BROKEN PHOTO:
-       -> Show initials
     ===================================================== */
 
     const StudentAvatar = ({
@@ -681,9 +1483,9 @@ function AdminDashboard() {
             "Student";
 
 
-        /* =================================================
+        /* ================================================
            INITIALS
-        ================================================= */
+        ================================================ */
 
         const nameParts =
             name
@@ -694,7 +1496,9 @@ function AdminDashboard() {
         let initials = "S";
 
 
-        if (nameParts.length === 1) {
+        if (
+            nameParts.length === 1
+        ) {
 
             initials =
                 nameParts[0]
@@ -712,6 +1516,7 @@ function AdminDashboard() {
                         nameParts.length - 1
                     ]
                         .charAt(0)
+
                 ).toUpperCase();
 
         }
@@ -723,29 +1528,38 @@ function AdminDashboard() {
                 : "student-avatar";
 
 
-        /* =================================================
-           INITIALS FALLBACK
-        ================================================= */
+        /* ================================================
+           FALLBACK
+        ================================================ */
 
-        if (!photo || imageError) {
+        if (
+            !photo ||
+            imageError
+        ) {
 
             return (
+
                 <div
                     className={avatarClass}
                     title={name}
                     aria-label={`${name} profile`}
                 >
+
                     {initials}
+
                 </div>
+
             );
+
         }
 
 
-        /* =================================================
+        /* ================================================
            PHOTO
-        ================================================= */
+        ================================================ */
 
         return (
+
             <div
                 className={`${avatarClass} avatar-photo`}
                 title={name}
@@ -764,7 +1578,9 @@ function AdminDashboard() {
                 />
 
             </div>
+
         );
+
     };
 
 
@@ -775,6 +1591,7 @@ function AdminDashboard() {
     if (loading) {
 
         return (
+
             <div className="admin-dashboard">
 
                 <div className="admin-loading">
@@ -788,7 +1605,9 @@ function AdminDashboard() {
                 </div>
 
             </div>
+
         );
+
     }
 
 
@@ -840,6 +1659,8 @@ function AdminDashboard() {
             <section className="admin-cards">
 
 
+                {/* TOTAL JOBS */}
+
                 <div className="admin-card">
 
                     <div className="admin-card-icon blue">
@@ -864,6 +1685,8 @@ function AdminDashboard() {
 
                 </div>
 
+
+                {/* APPLICANTS */}
 
                 <div className="admin-card">
 
@@ -890,6 +1713,8 @@ function AdminDashboard() {
                 </div>
 
 
+                {/* SELECTED */}
+
                 <div className="admin-card">
 
                     <div className="admin-card-icon green">
@@ -915,6 +1740,8 @@ function AdminDashboard() {
                 </div>
 
 
+                {/* PLACED */}
+
                 <div className="admin-card">
 
                     <div className="admin-card-icon placed">
@@ -939,6 +1766,8 @@ function AdminDashboard() {
 
                 </div>
 
+
+                {/* PENDING */}
 
                 <div className="admin-card">
 
@@ -1425,13 +2254,17 @@ function AdminDashboard() {
 
                                 <div
                                     className="placed-student-card"
-                                    key={student.id}
+                                    key={
+                                        student.id
+                                    }
                                 >
 
                                     <div className="placed-card-top">
 
                                         <StudentAvatar
-                                            student={student}
+                                            student={
+                                                student
+                                            }
                                             placed
                                         />
 
@@ -1655,6 +2488,9 @@ function AdminDashboard() {
                                                             <span>
                                                                 {
                                                                     job.companyName ||
+                                                                    job.company ||
+                                                                    job.companyData?.companyName ||
+                                                                    job.companyData?.name ||
                                                                     "Company"
                                                                 }
                                                             </span>
@@ -1740,7 +2576,9 @@ function AdminDashboard() {
 
 
         </div>
+
     );
+
 }
 
 
