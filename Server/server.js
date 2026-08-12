@@ -6,19 +6,16 @@ const emailRoutes = require("./routes/emailRoutes");
 
 const app = express();
 
-// Allowed frontend URLs
 const allowedOrigins = [
     "http://localhost:5173",
-    process.env.CLIENT_URL,
+    "https://placement-management-system-7eg5gg89o-rohit4579s-projects.vercel.app",
+    "https://placement-management-system-b46b7p6o9-rohit4579s-projects.vercel.app",
 ].filter(Boolean);
 
-console.log("Allowed CORS origins:", allowedOrigins);
-
-// CORS configuration
 app.use(
     cors({
-        origin: (origin, callback) => {
-            // Allow requests without an origin
+        origin: function (origin, callback) {
+            // Allow requests without an Origin
             // (Postman, server-to-server, etc.)
             if (!origin) {
                 return callback(null, true);
@@ -28,21 +25,12 @@ app.use(
                 return callback(null, true);
             }
 
-            console.error("❌ CORS blocked:", origin);
+            console.log("CORS blocked:", origin);
 
-            return callback(
-                new Error("Not allowed by CORS")
-            );
+            return callback(null, false);
         },
 
-        methods: [
-            "GET",
-            "POST",
-            "PUT",
-            "PATCH",
-            "DELETE",
-            "OPTIONS",
-        ],
+        methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
 
         allowedHeaders: [
             "Content-Type",
@@ -53,24 +41,22 @@ app.use(
     })
 );
 
-// Parse JSON request body
+// Handle preflight requests
+app.options("*", cors());
+
 app.use(express.json());
 
-// Email routes
 app.use("/api/email", emailRoutes);
 
-// Test route
 app.get("/", (req, res) => {
-    res.json({
+    res.status(200).json({
         message: "Placement Management Server is running",
         status: "success",
     });
 });
 
-// Export app for Vercel
 module.exports = app;
 
-// Run locally
 if (require.main === module) {
     const PORT = process.env.PORT || 5000;
 
