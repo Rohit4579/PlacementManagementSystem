@@ -1,66 +1,98 @@
-const API_URL = import.meta.env.VITE_API_URL;
+const nodemailer = require("nodemailer");
 
-const sendEmail = async ({
-    to,
-    subject,
-    message,
-}) => {
+const transporter = nodemailer.createTransport({
+    host: process.env.BREVO_SMTP_HOST,
+    port: Number(process.env.BREVO_SMTP_PORT) || 587,
+    secure: false,
+
+    auth: {
+        user: process.env.BREVO_SMTP_USER,
+        pass: process.env.BREVO_SMTP_KEY,
+    },
+});
+
+const sendEmail = async ({ to, subject, html }) => {
     try {
         console.log("=================================");
-        console.log("SENDING EMAIL");
-        console.log("API URL:", API_URL);
+        console.log("EMAIL SERVICE");
         console.log("To:", to);
         console.log("Subject:", subject);
+        console.log("SMTP Host:", process.env.BREVO_SMTP_HOST);
+        console.log("SMTP Port:", process.env.BREVO_SMTP_PORT);
+        console.log("SMTP User:", process.env.BREVO_SMTP_USER);
+        console.log(
+            "SMTP Key Loaded:",
+            Boolean(process.env.BREVO_SMTP_KEY)
+        );
+        console.log(
+            "From Email:",
+            process.env.BREVO_FROM_EMAIL
+        );
         console.log("=================================");
 
-        if (!API_URL) {
+        // Check environment variables
+        if (!process.env.BREVO_SMTP_HOST) {
             throw new Error(
-                "VITE_API_URL is not configured."
+                "BREVO_SMTP_HOST is not configured"
             );
         }
 
-        const response = await fetch(
-            `${API_URL}/api/email/send`,
-            {
-                method: "POST",
-
-                headers: {
-                    "Content-Type": "application/json",
-                },
-
-                body: JSON.stringify({
-                    to,
-                    subject,
-                    message,
-                }),
-            }
-        );
-
-        const data = await response.json();
-
-        console.log("Email API response:", data);
-
-        if (!response.ok) {
+        if (!process.env.BREVO_SMTP_USER) {
             throw new Error(
-                data?.message ||
-                "Unable to send email."
+                "BREVO_SMTP_USER is not configured"
             );
         }
+
+        if (!process.env.BREVO_SMTP_KEY) {
+            throw new Error(
+                "BREVO_SMTP_KEY is not configured"
+            );
+        }
+
+        if (!process.env.BREVO_FROM_EMAIL) {
+            throw new Error(
+                "BREVO_FROM_EMAIL is not configured"
+            );
+        }
+
+        // Test SMTP connection
+        await transporter.verify();
 
         console.log(
-            "✅ Email request successful"
+            "Brevo SMTP connection successful"
         );
 
-        return data;
+        // Send email
+        const info = await transporter.sendMail({
+            from: {
+                name:
+                    process.env.BREVO_FROM_NAME ||
+                    "Placement Management System",
 
+                address:
+                    process.env.BREVO_FROM_EMAIL,
+            },
+
+            to: to,
+            subject: subject,
+            html: html,
+        });
+
+        console.log("Email sent successfully");
+        console.log("Message ID:", info.messageId);
+
+        return info;
     } catch (error) {
-        console.error(
-            "❌ Email Service Error:",
-            error
-        );
+        console.error("=================================");
+        console.error("EMAIL SENDING FAILED");
+        console.error("Message:", error.message);
+        console.error("Code:", error.code);
+        console.error("Command:", error.command);
+        console.error("Response:", error.response);
+        console.error("=================================");
 
         throw error;
     }
 };
 
-export default sendEmail;
+module.exports = sendEmail;
