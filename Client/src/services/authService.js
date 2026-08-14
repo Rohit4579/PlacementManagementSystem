@@ -30,11 +30,14 @@ import {
 
 
 // =====================================================
-// GOOGLE AUTH PROVIDER
+// GOOGLE PROVIDER
 // =====================================================
 
-const googleProvider =
-    new GoogleAuthProvider();
+const googleProvider = new GoogleAuthProvider();
+
+googleProvider.setCustomParameters({
+    prompt: "select_account"
+});
 
 
 // =====================================================
@@ -80,6 +83,224 @@ function normalizeEmail(email) {
 
 
 // =====================================================
+// GET VALID ROLE
+// =====================================================
+
+function getValidRole(userData) {
+
+    const role = normalizeRole(
+        userData?.role
+    );
+
+    return VALID_ROLES.includes(role)
+        ? role
+        : "";
+}
+
+
+// =====================================================
+// FIND FIRESTORE USER BY EMAIL
+// =====================================================
+
+async function findUserByEmail(email) {
+
+    const normalizedEmail =
+        normalizeEmail(email);
+
+    if (!normalizedEmail) {
+        return null;
+    }
+
+    const usersRef =
+        collection(
+            db,
+            "users"
+        );
+
+    const usersQuery =
+        query(
+            usersRef,
+            where(
+                "email",
+                "==",
+                normalizedEmail
+            )
+        );
+
+    const snapshot =
+        await getDocs(
+            usersQuery
+        );
+
+    if (snapshot.empty) {
+        return null;
+    }
+
+    const firstDocument =
+        snapshot.docs[0];
+
+    return {
+        id: firstDocument.id,
+        data: firstDocument.data()
+    };
+}
+
+
+// =====================================================
+// GET USER PROFILE FROM FIRESTORE
+// =====================================================
+//
+// IMPORTANT:
+// This function is used both by Login.jsx and
+// authService functions to restore the user's role.
+//
+// =====================================================
+
+export async function getAuthenticatedUserProfile(
+    firebaseUser = auth.currentUser
+) {
+
+    if (!firebaseUser) {
+        return null;
+    }
+
+    const uid =
+        firebaseUser.uid;
+
+    const email =
+        normalizeEmail(
+            firebaseUser.email
+        );
+
+    const userRef =
+        doc(
+            db,
+            "users",
+            uid
+        );
+
+    const userDoc =
+        await getDoc(
+            userRef
+        );
+
+    let userData =
+        userDoc.exists()
+            ? userDoc.data()
+            : null;
+
+    let role =
+        getValidRole(
+            userData
+        );
+
+
+    // =================================================
+    // NORMAL UID DOCUMENT FOUND
+    // =================================================
+
+    if (role) {
+
+        return {
+
+            uid,
+
+            name:
+                userData?.name ||
+                firebaseUser.displayName ||
+                "",
+
+            email:
+                userData?.email ||
+                email,
+
+            role
+
+        };
+    }
+
+
+    // =================================================
+    // FALLBACK: SEARCH USER BY EMAIL
+    // =================================================
+
+    if (email) {
+
+        const emailUser =
+            await findUserByEmail(
+                email
+            );
+
+        if (emailUser) {
+
+            const emailData =
+                emailUser.data;
+
+            role =
+                getValidRole(
+                    emailData
+                );
+
+            if (role) {
+
+                // Repair users/{auth.uid}
+                await setDoc(
+
+                    userRef,
+
+                    {
+
+                        uid,
+
+                        name:
+                            emailData?.name ||
+                            firebaseUser.displayName ||
+                            "",
+
+                        email,
+
+                        role,
+
+                        repairedAt:
+                            serverTimestamp()
+
+                    },
+
+                    {
+                        merge: true
+                    }
+                );
+
+                return {
+
+                    uid,
+
+                    name:
+                        emailData?.name ||
+                        firebaseUser.displayName ||
+                        "",
+
+                    email:
+                        emailData?.email ||
+                        email,
+
+                    role
+
+                };
+            }
+        }
+    }
+
+
+    // =================================================
+    // NO VALID PROFILE
+    // =================================================
+
+    return null;
+}
+
+
+// =====================================================
 // REGISTER USER
 // =====================================================
 
@@ -90,49 +311,45 @@ export async function registerUser(
     role
 ) {
 
+    const normalizedRole =
+        normalizeRole(role);
+
+    const normalizedEmail =
+        normalizeEmail(email);
+
+
+    if (
+        normalizedRole !== "student" &&
+        normalizedRole !== "company"
+    ) {
+
+        const error =
+            new Error(
+                "Invalid registration role."
+            );
+
+        error.code =
+            "invalid-registration-role";
+
+        throw error;
+    }
+
+
+    if (!normalizedEmail) {
+
+        const error =
+            new Error(
+                "Email address is required."
+            );
+
+        error.code =
+            "auth/invalid-email";
+
+        throw error;
+    }
+
+
     try {
-
-        const normalizedRole =
-            normalizeRole(role);
-
-        if (
-            normalizedRole !== "student" &&
-            normalizedRole !== "company"
-        ) {
-
-            const error =
-                new Error(
-                    "Invalid registration role."
-                );
-
-            error.code =
-                "invalid-registration-role";
-
-            throw error;
-        }
-
-
-        const normalizedEmail =
-            normalizeEmail(email);
-
-
-        if (!normalizedEmail) {
-
-            const error =
-                new Error(
-                    "Email address is required."
-                );
-
-            error.code =
-                "auth/invalid-email";
-
-            throw error;
-        }
-
-
-        // =================================================
-        // CREATE AUTH ACCOUNT
-        // =================================================
 
         const result =
             await createUserWithEmailAndPassword(
@@ -141,14 +358,9 @@ export async function registerUser(
                 password
             );
 
-
         const firebaseUser =
             result.user;
 
-
-        // =================================================
-        // CREATE FIRESTORE USER
-        // =================================================
 
         await setDoc(
 
@@ -159,11 +371,14 @@ export async function registerUser(
             ),
 
             {
+
                 uid:
                     firebaseUser.uid,
 
                 name:
-                    String(name || "").trim(),
+                    String(
+                        name || ""
+                    ).trim(),
 
                 email:
                     normalizedEmail,
@@ -176,35 +391,14 @@ export async function registerUser(
 
                 createdAt:
                     serverTimestamp()
+
             }
         );
 
 
         console.log(
-            "===================================="
-        );
-
-        console.log(
-            "REGISTRATION SUCCESSFUL"
-        );
-
-        console.log(
-            "UID:",
+            "Registration successful:",
             firebaseUser.uid
-        );
-
-        console.log(
-            "Email:",
-            normalizedEmail
-        );
-
-        console.log(
-            "Role:",
-            normalizedRole
-        );
-
-        console.log(
-            "===================================="
         );
 
 
@@ -214,7 +408,9 @@ export async function registerUser(
                 firebaseUser.uid,
 
             name:
-                String(name || "").trim(),
+                String(
+                    name || ""
+                ).trim(),
 
             email:
                 normalizedEmail,
@@ -225,17 +421,11 @@ export async function registerUser(
         };
 
     }
-
     catch (error) {
 
         console.error(
-            "Register Error Code:",
-            error?.code
-        );
-
-        console.error(
             "Register Error:",
-            error?.message
+            error
         );
 
         throw error;
@@ -244,89 +434,7 @@ export async function registerUser(
 
 
 // =====================================================
-// FIND USER PROFILE BY EMAIL
-// =====================================================
-
-async function findUserByEmail(email) {
-
-    const normalizedEmail =
-        normalizeEmail(email);
-
-
-    const usersRef =
-        collection(
-            db,
-            "users"
-        );
-
-
-    const usersQuery =
-        query(
-            usersRef,
-            where(
-                "email",
-                "==",
-                normalizedEmail
-            )
-        );
-
-
-    const snapshot =
-        await getDocs(
-            usersQuery
-        );
-
-
-    if (
-        snapshot.empty
-    ) {
-
-        return null;
-    }
-
-
-    const firstDocument =
-        snapshot.docs[0];
-
-
-    return {
-
-        id:
-            firstDocument.id,
-
-        data:
-            firstDocument.data()
-
-    };
-}
-
-
-// =====================================================
-// GET VALID ROLE FROM USER DATA
-// =====================================================
-
-function getValidRole(userData) {
-
-    const role =
-        normalizeRole(
-            userData?.role
-        );
-
-
-    if (
-        VALID_ROLES.includes(role)
-    ) {
-
-        return role;
-    }
-
-
-    return "";
-}
-
-
-// =====================================================
-// LOGIN USER
+// LOGIN WITH EMAIL + PASSWORD
 // =====================================================
 
 export async function loginUser(
@@ -334,33 +442,16 @@ export async function loginUser(
     password
 ) {
 
+    const normalizedEmail =
+        normalizeEmail(email);
+
     try {
 
-        const normalizedEmail =
-            normalizeEmail(email);
-
-
         console.log(
-            "===================================="
-        );
-
-        console.log(
-            "LOGIN STARTED"
-        );
-
-        console.log(
-            "Email:",
+            "Email login started:",
             normalizedEmail
         );
 
-        console.log(
-            "===================================="
-        );
-
-
-        // =================================================
-        // FIREBASE AUTHENTICATION
-        // =================================================
 
         const result =
             await signInWithEmailAndPassword(
@@ -374,245 +465,41 @@ export async function loginUser(
             result.user;
 
 
-        const uid =
-            firebaseUser.uid;
-
-
-        console.log(
-            "===================================="
-        );
-
-        console.log(
-            "AUTHENTICATION SUCCESS"
-        );
-
-        console.log(
-            "Firebase UID:",
-            uid
-        );
-
-        console.log(
-            "Firebase Email:",
-            firebaseUser.email
-        );
-
-        console.log(
-            "===================================="
-        );
-
-
-        // =================================================
-        // FIRST TRY users/{uid}
-        // =================================================
-
-        const userRef =
-            doc(
-                db,
-                "users",
-                uid
+        const profile =
+            await getAuthenticatedUserProfile(
+                firebaseUser
             );
 
 
-        let userDoc =
-            await getDoc(
-                userRef
-            );
-
-
-        let userData =
-            null;
-
-
-        if (
-            userDoc.exists()
-        ) {
-
-            userData =
-                userDoc.data();
-
-            console.log(
-                "Found users/{uid} document."
-            );
-
-        }
-
-
         // =================================================
-        // SEARCH BY EMAIL IF ROLE IS INVALID
+        // AUTH ACCOUNT EXISTS BUT PROFILE DOES NOT
         // =================================================
 
-        let role =
-            getValidRole(
-                userData
-            );
-
-
-        if (
-            !role
-        ) {
-
-            console.log(
-                "UID document does not contain a valid role."
-            );
-
-            console.log(
-                "Searching users collection by email..."
-            );
-
-
-            const emailUser =
-                await findUserByEmail(
-                    normalizedEmail
-                );
-
-
-            if (
-                emailUser
-            ) {
-
-                userData =
-                    emailUser.data;
-
-
-                role =
-                    getValidRole(
-                        userData
-                    );
-
-
-                if (
-                    role
-                ) {
-
-                    // =================================================
-                    // REPAIR users/{AUTH UID}
-                    // =================================================
-
-                    await setDoc(
-
-                        userRef,
-
-                        {
-
-                            uid:
-                                uid,
-
-                            name:
-                                userData.name ||
-                                firebaseUser.displayName ||
-                                "",
-
-                            email:
-                                normalizedEmail,
-
-                            role:
-                                role,
-
-                            repairedAt:
-                                serverTimestamp()
-
-                        },
-
-                        {
-                            merge: true
-                        }
-                    );
-
-
-                    console.log(
-                        "users/{AuthUID} document repaired."
-                    );
-                }
-            }
-        }
-
-
-        // =================================================
-        // INVALID ROLE
-        // =================================================
-
-        if (
-            !VALID_ROLES.includes(role)
-        ) {
+        if (!profile) {
 
             await signOut(auth);
 
-
-            const roleError =
+            const profileError =
                 new Error(
-                    `Invalid user role: "${userData?.role}"`
+                    "Your authentication account exists, but your user profile could not be found. Please contact the administrator."
                 );
 
+            profileError.code =
+                "user-profile-not-found";
 
-            roleError.code =
-                "invalid-user-role";
-
-
-            throw roleError;
+            throw profileError;
         }
 
 
-        // =================================================
-        // LOGIN SUCCESS
-        // =================================================
-
         console.log(
-            "===================================="
-        );
-
-        console.log(
-            "LOGIN COMPLETELY SUCCESSFUL"
-        );
-
-        console.log(
-            "UID:",
-            uid
-        );
-
-        console.log(
-            "Name:",
-            userData?.name || ""
-        );
-
-        console.log(
-            "Email:",
-            userData?.email ||
-            firebaseUser.email ||
-            ""
-        );
-
-        console.log(
-            "Role:",
-            role
-        );
-
-        console.log(
-            "===================================="
+            "Email login successful:",
+            profile
         );
 
 
-        return {
-
-            uid:
-                uid,
-
-            name:
-                userData?.name ||
-                firebaseUser.displayName ||
-                "",
-
-            email:
-                userData?.email ||
-                firebaseUser.email ||
-                "",
-
-            role:
-                role
-
-        };
+        return profile;
 
     }
-
     catch (error) {
 
         console.error(
@@ -620,7 +507,7 @@ export async function loginUser(
         );
 
         console.error(
-            "LOGIN FAILED"
+            "EMAIL LOGIN FAILED"
         );
 
         console.error(
@@ -646,20 +533,23 @@ export async function loginUser(
 // GOOGLE LOGIN
 // =====================================================
 //
-// SAFE ACCOUNT-LINKING BEHAVIOR
+// Behavior:
 //
-// Existing password account:
-//     Email + Password
-//             +
-//          Google
+// 1. Existing Google account
+//      -> login normally.
 //
-// becomes one Firebase account.
+// 2. Existing password account with same email
+//      -> Firebase reports account-exists-with-different-credential.
+//      -> User must provide existing password.
+//      -> Password account is authenticated.
+//      -> Google credential is linked.
 //
+// 3. New Google account
+//      -> creates a new student account.
+//
+// IMPORTANT:
 // Google NEVER changes the existing password.
 //
-// If Firebase says the email already belongs to a
-// password account, Login.jsx can retry using the
-// existing password and this function can link Google.
 // =====================================================
 
 export async function loginWithGoogle(
@@ -670,26 +560,18 @@ export async function loginWithGoogle(
     try {
 
         console.log(
-            "===================================="
-        );
-
-        console.log(
-            "GOOGLE LOGIN STARTED"
-        );
-
-        console.log(
-            "===================================="
+            "Google login started."
         );
 
 
         let result;
 
 
-        try {
+        // =================================================
+        // TRY NORMAL GOOGLE LOGIN
+        // =================================================
 
-            // =================================================
-            // NORMAL GOOGLE LOGIN
-            // =================================================
+        try {
 
             result =
                 await signInWithPopup(
@@ -698,17 +580,16 @@ export async function loginWithGoogle(
                 );
 
         }
-
         catch (googleError) {
 
             console.error(
-                "Google popup authentication failed:",
+                "Google popup error:",
                 googleError?.code
             );
 
 
             // =================================================
-            // EMAIL ALREADY EXISTS WITH ANOTHER PROVIDER
+            // DIFFERENT PROVIDER
             // =================================================
 
             if (
@@ -720,24 +601,17 @@ export async function loginWithGoogle(
             }
 
 
-            // =================================================
-            // GET GOOGLE CREDENTIAL FROM ERROR
-            // =================================================
-
             const googleCredential =
-                GoogleAuthProvider
-                    .credentialFromError(
-                        googleError
-                    );
+                GoogleAuthProvider.credentialFromError(
+                    googleError
+                );
 
 
-            if (
-                !googleCredential
-            ) {
+            if (!googleCredential) {
 
                 const credentialError =
                     new Error(
-                        "Unable to retrieve the Google credential. Please try again."
+                        "Unable to retrieve the Google credential."
                     );
 
                 credentialError.code =
@@ -754,36 +628,39 @@ export async function loginWithGoogle(
                 );
 
 
+            if (!googleEmail) {
+
+                const emailError =
+                    new Error(
+                        "Please enter the Google account email."
+                    );
+
+                emailError.code =
+                    "auth/invalid-email";
+
+                throw emailError;
+            }
+
+
             // =================================================
-            // WE REQUIRE THE EXISTING PASSWORD TO LINK
-            //
-            // IMPORTANT:
-            // We NEVER know or retrieve the old password.
-            //
-            // The user must enter their own existing password.
+            // EXISTING PASSWORD REQUIRED
             // =================================================
 
-            if (
-                !existingPassword
-            ) {
+            if (!existingPassword) {
 
                 const passwordRequiredError =
                     new Error(
-                        "This email already has a password account. Enter your existing password and click Google again to safely link Google to that account."
+                        "This email already has a password account. Enter your existing password and click Continue with Google again to safely link Google."
                     );
-
 
                 passwordRequiredError.code =
                     "auth/password-required-for-linking";
 
-
                 passwordRequiredError.email =
                     googleEmail;
 
-
                 passwordRequiredError.googleCredential =
                     googleCredential;
-
 
                 throw passwordRequiredError;
             }
@@ -793,12 +670,27 @@ export async function loginWithGoogle(
             // SIGN INTO EXISTING PASSWORD ACCOUNT
             // =================================================
 
-            const existingResult =
-                await signInWithEmailAndPassword(
-                    auth,
-                    googleEmail,
-                    existingPassword
+            let existingResult;
+
+            try {
+
+                existingResult =
+                    await signInWithEmailAndPassword(
+                        auth,
+                        googleEmail,
+                        existingPassword
+                    );
+
+            }
+            catch (passwordError) {
+
+                console.error(
+                    "Existing password verification failed:",
+                    passwordError?.code
                 );
+
+                throw passwordError;
+            }
 
 
             const existingUser =
@@ -806,24 +698,18 @@ export async function loginWithGoogle(
 
 
             // =================================================
-            // CHECK WHETHER GOOGLE IS ALREADY LINKED
+            // CHECK GOOGLE PROVIDER
             // =================================================
 
             const googleAlreadyLinked =
                 existingUser.providerData.some(
-                    (provider) =>
+                    provider =>
                         provider.provider ===
                         "google.com"
                 );
 
 
-            if (
-                !googleAlreadyLinked
-            ) {
-
-                // =================================================
-                // LINK GOOGLE TO EXISTING PASSWORD ACCOUNT
-                // =================================================
+            if (!googleAlreadyLinked) {
 
                 await linkWithCredential(
                     existingUser,
@@ -831,156 +717,44 @@ export async function loginWithGoogle(
                 );
 
                 console.log(
-                    "Google provider linked to existing password account."
+                    "Google successfully linked."
                 );
 
             }
 
 
             // =================================================
-            // LOAD FIRESTORE PROFILE
+            // LOAD PROFILE
             // =================================================
 
-            const uid =
-                existingUser.uid;
-
-
-            const userRef =
-                doc(
-                    db,
-                    "users",
-                    uid
+            const profile =
+                await getAuthenticatedUserProfile(
+                    existingUser
                 );
 
 
-            let userDoc =
-                await getDoc(
-                    userRef
-                );
-
-
-            let userData =
-                userDoc.exists()
-                    ? userDoc.data()
-                    : null;
-
-
-            let role =
-                getValidRole(
-                    userData
-                );
-
-
-            // =================================================
-            // FALLBACK: SEARCH BY EMAIL
-            // =================================================
-
-            if (
-                !role
-            ) {
-
-                const emailUser =
-                    await findUserByEmail(
-                        googleEmail
-                    );
-
-
-                if (
-                    emailUser
-                ) {
-
-                    userData =
-                        emailUser.data;
-
-
-                    role =
-                        getValidRole(
-                            userData
-                        );
-
-
-                    if (
-                        role
-                    ) {
-
-                        await setDoc(
-
-                            userRef,
-
-                            {
-
-                                uid:
-                                    uid,
-
-                                name:
-                                    userData.name ||
-                                    existingUser.displayName ||
-                                    "",
-
-                                email:
-                                    googleEmail,
-
-                                role:
-                                    role,
-
-                                repairedAt:
-                                    serverTimestamp()
-
-                            },
-
-                            {
-                                merge: true
-                            }
-                        );
-                    }
-                }
-            }
-
-
-            // =================================================
-            // INVALID ROLE
-            // =================================================
-
-            if (
-                !VALID_ROLES.includes(role)
-            ) {
+            if (!profile) {
 
                 await signOut(auth);
 
-
-                const roleError =
+                const profileError =
                     new Error(
-                        `Invalid user role: "${userData?.role}"`
+                        "Your account was authenticated, but the user profile could not be found."
                     );
 
+                profileError.code =
+                    "user-profile-not-found";
 
-                roleError.code =
-                    "invalid-user-role";
-
-
-                throw roleError;
+                throw profileError;
             }
 
 
             return {
 
-                uid:
-                    uid,
-
-                name:
-                    userData?.name ||
-                    existingUser.displayName ||
-                    "",
-
-                email:
-                    userData?.email ||
-                    googleEmail,
-
-                role:
-                    role,
+                ...profile,
 
                 linkedGoogle:
-                    true
+                    !googleAlreadyLinked
 
             };
         }
@@ -993,10 +767,8 @@ export async function loginWithGoogle(
         const firebaseUser =
             result.user;
 
-
         const uid =
             firebaseUser.uid;
-
 
         const normalizedEmail =
             normalizeEmail(
@@ -1005,22 +777,29 @@ export async function loginWithGoogle(
 
 
         console.log(
-            "Google authentication successful."
-        );
-
-        console.log(
-            "Google UID:",
-            uid
-        );
-
-        console.log(
-            "Google Email:",
+            "Google authentication successful:",
             normalizedEmail
         );
 
 
         // =================================================
-        // CHECK users/{uid}
+        // CHECK EXISTING UID PROFILE
+        // =================================================
+
+        const existingProfile =
+            await getAuthenticatedUserProfile(
+                firebaseUser
+            );
+
+
+        if (existingProfile) {
+
+            return existingProfile;
+        }
+
+
+        // =================================================
+        // NEW GOOGLE ACCOUNT
         // =================================================
 
         const userRef =
@@ -1031,187 +810,9 @@ export async function loginWithGoogle(
             );
 
 
-        const userDoc =
-            await getDoc(
-                userRef
-            );
-
-
-        if (
-            userDoc.exists()
-        ) {
-
-            const userData =
-                userDoc.data();
-
-
-            const role =
-                getValidRole(
-                    userData
-                );
-
-
-            if (
-                !VALID_ROLES.includes(role)
-            ) {
-
-                await signOut(auth);
-
-
-                const roleError =
-                    new Error(
-                        `Invalid user role: "${userData?.role}"`
-                    );
-
-
-                roleError.code =
-                    "invalid-user-role";
-
-
-                throw roleError;
-            }
-
-
-            return {
-
-                uid:
-                    uid,
-
-                name:
-                    userData.name ||
-                    firebaseUser.displayName ||
-                    "",
-
-                email:
-                    userData.email ||
-                    normalizedEmail,
-
-                role:
-                    role
-
-            };
-        }
-
-
-        // =================================================
-        // SEARCH BY EMAIL
-        // =================================================
-
-        const emailUser =
-            await findUserByEmail(
-                normalizedEmail
-            );
-
-
-        if (
-            emailUser
-        ) {
-
-            const existingData =
-                emailUser.data;
-
-
-            const existingRole =
-                getValidRole(
-                    existingData
-                );
-
-
-            if (
-                !VALID_ROLES.includes(
-                    existingRole
-                )
-            ) {
-
-                await signOut(auth);
-
-
-                const roleError =
-                    new Error(
-                        `Invalid user role: "${existingData?.role}"`
-                    );
-
-
-                roleError.code =
-                    "invalid-user-role";
-
-
-                throw roleError;
-            }
-
-
-            // =================================================
-            // REPAIR UID DOCUMENT
-            // =================================================
-
-            await setDoc(
-
-                userRef,
-
-                {
-
-                    uid:
-                        uid,
-
-                    name:
-                        existingData.name ||
-                        firebaseUser.displayName ||
-                        "",
-
-                    email:
-                        normalizedEmail,
-
-                    role:
-                        existingRole,
-
-                    provider:
-                        "google",
-
-                    repairedAt:
-                        serverTimestamp()
-
-                },
-
-                {
-                    merge: true
-                }
-            );
-
-
-            return {
-
-                uid:
-                    uid,
-
-                name:
-                    existingData.name ||
-                    firebaseUser.displayName ||
-                    "",
-
-                email:
-                    existingData.email ||
-                    normalizedEmail,
-
-                role:
-                    existingRole
-
-            };
-        }
-
-
-        // =================================================
-        // NEW GOOGLE USER
-        // =================================================
-        //
-        // New Google accounts become students.
-        //
-        // Admin is NEVER automatically assigned.
-        // =================================================
-
         const newUser = {
 
-            uid:
-                uid,
+            uid,
 
             name:
                 firebaseUser.displayName ||
@@ -1245,8 +846,7 @@ export async function loginWithGoogle(
 
         return {
 
-            uid:
-                uid,
+            uid,
 
             name:
                 firebaseUser.displayName ||
@@ -1261,7 +861,6 @@ export async function loginWithGoogle(
         };
 
     }
-
     catch (error) {
 
         console.error(
@@ -1286,68 +885,52 @@ export async function loginWithGoogle(
             "===================================="
         );
 
-
         throw error;
     }
 }
 
 
 // =====================================================
-// FORGOT PASSWORD
+// RESET PASSWORD
 // =====================================================
 
 export async function resetPassword(
     email
 ) {
 
+    const normalizedEmail =
+        normalizeEmail(email);
+
+
+    if (!normalizedEmail) {
+
+        const error =
+            new Error(
+                "Please enter your email address."
+            );
+
+        error.code =
+            "auth/invalid-email";
+
+        throw error;
+    }
+
+
     try {
-
-        const normalizedEmail =
-            normalizeEmail(email);
-
-
-        if (
-            !normalizedEmail
-        ) {
-
-            const error =
-                new Error(
-                    "Please enter your email address."
-                );
-
-            error.code =
-                "invalid-email";
-
-            throw error;
-        }
-
 
         await sendPasswordResetEmail(
             auth,
             normalizedEmail
         );
 
-
-        console.log(
-            "Password reset email sent:",
-            normalizedEmail
-        );
-
-
         return true;
 
     }
-
     catch (error) {
 
         console.error(
-            "Password Reset Error Code:",
-            error?.code
-        );
-
-        console.error(
-            "Password Reset Error:",
-            error?.message
+            "Password reset error:",
+            error
         );
 
         throw error;
@@ -1370,42 +953,20 @@ async function deleteQueryDocuments(
         );
 
 
-    if (
-        snapshot.empty
-    ) {
-
-        console.log(
-            `No ${label} documents found.`
-        );
-
-        return;
-    }
-
-
-    console.log(
-        `Found ${snapshot.size} ${label} document(s).`
-    );
-
-
     for (
         const documentSnapshot
         of snapshot.docs
     ) {
 
         console.log(
-            `Deleting ${label}: ${documentSnapshot.ref.path}`
+            `Deleting ${label}:`,
+            documentSnapshot.ref.path
         );
-
 
         await deleteDoc(
             documentSnapshot.ref
         );
     }
-
-
-    console.log(
-        `Deleted ${snapshot.size} ${label} document(s).`
-    );
 }
 
 
@@ -1421,9 +982,7 @@ export async function deleteAccount() {
             auth.currentUser;
 
 
-        if (
-            !firebaseUser
-        ) {
+        if (!firebaseUser) {
 
             throw new Error(
                 "No authenticated user found."
@@ -1449,9 +1008,7 @@ export async function deleteAccount() {
             );
 
 
-        if (
-            !userDoc.exists()
-        ) {
+        if (!userDoc.exists()) {
 
             throw new Error(
                 "User profile does not exist in Firestore."
@@ -1462,14 +1019,11 @@ export async function deleteAccount() {
         const userData =
             userDoc.data();
 
-
         const role =
             normalizeRole(
                 userData.role
             );
 
-
-        // Admin cannot use this function.
 
         if (
             role !== "student" &&
@@ -1486,32 +1040,15 @@ export async function deleteAccount() {
         // STUDENT
         // =================================================
 
-        if (
-            role === "student"
-        ) {
+        if (role === "student") {
 
-            const studentProfileRef =
+            await deleteDoc(
                 doc(
                     db,
                     "studentProfiles",
                     uid
-                );
-
-
-            const studentProfileDoc =
-                await getDoc(
-                    studentProfileRef
-                );
-
-
-            if (
-                studentProfileDoc.exists()
-            ) {
-
-                await deleteDoc(
-                    studentProfileRef
-                );
-            }
+                )
+            ).catch(() => {});
 
 
             await deleteQueryDocuments(
@@ -1573,32 +1110,15 @@ export async function deleteAccount() {
         // COMPANY
         // =================================================
 
-        if (
-            role === "company"
-        ) {
+        if (role === "company") {
 
-            const companyRef =
+            await deleteDoc(
                 doc(
                     db,
                     "companies",
                     uid
-                );
-
-
-            const companyDoc =
-                await getDoc(
-                    companyRef
-                );
-
-
-            if (
-                companyDoc.exists()
-            ) {
-
-                await deleteDoc(
-                    companyRef
-                );
-            }
+                )
+            ).catch(() => {});
 
 
             await deleteQueryDocuments(
@@ -1675,7 +1195,7 @@ export async function deleteAccount() {
 
 
         // =================================================
-        // DELETE USERS DOCUMENT
+        // USERS DOCUMENT
         // =================================================
 
         await deleteDoc(
@@ -1684,7 +1204,7 @@ export async function deleteAccount() {
 
 
         // =================================================
-        // DELETE AUTH ACCOUNT
+        // FIREBASE AUTH ACCOUNT
         // =================================================
 
         await deleteUser(
@@ -1692,25 +1212,14 @@ export async function deleteAccount() {
         );
 
 
-        console.log(
-            "Account deletion completed."
-        );
-
-
         return true;
 
     }
-
     catch (error) {
 
         console.error(
-            "Delete Account Error Code:",
-            error?.code
-        );
-
-        console.error(
             "Delete Account Error:",
-            error?.message
+            error
         );
 
 
@@ -1724,10 +1233,8 @@ export async function deleteAccount() {
                     "For security, please log in again and then delete your account."
                 );
 
-
             recentLoginError.code =
                 "auth/requires-recent-login";
-
 
             throw recentLoginError;
         }
@@ -1751,7 +1258,6 @@ export async function logoutUser() {
         );
 
     }
-
     catch (error) {
 
         console.error(

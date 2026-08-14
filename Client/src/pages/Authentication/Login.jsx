@@ -9,16 +9,6 @@ import {
     useNavigate
 } from "react-router-dom";
 
-import "./Login.css";
-
-import {
-    loginUser,
-    loginWithGoogle,
-    resetPassword
-} from "../../services/authService";
-
-import sendEmail from "../../services/emailService";
-
 import {
     getAuth,
     onAuthStateChanged
@@ -30,9 +20,20 @@ import {
     FaLock
 } from "react-icons/fa";
 
+import "./Login.css";
+
+import {
+    loginUser,
+    loginWithGoogle,
+    resetPassword,
+    getAuthenticatedUserProfile
+} from "../../services/authService";
+
+import sendEmail from "../../services/emailService";
+
 
 // =====================================================
-// VALIDATION CONSTANTS
+// CONSTANTS
 // =====================================================
 
 const MAX_EMAIL_LENGTH = 254;
@@ -48,7 +49,6 @@ const normalizeEmail = (email) => {
     return String(email || "")
         .trim()
         .toLowerCase();
-
 };
 
 
@@ -81,9 +81,15 @@ const navigateByRole = (
     }
 
 
-    if (
-        user.role === "student"
-    ) {
+    const role =
+        String(
+            user.role || ""
+        )
+            .trim()
+            .toLowerCase();
+
+
+    if (role === "student") {
 
         navigate(
             "/student/dashboard",
@@ -96,9 +102,7 @@ const navigateByRole = (
     }
 
 
-    if (
-        user.role === "company"
-    ) {
+    if (role === "company") {
 
         navigate(
             "/company/dashboard",
@@ -111,9 +115,7 @@ const navigateByRole = (
     }
 
 
-    if (
-        user.role === "admin"
-    ) {
+    if (role === "admin") {
 
         navigate(
             "/admin/dashboard",
@@ -179,6 +181,10 @@ function Login() {
         useNavigate();
 
 
+    // =================================================
+    // FORM
+    // =================================================
+
     const [data, setData] =
         useState({
             email: "",
@@ -186,32 +192,57 @@ function Login() {
         });
 
 
+    // =================================================
+    // LOADING
+    // =================================================
+
     const [loading, setLoading] =
         useState(false);
-
 
     const [googleLoading, setGoogleLoading] =
         useState(false);
 
-
     const [resetLoading, setResetLoading] =
         useState(false);
-
 
     const [checkingSession, setCheckingSession] =
         useState(true);
 
 
+    // =================================================
+    // MESSAGES
+    // =================================================
+
     const [errorMessage, setErrorMessage] =
         useState("");
-
 
     const [successMessage, setSuccessMessage] =
         useState("");
 
 
     // =================================================
-    // SESSION CHECK
+    // RESTORE EXISTING FIREBASE SESSION
+    // =================================================
+    //
+    // THIS IS THE IMPORTANT FIX.
+    //
+    // Firebase persists authentication by default.
+    //
+    // When the browser/site is reopened:
+    //
+    // Firebase user
+    //       ↓
+    // onAuthStateChanged
+    //       ↓
+    // Firestore users/{uid}
+    //       ↓
+    // role
+    //       ↓
+    // correct dashboard
+    //
+    // Therefore a logged-in user will NOT remain on
+    // the Login page after reopening the website.
+    //
     // =================================================
 
     useEffect(() => {
@@ -220,10 +251,24 @@ function Login() {
             getAuth();
 
 
+        let mounted = true;
+
+
         const unsubscribe =
             onAuthStateChanged(
+
                 auth,
+
                 async (firebaseUser) => {
+
+                    if (!mounted) {
+                        return;
+                    }
+
+
+                    // =================================================
+                    // NO SESSION
+                    // =================================================
 
                     if (!firebaseUser) {
 
@@ -233,20 +278,126 @@ function Login() {
                     }
 
 
+                    // =================================================
+                    // EXISTING SESSION FOUND
+                    // =================================================
+
+                    console.log(
+                        "Existing Firebase session found:",
+                        firebaseUser.uid
+                    );
+
+
                     try {
 
-                        setCheckingSession(false);
+                        const user =
+                            await getAuthenticatedUserProfile(
+                                firebaseUser
+                            );
+
+
+                        if (!mounted) {
+                            return;
+                        }
+
+
+                        // =================================================
+                        // PROFILE FOUND
+                        // =================================================
+
+                        if (user) {
+
+                            console.log(
+                                "Existing session profile:",
+                                user
+                            );
+
+
+                            const navigated =
+                                navigateByRole(
+                                    user,
+                                    navigate
+                                );
+
+
+                            if (!navigated) {
+
+                                await auth.signOut();
+
+                                setErrorMessage(
+                                    "Your account role could not be verified. Please contact the administrator."
+                                );
+
+                                setCheckingSession(
+                                    false
+                                );
+
+                                return;
+                            }
+
+
+                            // Don't render Login page.
+                            return;
+                        }
+
+
+                        // =================================================
+                        // AUTH EXISTS BUT FIRESTORE PROFILE MISSING
+                        // =================================================
+
+                        console.error(
+                            "Authenticated Firebase user has no valid Firestore profile."
+                        );
+
+
+                        await auth.signOut();
+
+
+                        if (!mounted) {
+                            return;
+                        }
+
+
+                        setErrorMessage(
+                            "Your login session could not be restored. Please log in again."
+                        );
+
+                        setCheckingSession(
+                            false
+                        );
 
                     }
-
                     catch (error) {
 
                         console.error(
-                            "Existing authentication session check failed.",
+                            "Session restoration failed:",
                             error
                         );
 
-                        setCheckingSession(false);
+
+                        try {
+                            await auth.signOut();
+                        }
+                        catch (signOutError) {
+                            console.error(
+                                "Session cleanup failed:",
+                                signOutError
+                            );
+                        }
+
+
+                        if (!mounted) {
+                            return;
+                        }
+
+
+                        setErrorMessage(
+                            "Unable to restore your login session. Please log in again."
+                        );
+
+                        setCheckingSession(
+                            false
+                        );
                     }
                 }
             );
@@ -254,16 +405,17 @@ function Login() {
 
         return () => {
 
-            unsubscribe();
+            mounted = false;
 
+            unsubscribe();
         };
 
     }, [navigate]);
 
 
-    // =================================================
+    // =====================================================
     // INPUT CHANGE
-    // =================================================
+    // =====================================================
 
     const change = (e) => {
 
@@ -278,7 +430,7 @@ function Login() {
 
 
         setData(
-            (previousData) => ({
+            previousData => ({
 
                 ...previousData,
 
@@ -290,9 +442,9 @@ function Login() {
     };
 
 
-    // =================================================
-    // VALIDATE LOGIN FORM
-    // =================================================
+    // =====================================================
+    // VALIDATE FORM
+    // =====================================================
 
     const validateForm = () => {
 
@@ -300,7 +452,6 @@ function Login() {
             normalizeEmail(
                 data.email
             );
-
 
         const password =
             data.password;
@@ -321,9 +472,7 @@ function Login() {
         }
 
 
-        if (
-            !isValidEmail(email)
-        ) {
+        if (!isValidEmail(email)) {
 
             return "Please enter a valid email address.";
         }
@@ -348,9 +497,9 @@ function Login() {
     };
 
 
-    // =================================================
-    // SEND LOGIN NOTIFICATION
-    // =================================================
+    // =====================================================
+    // LOGIN EMAIL NOTIFICATION
+    // =====================================================
 
     const sendLoginNotification = async (
         user,
@@ -395,23 +544,21 @@ Placement Management System`
             });
 
         }
-
         catch (emailError) {
 
             console.error(
-                "Login notification failed.",
+                "Login notification failed:",
                 emailError
             );
 
-            // Email notification failure must NOT
-            // prevent the user from logging in.
+            // Email failure must never prevent login.
         }
     };
 
 
-    // =================================================
-    // LOGIN
-    // =================================================
+    // =====================================================
+    // EMAIL/PASSWORD LOGIN
+    // =====================================================
 
     const submit = async (e) => {
 
@@ -423,7 +570,6 @@ Placement Management System`
             googleLoading ||
             resetLoading
         ) {
-
             return;
         }
 
@@ -451,7 +597,6 @@ Placement Management System`
                 data.email
             );
 
-
         const password =
             data.password;
 
@@ -478,27 +623,20 @@ Placement Management System`
             }
 
 
-            // =================================================
-            // LOGIN NOTIFICATION
-            // =================================================
-
             await sendLoginNotification(
                 user,
                 false
             );
 
 
-            // =================================================
-            // ROLE NAVIGATION
-            // =================================================
-
-            if (
+            const navigated =
                 navigateByRole(
                     user,
                     navigate
-                )
-            ) {
+                );
 
+
+            if (navigated) {
                 return;
             }
 
@@ -508,11 +646,10 @@ Placement Management System`
             );
 
         }
-
         catch (error) {
 
             console.error(
-                "Login authentication failed.",
+                "Login authentication failed:",
                 error
             );
 
@@ -530,7 +667,6 @@ Placement Management System`
                     "Too many login attempts. Please wait and try again later.";
             }
 
-
             else if (
                 error?.code ===
                 "auth/network-request-failed"
@@ -539,7 +675,6 @@ Placement Management System`
                 message =
                     "Network error. Please check your connection and try again.";
             }
-
 
             else if (
                 error?.code ===
@@ -550,7 +685,6 @@ Placement Management System`
                     "This account is currently unavailable. Please contact the administrator.";
             }
 
-
             else if (
                 error?.code ===
                 "auth/invalid-email"
@@ -559,7 +693,6 @@ Placement Management System`
                 message =
                     "Please enter a valid email address.";
             }
-
 
             else if (
                 error?.code ===
@@ -570,7 +703,6 @@ Placement Management System`
                     "Invalid email or password.";
             }
 
-
             else if (
                 error?.code ===
                 "auth/wrong-password"
@@ -580,13 +712,29 @@ Placement Management System`
                     "Invalid email or password.";
             }
 
+            else if (
+                error?.code ===
+                "auth/invalid-credential"
+            ) {
+
+                message =
+                    "Invalid email or password.";
+            }
+
+            else if (
+                error?.code ===
+                "user-profile-not-found"
+            ) {
+
+                message =
+                    "Your account was authenticated, but your user profile could not be found. Please contact the administrator.";
+            }
 
             setErrorMessage(
                 message
             );
 
         }
-
         finally {
 
             setLoading(false);
@@ -594,9 +742,9 @@ Placement Management System`
     };
 
 
-    // =================================================
+    // =====================================================
     // GOOGLE LOGIN
-    // =================================================
+    // =====================================================
 
     const handleGoogleLogin = async () => {
 
@@ -605,7 +753,6 @@ Placement Management System`
             googleLoading ||
             resetLoading
         ) {
-
             return;
         }
 
@@ -619,7 +766,6 @@ Placement Management System`
                 data.email
             );
 
-
         const password =
             data.password;
 
@@ -628,15 +774,6 @@ Placement Management System`
 
             setGoogleLoading(true);
 
-
-            // =================================================
-            // GOOGLE LOGIN
-            //
-            // If an existing password account is found,
-            // authService will safely link Google to it.
-            //
-            // The existing password is NEVER replaced.
-            // =================================================
 
             const user =
                 await loginWithGoogle(
@@ -656,7 +793,7 @@ Placement Management System`
 
 
             // =================================================
-            // SUCCESS MESSAGE FOR LINKING
+            // GOOGLE LINKED
             // =================================================
 
             if (
@@ -664,14 +801,10 @@ Placement Management System`
             ) {
 
                 setSuccessMessage(
-                    "Google has been safely linked to your existing account."
+                    "Google has been safely linked to your existing account. Your existing password has not been changed."
                 );
             }
 
-
-            // =================================================
-            // LOGIN NOTIFICATION
-            // =================================================
 
             await sendLoginNotification(
                 user,
@@ -679,17 +812,14 @@ Placement Management System`
             );
 
 
-            // =================================================
-            // NAVIGATION
-            // =================================================
-
-            if (
+            const navigated =
                 navigateByRole(
                     user,
                     navigate
-                )
-            ) {
+                );
 
+
+            if (navigated) {
                 return;
             }
 
@@ -699,11 +829,10 @@ Placement Management System`
             );
 
         }
-
         catch (error) {
 
             console.error(
-                "Google login failed.",
+                "Google login failed:",
                 error
             );
 
@@ -713,7 +842,7 @@ Placement Management System`
 
 
             // =================================================
-            // EXISTING PASSWORD ACCOUNT
+            // PASSWORD REQUIRED
             // =================================================
 
             if (
@@ -722,12 +851,12 @@ Placement Management System`
             ) {
 
                 message =
-                    "This email already has an account with a password. Enter your existing password above, then click Continue with Google again to safely link Google.";
+                    "This email already has a password account. Enter your existing password above, then click Continue with Google again to safely link Google.";
             }
 
 
             // =================================================
-            // WRONG PASSWORD DURING LINKING
+            // WRONG PASSWORD
             // =================================================
 
             else if (
@@ -740,13 +869,17 @@ Placement Management System`
             }
 
 
+            // =================================================
+            // INVALID CREDENTIAL
+            // =================================================
+
             else if (
                 error?.code ===
                 "auth/invalid-credential"
             ) {
 
                 message =
-                    "The email or password could not be verified. Please check your existing password.";
+                    "The existing email or password could not be verified. Enter the current password for this account and try again.";
             }
 
 
@@ -756,7 +889,7 @@ Placement Management System`
             ) {
 
                 message =
-                    "No password account was found for this email. Please use the Google account that belongs to your account.";
+                    "No password account was found for this email.";
             }
 
 
@@ -820,12 +953,21 @@ Placement Management System`
             }
 
 
+            else if (
+                error?.code ===
+                "user-profile-not-found"
+            ) {
+
+                message =
+                    "Your Google account was authenticated, but your Placement Management profile could not be found.";
+            }
+
+
             setErrorMessage(
                 message
             );
 
         }
-
         finally {
 
             setGoogleLoading(false);
@@ -833,9 +975,9 @@ Placement Management System`
     };
 
 
-    // =================================================
+    // =====================================================
     // FORGOT PASSWORD
-    // =================================================
+    // =====================================================
 
     const handleForgotPassword = async () => {
 
@@ -844,7 +986,6 @@ Placement Management System`
             googleLoading ||
             resetLoading
         ) {
-
             return;
         }
 
@@ -869,9 +1010,7 @@ Placement Management System`
         }
 
 
-        if (
-            !isValidEmail(email)
-        ) {
+        if (!isValidEmail(email)) {
 
             setErrorMessage(
                 "Please enter a valid email address."
@@ -896,11 +1035,10 @@ Placement Management System`
             );
 
         }
-
         catch (error) {
 
             console.error(
-                "Password reset failed.",
+                "Password reset failed:",
                 error
             );
 
@@ -918,7 +1056,6 @@ Placement Management System`
                     "Please enter a valid email address.";
             }
 
-
             else if (
                 error?.code ===
                 "auth/too-many-requests"
@@ -927,7 +1064,6 @@ Placement Management System`
                 message =
                     "Too many password reset requests. Please try again later.";
             }
-
 
             else if (
                 error?.code ===
@@ -944,7 +1080,6 @@ Placement Management System`
             );
 
         }
-
         finally {
 
             setResetLoading(false);
@@ -952,9 +1087,9 @@ Placement Management System`
     };
 
 
-    // =================================================
+    // =====================================================
     // REGISTER
-    // =================================================
+    // =====================================================
 
     const goToRegister = () => {
 
@@ -971,13 +1106,11 @@ Placement Management System`
     };
 
 
-    // =================================================
-    // SESSION SCREEN
-    // =================================================
+    // =====================================================
+    // SESSION CHECK SCREEN
+    // =====================================================
 
-    if (
-        checkingSession
-    ) {
+    if (checkingSession) {
 
         return (
 
@@ -1008,15 +1141,19 @@ Placement Management System`
     }
 
 
+    // =====================================================
+    // DISABLED
+    // =====================================================
+
     const disabled =
         loading ||
         googleLoading ||
         resetLoading;
 
 
-    // =================================================
+    // =====================================================
     // RENDER
-    // =================================================
+    // =====================================================
 
     return (
 
@@ -1024,13 +1161,15 @@ Placement Management System`
 
             <div className="auth-shell">
 
-                {/* ======================================
+
+                {/* ==========================================
                     LEFT LOGIN PANEL
-                ====================================== */}
+                ========================================== */}
 
                 <section className="auth-form-panel">
 
                     <div className="auth-form-content">
+
 
                         {/* BRAND */}
 
@@ -1098,7 +1237,6 @@ Placement Management System`
                                 </span>
 
                             </div>
-
                         )}
 
 
@@ -1121,7 +1259,6 @@ Placement Management System`
                                 </span>
 
                             </div>
-
                         )}
 
 
@@ -1132,6 +1269,7 @@ Placement Management System`
                             noValidate
                             className="login-form"
                         >
+
 
                             {/* EMAIL */}
 
@@ -1196,7 +1334,7 @@ Placement Management System`
                             </div>
 
 
-                            {/* FORGOT */}
+                            {/* FORGOT PASSWORD */}
 
                             <div className="forgot-row">
 
@@ -1246,7 +1384,11 @@ Placement Management System`
                         <div className="auth-divider">
 
                             <span />
-                            <strong>OR</strong>
+
+                            <strong>
+                                OR
+                            </strong>
+
                             <span />
 
                         </div>
@@ -1275,7 +1417,7 @@ Placement Management System`
                         </button>
 
 
-                        {/* GOOGLE LINKING HELP */}
+                        {/* GOOGLE HELP */}
 
                         <div
                             style={{
@@ -1286,9 +1428,12 @@ Placement Management System`
                                 color: "#64748b"
                             }}
                         >
-                            If this email already has a password account,
-                            enter your existing password above before using
-                            Google for the first time.
+
+                            If this email already has a password
+                            account, enter your existing password
+                            above before using Google for the first
+                            time.
+
                         </div>
 
 
@@ -1317,9 +1462,9 @@ Placement Management System`
                 </section>
 
 
-                {/* ======================================
-                    RIGHT ILLUSTRATION PANEL
-                ====================================== */}
+                {/* ==========================================
+                    RIGHT VISUAL PANEL
+                ========================================== */}
 
                 <section className="auth-visual-panel">
 
