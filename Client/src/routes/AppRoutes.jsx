@@ -1,7 +1,11 @@
+// src/routes/AppRoutes.jsx
+
 import {
     Routes,
-    Route
+    Route,
+    Navigate
 } from "react-router-dom";
+
 
 // ========================================
 // Public Pages
@@ -11,17 +15,20 @@ import Landing from "../pages/Landing/Landing";
 import Login from "../pages/Authentication/Login";
 import Register from "../pages/Authentication/Register";
 
+
 // ========================================
 // Layout
 // ========================================
 
 import Layout from "../components/Layout/Layout";
 
+
 // ========================================
 // Protected Route
 // ========================================
 
 import ProtectedRoute from "../components/ProtectedRoute/ProtectedRoute";
+
 
 // ========================================
 // Student Pages
@@ -33,6 +40,7 @@ import ResumeUpload from "../pages/Student/ResumeUpload";
 import AvailableJobs from "../pages/Student/AvailableJobs";
 import AppliedJobs from "../pages/Student/AppliedJobs";
 
+
 // ========================================
 // Company Pages
 // ========================================
@@ -43,12 +51,10 @@ import AddJob from "../pages/Company/AddJob";
 import ManageJobs from "../pages/Company/ManageJobs";
 import Applicants from "../pages/Company/Applicants";
 
+
 // ========================================
 // Admin / TPO Pages
 // ========================================
-// IMPORTANT:
-// The actual folder name is "Admin" with capital A.
-// Linux/Vercel is case-sensitive.
 
 import AdminDashboard from "../pages/Admin/AdminDashboard";
 import ManageStudents from "../pages/Admin/ManageStudents";
@@ -58,15 +64,17 @@ import AdminApplications from "../pages/Admin/AdminApplications";
 import PlacementReports from "../pages/Admin/PlacementReports";
 import Placements from "../pages/Admin/Placements";
 
-// ========================================
+
+// =====================================================
 // APP ROUTES
-// ========================================
+// =====================================================
 
 function AppRoutes() {
 
     return (
 
         <Routes>
+
 
             {/* ==================================
                 PUBLIC ROUTES
@@ -79,12 +87,14 @@ function AppRoutes() {
                 }
             />
 
+
             <Route
                 path="/login"
                 element={
                     <Login />
                 }
             />
+
 
             <Route
                 path="/register"
@@ -107,13 +117,16 @@ function AppRoutes() {
                     >
 
                         <Layout>
+
                             <StudentDashboard />
+
                         </Layout>
 
                     </ProtectedRoute>
 
                 }
             />
+
 
             <Route
                 path="/student/profile"
@@ -124,13 +137,16 @@ function AppRoutes() {
                     >
 
                         <Layout>
+
                             <StudentProfile />
+
                         </Layout>
 
                     </ProtectedRoute>
 
                 }
             />
+
 
             <Route
                 path="/student/resume"
@@ -141,13 +157,16 @@ function AppRoutes() {
                     >
 
                         <Layout>
+
                             <ResumeUpload />
+
                         </Layout>
 
                     </ProtectedRoute>
 
                 }
             />
+
 
             <Route
                 path="/student/jobs"
@@ -158,13 +177,16 @@ function AppRoutes() {
                     >
 
                         <Layout>
+
                             <AvailableJobs />
+
                         </Layout>
 
                     </ProtectedRoute>
 
                 }
             />
+
 
             <Route
                 path="/student/applied-jobs"
@@ -175,7 +197,9 @@ function AppRoutes() {
                     >
 
                         <Layout>
+
                             <AppliedJobs />
+
                         </Layout>
 
                     </ProtectedRoute>
@@ -197,13 +221,16 @@ function AppRoutes() {
                     >
 
                         <Layout>
+
                             <CompanyDashboard />
+
                         </Layout>
 
                     </ProtectedRoute>
 
                 }
             />
+
 
             <Route
                 path="/company/profile"
@@ -214,13 +241,16 @@ function AppRoutes() {
                     >
 
                         <Layout>
+
                             <CompanyProfile />
+
                         </Layout>
 
                     </ProtectedRoute>
 
                 }
             />
+
 
             <Route
                 path="/company/add-job"
@@ -231,13 +261,16 @@ function AppRoutes() {
                     >
 
                         <Layout>
+
                             <AddJob />
+
                         </Layout>
 
                     </ProtectedRoute>
 
                 }
             />
+
 
             <Route
                 path="/company/jobs"
@@ -248,13 +281,16 @@ function AppRoutes() {
                     >
 
                         <Layout>
+
                             <ManageJobs />
+
                         </Layout>
 
                     </ProtectedRoute>
 
                 }
             />
+
 
             <Route
                 path="/company/applicants"
@@ -265,7 +301,9 @@ function AppRoutes() {
                     >
 
                         <Layout>
+
                             <Applicants />
+
                         </Layout>
 
                     </ProtectedRoute>
@@ -278,8 +316,6 @@ function AppRoutes() {
                 ADMIN / TPO ROUTES
             ================================== */}
 
-            {/* Admin Dashboard */}
-
             <Route
                 path="/admin/dashboard"
                 element={
@@ -289,7 +325,9 @@ function AppRoutes() {
                     >
 
                         <Layout>
+
                             <AdminDashboard />
+
                         </Layout>
 
                     </ProtectedRoute>
@@ -297,8 +335,6 @@ function AppRoutes() {
                 }
             />
 
-
-            {/* Manage Students */}
 
             <Route
                 path="/admin/students"
@@ -309,7 +345,9 @@ function AppRoutes() {
                     >
 
                         <Layout>
+
                             <ManageStudents />
+
                         </Layout>
 
                     </ProtectedRoute>
@@ -317,8 +355,6 @@ function AppRoutes() {
                 }
             />
 
-
-            {/* Manage Companies */}
 
             <Route
                 path="/admin/companies"
@@ -329,7 +365,9 @@ function AppRoutes() {
                     >
 
                         <Layout>
+
                             <ManageCompanies />
+
                         </Layout>
 
                     </ProtectedRoute>
@@ -337,8 +375,6 @@ function AppRoutes() {
                 }
             />
 
-
-            {/* Manage Jobs */}
 
             <Route
                 path="/admin/jobs"
@@ -349,7 +385,9 @@ function AppRoutes() {
                     >
 
                         <Layout>
+
                             <AdminManageJobs />
+
                         </Layout>
 
                     </ProtectedRoute>
@@ -357,8 +395,6 @@ function AppRoutes() {
                 }
             />
 
-
-            {/* Applications */}
 
             <Route
                 path="/admin/applications"
@@ -369,7 +405,9 @@ function AppRoutes() {
                     >
 
                         <Layout>
+
                             <AdminApplications />
+
                         </Layout>
 
                     </ProtectedRoute>
@@ -391,7 +429,9 @@ function AppRoutes() {
                     >
 
                         <Layout>
+
                             <Placements />
+
                         </Layout>
 
                     </ProtectedRoute>
@@ -413,11 +453,36 @@ function AppRoutes() {
                     >
 
                         <Layout>
+
                             <PlacementReports />
+
                         </Layout>
 
                     </ProtectedRoute>
 
+                }
+            />
+
+
+            {/* ==================================
+                OPTIONAL /dashboard ROUTE
+            ==================================
+            
+            Do NOT redirect this to another dashboard
+            because that was causing the navigation loop.
+
+            If someone manually enters /dashboard,
+            send them to the landing page.
+
+            ================================== */}
+
+            <Route
+                path="/dashboard"
+                element={
+                    <Navigate
+                        to="/"
+                        replace
+                    />
                 }
             />
 
@@ -429,13 +494,18 @@ function AppRoutes() {
             <Route
                 path="*"
                 element={
-                    <Landing />
+                    <Navigate
+                        to="/"
+                        replace
+                    />
                 }
             />
 
         </Routes>
 
     );
+
 }
+
 
 export default AppRoutes;

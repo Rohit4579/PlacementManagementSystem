@@ -1,25 +1,17 @@
-
-import {
-    useEffect,
-    useState
-} from "react";
-
-import {
-    createPortal
-} from "react-dom";
+import { useEffect, useState } from "react";
 
 import {
     collection,
     deleteDoc,
     doc,
-    getDoc,
     getDocs,
+    onSnapshot,
     writeBatch
 } from "firebase/firestore";
 
 import {
-    db
-} from "../../firebase/firebaseConfig";
+    createPortal
+} from "react-dom";
 
 import {
     FaUsers,
@@ -38,6 +30,8 @@ import {
     FaSearch,
     FaUserCircle
 } from "react-icons/fa";
+
+import { db } from "../../firebase/firebaseConfig";
 
 import "./ManageStudents.css";
 
@@ -83,445 +77,871 @@ function ManageStudents() {
 
 
     /* =========================================================
-       FETCH STUDENTS
+       NORMALIZE ID
     ========================================================= */
 
-    const fetchStudents = async () => {
+    const normalizeId = (value) => {
 
-        try {
-
-            setLoading(true);
-
-            const usersSnapshot =
-                await getDocs(
-                    collection(
-                        db,
-                        "users"
-                    )
-                );
-
-            const studentList = [];
-
-
-            for (
-                const userDoc of usersSnapshot.docs
-            ) {
-
-                const userData =
-                    userDoc.data() || {};
-
-                const role =
-                    normalize(
-                        userData.role
-                    ).toLowerCase();
-
-
-                if (
-                    role &&
-                    role !== "student"
-                ) {
-                    continue;
-                }
-
-
-                const student = {
-
-                    id:
-                        userDoc.id,
-
-                    uid:
-                        userData.uid ||
-                        userDoc.id,
-
-                    name:
-                        normalize(
-                            userData.name
-                        ) ||
-                        normalize(
-                            userData.displayName
-                        ) ||
-                        normalize(
-                            userData.fullName
-                        ) ||
-                        "Student",
-
-                    email:
-                        normalize(
-                            userData.email
-                        ),
-
-                    phone:
-                        normalize(
-                            userData.phone
-                        ),
-
-                    degree:
-                        normalize(
-                            userData.degree
-                        ) ||
-                        normalize(
-                            userData.degreeName
-                        ) ||
-                        normalize(
-                            userData.course
-                        ) ||
-                        normalize(
-                            userData.program
-                        ),
-
-                    department:
-                        normalize(
-                            userData.department
-                        ),
-
-                    tenthPercentage:
-                        normalize(
-                            userData.tenthPercentage
-                        ) ||
-                        normalize(
-                            userData.tenthPercent
-                        ) ||
-                        normalize(
-                            userData.class10Percentage
-                        ),
-
-                    twelfthPercentage:
-                        normalize(
-                            userData.twelfthPercentage
-                        ) ||
-                        normalize(
-                            userData.twelfthPercent
-                        ) ||
-                        normalize(
-                            userData.class12Percentage
-                        ),
-
-                    cgpa:
-                        normalize(
-                            userData.cgpa
-                        ) ||
-                        normalize(
-                            userData.CGPA
-                        ),
-
-                    skills:
-                        normalize(
-                            userData.skills
-                        ),
-
-                    graduationYear:
-                        normalize(
-                            userData.graduationYear
-                        ) ||
-                        normalize(
-                            userData.passoutYear
-                        ) ||
-                        normalize(
-                            userData.yearOfGraduation
-                        ),
-
-                    resumeURL:
-                        normalize(
-                            userData.resumeURL
-                        ) ||
-                        normalize(
-                            userData.resumeUrl
-                        ),
-
-                    profilePhotoURL:
-                        normalize(
-                            userData.profilePhotoURL
-                        ) ||
-                        normalize(
-                            userData.photoURL
-                        ) ||
-                        normalize(
-                            userData.photo
-                        ),
-
-                    profilePhotoPublicId:
-                        normalize(
-                            userData.profilePhotoPublicId
-                        ),
-
-                    profileCompleted:
-                        false
-                };
-
-
-                /* =================================================
-                   GET STUDENT PROFILE
-                ================================================= */
-
-                try {
-
-                    let profileSnapshot =
-                        await getDoc(
-                            doc(
-                                db,
-                                "studentProfiles",
-                                userDoc.id
-                            )
-                        );
-
-
-                    if (
-                        !profileSnapshot.exists() &&
-                        student.uid &&
-                        student.uid !== userDoc.id
-                    ) {
-
-                        profileSnapshot =
-                            await getDoc(
-                                doc(
-                                    db,
-                                    "studentProfiles",
-                                    student.uid
-                                )
-                            );
-
-                    }
-
-
-                    if (
-                        profileSnapshot.exists()
-                    ) {
-
-                        const profile =
-                            profileSnapshot.data() || {};
-
-
-                        student.phone =
-                            normalize(
-                                profile.phone
-                            ) ||
-                            student.phone;
-
-
-                        student.degree =
-                            normalize(
-                                profile.degree
-                            ) ||
-                            normalize(
-                                profile.degreeName
-                            ) ||
-                            normalize(
-                                profile.course
-                            ) ||
-                            normalize(
-                                profile.program
-                            ) ||
-                            student.degree;
-
-
-                        student.department =
-                            normalize(
-                                profile.department
-                            ) ||
-                            student.department;
-
-
-                        student.tenthPercentage =
-                            normalize(
-                                profile.tenthPercentage
-                            ) ||
-                            normalize(
-                                profile.tenthPercent
-                            ) ||
-                            normalize(
-                                profile.class10Percentage
-                            ) ||
-                            student.tenthPercentage;
-
-
-                        student.twelfthPercentage =
-                            normalize(
-                                profile.twelfthPercentage
-                            ) ||
-                            normalize(
-                                profile.twelfthPercent
-                            ) ||
-                            normalize(
-                                profile.class12Percentage
-                            ) ||
-                            student.twelfthPercentage;
-
-
-                        student.cgpa =
-                            normalize(
-                                profile.cgpa
-                            ) ||
-                            normalize(
-                                profile.CGPA
-                            ) ||
-                            student.cgpa;
-
-
-                        student.skills =
-                            normalize(
-                                profile.skills
-                            ) ||
-                            student.skills;
-
-
-                        student.graduationYear =
-                            normalize(
-                                profile.graduationYear
-                            ) ||
-                            normalize(
-                                profile.passoutYear
-                            ) ||
-                            normalize(
-                                profile.yearOfGraduation
-                            ) ||
-                            student.graduationYear;
-
-
-                        student.profilePhotoURL =
-                            normalize(
-                                profile.profilePhotoURL
-                            ) ||
-                            normalize(
-                                profile.photoURL
-                            ) ||
-                            normalize(
-                                profile.photo
-                            ) ||
-                            student.profilePhotoURL;
-
-
-                        student.profilePhotoPublicId =
-                            normalize(
-                                profile.profilePhotoPublicId
-                            ) ||
-                            student.profilePhotoPublicId;
-
-
-                        student.resumeURL =
-                            normalize(
-                                profile.resumeURL
-                            ) ||
-                            normalize(
-                                profile.resumeUrl
-                            ) ||
-                            normalize(
-                                profile.resume
-                            ) ||
-                            student.resumeURL;
-
-
-                        if (
-                            typeof profile.profileCompleted ===
-                            "boolean"
-                        ) {
-
-                            student.profileCompleted =
-                                profile.profileCompleted;
-
-                        }
-
-                    }
-
-                }
-
-                catch (profileError) {
-
-                    console.warn(
-                        "Student profile error:",
-                        profileError
-                    );
-
-                }
-
-
-                /* =================================================
-                   AUTOMATIC PROFILE COMPLETION
-                ================================================= */
-
-                const requiredFields = [
-
-                    student.phone,
-                    student.degree,
-                    student.department,
-                    student.tenthPercentage,
-                    student.twelfthPercentage,
-                    student.cgpa,
-                    student.skills,
-                    student.graduationYear
-
-                ];
-
-
-                const complete =
-                    requiredFields.every(
-                        (value) =>
-                            normalize(value) !== ""
-                    );
-
-
-                if (complete) {
-
-                    student.profileCompleted =
-                        true;
-
-                }
-
-
-                studentList.push(
-                    student
-                );
-
-            }
-
-
-            studentList.sort(
-                (a, b) =>
-                    String(a.name)
-                        .localeCompare(
-                            String(b.name)
-                        )
-            );
-
-
-            setStudents(
-                studentList
-            );
-
-            setFilteredStudents(
-                studentList
-            );
-
-        }
-
-        catch (error) {
-
-            console.error(
-                "Fetch Students Error:",
-                error
-            );
-
-            alert(
-                "Unable to load students."
-            );
-
-        }
-
-        finally {
-
-            setLoading(false);
-
-        }
+        return normalize(value).toLowerCase();
 
     };
 
 
     /* =========================================================
-       INITIAL LOAD
+       GET FIRST AVAILABLE VALUE
+    ========================================================= */
+
+    const getFirstValue = (
+        object,
+        fields,
+        fallback = ""
+    ) => {
+
+        if (!object) {
+            return fallback;
+        }
+
+        for (const field of fields) {
+
+            const value = object[field];
+
+            if (
+                value !== undefined &&
+                value !== null &&
+                String(value).trim() !== ""
+            ) {
+                return value;
+            }
+
+        }
+
+        return fallback;
+
+    };
+
+
+    /* =========================================================
+       CHECK ACTIVE STUDENT ACCOUNT
+       
+       IMPORTANT:
+       
+       A student is considered valid/active for this page
+       only when:
+       
+       1. users document exists
+       2. role is student
+       3. studentProfiles document exists
+       
+       This follows the same validation approach used by
+       AdminDashboard.
+
+       Old/stale users documents without a student profile
+       are therefore NOT counted.
+    ========================================================= */
+
+    const isActiveStudent = (
+        user,
+        profile
+    ) => {
+
+        if (!user || !profile) {
+            return false;
+        }
+
+        const role =
+            normalize(
+                user.role
+            ).toLowerCase();
+
+
+        if (role !== "student") {
+            return false;
+        }
+
+
+        return true;
+
+    };
+
+
+    /* =========================================================
+       BUILD STUDENT
+    ========================================================= */
+
+    const buildStudent = (
+        userDocument,
+        profileDocument
+    ) => {
+
+        const userData =
+            userDocument?.data() || {};
+
+        const profile =
+            profileDocument?.data() || {};
+
+
+        const uid =
+            normalize(
+                userData.uid
+            ) ||
+            normalize(
+                profile.uid
+            ) ||
+            userDocument.id;
+
+
+        const student = {
+
+            id:
+                userDocument.id,
+
+            uid,
+
+            profileId:
+                profileDocument.id,
+
+            name:
+                normalize(
+                    getFirstValue(
+                        profile,
+                        [
+                            "studentName",
+                            "name",
+                            "fullName",
+                            "displayName"
+                        ]
+                    )
+                ) ||
+                normalize(
+                    getFirstValue(
+                        userData,
+                        [
+                            "studentName",
+                            "name",
+                            "fullName",
+                            "displayName"
+                        ]
+                    )
+                ) ||
+                "Student",
+
+
+            email:
+                normalize(
+                    getFirstValue(
+                        profile,
+                        [
+                            "email",
+                            "studentEmail",
+                            "emailAddress"
+                        ]
+                    )
+                ) ||
+                normalize(
+                    userData.email
+                ),
+
+
+            phone:
+                normalize(
+                    getFirstValue(
+                        profile,
+                        [
+                            "phone",
+                            "mobile",
+                            "mobileNumber",
+                            "phoneNumber",
+                            "contactNumber"
+                        ]
+                    )
+                ) ||
+                normalize(
+                    userData.phone
+                ),
+
+
+            degree:
+                normalize(
+                    getFirstValue(
+                        profile,
+                        [
+                            "degree",
+                            "degreeName",
+                            "course",
+                            "courseName",
+                            "program",
+                            "programName",
+                            "qualification",
+                            "education",
+                            "highestQualification"
+                        ]
+                    )
+                ) ||
+                normalize(
+                    getFirstValue(
+                        userData,
+                        [
+                            "degree",
+                            "degreeName",
+                            "course",
+                            "program"
+                        ]
+                    )
+                ),
+
+
+            department:
+                normalize(
+                    getFirstValue(
+                        profile,
+                        [
+                            "department",
+                            "branch",
+                            "stream",
+                            "specialization"
+                        ]
+                    )
+                ) ||
+                normalize(
+                    userData.department
+                ),
+
+
+            tenthPercentage:
+                normalize(
+                    getFirstValue(
+                        profile,
+                        [
+                            "tenthPercentage",
+                            "tenthPercent",
+                            "class10Percentage",
+                            "class10Percent",
+                            "percentage10"
+                        ]
+                    )
+                ) ||
+                normalize(
+                    getFirstValue(
+                        userData,
+                        [
+                            "tenthPercentage",
+                            "tenthPercent",
+                            "class10Percentage"
+                        ]
+                    )
+                ),
+
+
+            twelfthPercentage:
+                normalize(
+                    getFirstValue(
+                        profile,
+                        [
+                            "twelfthPercentage",
+                            "twelfthPercent",
+                            "class12Percentage",
+                            "class12Percent",
+                            "percentage12"
+                        ]
+                    )
+                ) ||
+                normalize(
+                    getFirstValue(
+                        userData,
+                        [
+                            "twelfthPercentage",
+                            "twelfthPercent",
+                            "class12Percentage"
+                        ]
+                    )
+                ),
+
+
+            cgpa:
+                normalize(
+                    getFirstValue(
+                        profile,
+                        [
+                            "cgpa",
+                            "CGPA"
+                        ]
+                    )
+                ) ||
+                normalize(
+                    getFirstValue(
+                        userData,
+                        [
+                            "cgpa",
+                            "CGPA"
+                        ]
+                    )
+                ),
+
+
+            skills:
+                normalize(
+                    getFirstValue(
+                        profile,
+                        [
+                            "skills"
+                        ]
+                    )
+                ) ||
+                normalize(
+                    userData.skills
+                ),
+
+
+            graduationYear:
+                normalize(
+                    getFirstValue(
+                        profile,
+                        [
+                            "graduationYear",
+                            "passoutYear",
+                            "yearOfGraduation",
+                            "graduation_year"
+                        ]
+                    )
+                ) ||
+                normalize(
+                    getFirstValue(
+                        userData,
+                        [
+                            "graduationYear",
+                            "passoutYear",
+                            "yearOfGraduation"
+                        ]
+                    )
+                ),
+
+
+            resumeURL:
+                normalize(
+                    getFirstValue(
+                        profile,
+                        [
+                            "resumeURL",
+                            "resumeUrl",
+                            "resume",
+                            "resumeURL"
+                        ]
+                    )
+                ) ||
+                normalize(
+                    getFirstValue(
+                        userData,
+                        [
+                            "resumeURL",
+                            "resumeUrl"
+                        ]
+                    )
+                ),
+
+
+            profilePhotoURL:
+                normalize(
+                    getFirstValue(
+                        profile,
+                        [
+                            "photoURL",
+                            "photoUrl",
+                            "profilePhoto",
+                            "profilePhotoURL",
+                            "profilePhotoUrl",
+                            "profileImage",
+                            "profileImageURL",
+                            "profileImageUrl",
+                            "photo",
+                            "image",
+                            "imageURL",
+                            "imageUrl",
+                            "avatar",
+                            "avatarUrl"
+                        ]
+                    )
+                ) ||
+                normalize(
+                    getFirstValue(
+                        userData,
+                        [
+                            "profilePhotoURL",
+                            "photoURL",
+                            "photoUrl",
+                            "photo"
+                        ]
+                    )
+                ),
+
+
+            profilePhotoPublicId:
+                normalize(
+                    getFirstValue(
+                        profile,
+                        [
+                            "profilePhotoPublicId"
+                        ]
+                    )
+                ) ||
+                normalize(
+                    userData.profilePhotoPublicId
+                ),
+
+
+            profileCompleted:
+                false
+
+        };
+
+
+        /* =====================================================
+           PROFILE COMPLETION
+        ===================================================== */
+
+        const requiredFields = [
+
+            student.phone,
+
+            student.degree,
+
+            student.department,
+
+            student.tenthPercentage,
+
+            student.twelfthPercentage,
+
+            student.cgpa,
+
+            student.skills,
+
+            student.graduationYear
+
+        ];
+
+
+        const automaticallyComplete =
+            requiredFields.every(
+                value =>
+                    normalize(value) !== ""
+            );
+
+
+        if (
+            automaticallyComplete
+        ) {
+
+            student.profileCompleted = true;
+
+        }
+        else if (
+            typeof profile.profileCompleted ===
+            "boolean"
+        ) {
+
+            student.profileCompleted =
+                profile.profileCompleted;
+
+        }
+
+
+        return student;
+
+    };
+
+
+    /* =========================================================
+       FETCH ACTIVE STUDENTS
+
+       REALTIME
+
+       This is intentionally based on BOTH:
+
+       users
+          +
+       studentProfiles
+
+       A users document without a matching student profile
+       is ignored.
+
+       A student profile without a users document
+       is also ignored.
+
+       Therefore stale/deleted records do not appear.
     ========================================================= */
 
     useEffect(() => {
 
-        fetchStudents();
+        let usersData = [];
+
+        let profilesData = [];
+
+        let usersLoaded = false;
+
+        let profilesLoaded = false;
+
+
+        const processStudents = () => {
+
+            if (
+                !usersLoaded ||
+                !profilesLoaded
+            ) {
+                return;
+            }
+
+
+            try {
+
+                /* =================================================
+                   PROFILE MAPS
+
+                   Same strategy as AdminDashboard.
+                ================================================= */
+
+                const profilesById = {};
+
+                const profilesByUid = {};
+
+
+                profilesData.forEach(
+                    profile => {
+
+                        profilesById[
+                            normalizeId(
+                                profile.id
+                            )
+                        ] = profile;
+
+
+                        const profileUid =
+                            normalize(
+                                profile.uid
+                            );
+
+
+                        if (profileUid) {
+
+                            profilesByUid[
+                                normalizeId(
+                                    profileUid
+                                )
+                            ] = profile;
+
+                        }
+
+                    }
+                );
+
+
+                /* =================================================
+                   BUILD ONLY ACTIVE STUDENTS
+                ================================================= */
+
+                const activeStudents = [];
+
+
+                usersData.forEach(
+                    user => {
+
+                        const role =
+                            normalize(
+                                user.role
+                            ).toLowerCase();
+
+
+                        /*
+                         * ONLY STUDENT ACCOUNTS
+                         */
+                        if (
+                            role !== "student"
+                        ) {
+                            return;
+                        }
+
+
+                        const userId =
+                            normalize(
+                                user.id
+                            );
+
+
+                        const uid =
+                            normalize(
+                                user.uid
+                            );
+
+
+                        let profile = null;
+
+
+                        /* =========================================
+                           FIRST: USERS DOCUMENT ID
+                        ========================================= */
+
+                        if (
+                            userId &&
+                            profilesById[
+                                normalizeId(
+                                    userId
+                                )
+                            ]
+                        ) {
+
+                            profile =
+                                profilesById[
+                                    normalizeId(
+                                        userId
+                                    )
+                                ];
+
+                        }
+
+
+                        /* =========================================
+                           SECOND: UID
+                        ========================================= */
+
+                        if (
+                            !profile &&
+                            uid &&
+                            profilesById[
+                                normalizeId(
+                                    uid
+                                )
+                            ]
+                        ) {
+
+                            profile =
+                                profilesById[
+                                    normalizeId(
+                                        uid
+                                    )
+                                ];
+
+                        }
+
+
+                        /* =========================================
+                           THIRD: PROFILE UID
+                        ========================================= */
+
+                        if (
+                            !profile &&
+                            uid &&
+                            profilesByUid[
+                                normalizeId(
+                                    uid
+                                )
+                            ]
+                        ) {
+
+                            profile =
+                                profilesByUid[
+                                    normalizeId(
+                                        uid
+                                    )
+                                ];
+
+                        }
+
+
+                        /*
+                         * NO PROFILE = INVALID/STALE ACCOUNT
+                         *
+                         * This is the critical fix.
+                         *
+                         * Old users documents left behind after
+                         * student deletion will NOT be displayed.
+                         */
+
+                        if (
+                            !isActiveStudent(
+                                user,
+                                profile
+                            )
+                        ) {
+
+                            return;
+
+                        }
+
+
+                        const userDocument = {
+                            id: user.id,
+                            data: () => user
+                        };
+
+
+                        const profileDocument = {
+                            id: profile.id,
+                            data: () => profile
+                        };
+
+
+                        const student =
+                            buildStudent(
+                                userDocument,
+                                profileDocument
+                            );
+
+
+                        activeStudents.push(
+                            student
+                        );
+
+                    }
+                );
+
+
+                /* =================================================
+                   SORT
+                ================================================= */
+
+                activeStudents.sort(
+                    (a, b) =>
+                        String(a.name)
+                            .localeCompare(
+                                String(b.name)
+                            )
+                );
+
+
+                setStudents(
+                    activeStudents
+                );
+
+
+                setFilteredStudents(
+                    activeStudents
+                );
+
+
+                setLoading(false);
+
+            }
+            catch (error) {
+
+                console.error(
+                    "Student processing error:",
+                    error
+                );
+
+                setLoading(false);
+
+            }
+
+        };
+
+
+        /* =========================================================
+           USERS REALTIME LISTENER
+        ========================================================= */
+
+        const unsubscribeUsers =
+            onSnapshot(
+
+                collection(
+                    db,
+                    "users"
+                ),
+
+                snapshot => {
+
+                    usersData =
+                        snapshot.docs.map(
+                            document => ({
+
+                                id:
+                                    document.id,
+
+                                ...document.data()
+
+                            })
+                        );
+
+
+                    usersLoaded = true;
+
+                    processStudents();
+
+                },
+
+                error => {
+
+                    console.error(
+                        "Users realtime listener error:",
+                        error
+                    );
+
+                    usersLoaded = true;
+
+                    processStudents();
+
+                }
+
+            );
+
+
+        /* =========================================================
+           STUDENT PROFILES REALTIME LISTENER
+        ========================================================= */
+
+        const unsubscribeProfiles =
+            onSnapshot(
+
+                collection(
+                    db,
+                    "studentProfiles"
+                ),
+
+                snapshot => {
+
+                    profilesData =
+                        snapshot.docs.map(
+                            document => ({
+
+                                id:
+                                    document.id,
+
+                                ...document.data()
+
+                            })
+                        );
+
+
+                    profilesLoaded = true;
+
+                    processStudents();
+
+                },
+
+                error => {
+
+                    console.error(
+                        "Student profiles realtime listener error:",
+                        error
+                    );
+
+                    profilesLoaded = true;
+
+                    processStudents();
+
+                }
+
+            );
+
+
+        /* =========================================================
+           CLEANUP
+        ========================================================= */
+
+        return () => {
+
+            unsubscribeUsers();
+
+            unsubscribeProfiles();
+
+        };
 
     }, []);
 
@@ -551,19 +971,28 @@ function ManageStudents() {
 
         const result =
             students.filter(
-                (student) => {
+                student => {
 
                     const searchableText = [
 
                         student.name,
+
                         student.email,
+
                         student.phone,
+
                         student.department,
+
                         student.degree,
+
                         student.cgpa,
+
                         student.tenthPercentage,
+
                         student.twelfthPercentage,
+
                         student.graduationYear,
+
                         student.skills
 
                     ]
@@ -619,9 +1048,7 @@ function ManageStudents() {
 
 
         if (!cleanName) {
-
             return "S";
-
         }
 
 
@@ -699,14 +1126,17 @@ function ManageStudents() {
 
             const studentIdentifiers =
                 new Set(
+
                     [
                         student?.id,
-                        student?.uid
+                        student?.uid,
+                        student?.profileId
                     ]
                         .map(
                             normalize
                         )
                         .filter(Boolean)
+
                 );
 
 
@@ -730,7 +1160,7 @@ function ManageStudents() {
 
             const applicationDocuments =
                 applicationsSnapshot.docs.filter(
-                    (applicationDoc) => {
+                    applicationDoc => {
 
                         const application =
                             applicationDoc.data() || {};
@@ -739,10 +1169,19 @@ function ManageStudents() {
                         const applicationIdentifiers = [
 
                             application.studentId,
+
+                            application.studentID,
+
                             application.uid,
+
                             application.userId,
+
+                            application.userID,
+
                             application.studentUid,
+
                             application.studentUID,
+
                             application.studentProfileId
 
                         ]
@@ -753,7 +1192,7 @@ function ManageStudents() {
 
 
                         return applicationIdentifiers.some(
-                            (identifier) =>
+                            identifier =>
                                 studentIdentifiers.has(
                                     identifier
                                 )
@@ -773,9 +1212,7 @@ function ManageStudents() {
 
 
             /*
-             * Firestore allows a maximum of 500 writes
-             * in one batch, so process applications in
-             * groups of 500.
+             * Firestore maximum batch size = 500 writes.
              */
 
             const BATCH_SIZE = 500;
@@ -801,7 +1238,7 @@ function ManageStudents() {
 
 
                 currentBatch.forEach(
-                    (applicationDoc) => {
+                    applicationDoc => {
 
                         batch.delete(
                             doc(
@@ -907,6 +1344,7 @@ function ManageStudents() {
                 handleEscape
             );
 
+
             document.body.classList.remove(
                 "student-modal-open"
             );
@@ -926,9 +1364,7 @@ function ManageStudents() {
         ) => {
 
             if (!student?.id) {
-
                 return;
-
             }
 
 
@@ -947,9 +1383,7 @@ function ManageStudents() {
 
 
             if (!confirmed) {
-
                 return;
-
             }
 
 
@@ -960,10 +1394,9 @@ function ManageStudents() {
                 );
 
 
-                /*
-                 * FIRST DELETE ALL APPLICATIONS
-                 * BELONGING TO THIS STUDENT.
-                 */
+                /* =============================================
+                   DELETE APPLICATIONS FIRST
+                ============================================= */
 
                 const deletedApplications =
                     await deleteStudentApplications(
@@ -971,9 +1404,9 @@ function ManageStudents() {
                     );
 
 
-                /*
-                 * DELETE USERS DOCUMENT
-                 */
+                /* =============================================
+                   DELETE USERS DOCUMENT
+                ============================================= */
 
                 await deleteDoc(
                     doc(
@@ -984,42 +1417,82 @@ function ManageStudents() {
                 );
 
 
-                /*
-                 * DELETE PROFILE USING
-                 * USERS DOCUMENT ID
-                 */
+                /* =============================================
+                   DELETE PROFILE BY PROFILE DOCUMENT ID
+                ============================================= */
 
-                try {
-
-                    await deleteDoc(
-                        doc(
-                            db,
-                            "studentProfiles",
-                            student.id
-                        )
-                    );
-
-                }
-
-                catch (
-                    profileDeleteError
+                if (
+                    student.profileId
                 ) {
 
-                    console.warn(
-                        "Profile delete warning:",
+                    try {
+
+                        await deleteDoc(
+                            doc(
+                                db,
+                                "studentProfiles",
+                                student.profileId
+                            )
+                        );
+
+                    }
+                    catch (
                         profileDeleteError
-                    );
+                    ) {
+
+                        console.warn(
+                            "Profile delete warning:",
+                            profileDeleteError
+                        );
+
+                    }
 
                 }
 
 
-                /*
-                 * DELETE PROFILE USING UID
-                 */
+                /* =============================================
+                   ALSO DELETE PROFILE USING USER ID
+                   IF DIFFERENT
+                ============================================= */
+
+                if (
+                    student.id &&
+                    student.profileId !== student.id
+                ) {
+
+                    try {
+
+                        await deleteDoc(
+                            doc(
+                                db,
+                                "studentProfiles",
+                                student.id
+                            )
+                        );
+
+                    }
+                    catch (
+                        profileDeleteError
+                    ) {
+
+                        console.warn(
+                            "User ID profile delete warning:",
+                            profileDeleteError
+                        );
+
+                    }
+
+                }
+
+
+                /* =============================================
+                   ALSO DELETE PROFILE USING UID
+                ============================================= */
 
                 if (
                     student.uid &&
-                    student.uid !== student.id
+                    student.uid !== student.id &&
+                    student.uid !== student.profileId
                 ) {
 
                     try {
@@ -1033,7 +1506,6 @@ function ManageStudents() {
                         );
 
                     }
-
                     catch (
                         uidDeleteError
                     ) {
@@ -1048,19 +1520,11 @@ function ManageStudents() {
                 }
 
 
-                /*
-                 * UPDATE UI
-                 */
+                /* =============================================
+                   REALTIME LISTENER WILL UPDATE UI
 
-                setStudents(
-                    previous =>
-                        previous.filter(
-                            item =>
-                                item.id !==
-                                student.id
-                        )
-                );
-
+                   No manual student state update is required.
+                ============================================= */
 
                 setSelectedStudent(
                     null
@@ -1068,12 +1532,10 @@ function ManageStudents() {
 
 
                 alert(
-                    `Student deleted successfully.` +
-                    ` ${deletedApplications} application(s) also deleted.`
+                    `Student deleted successfully. ${deletedApplications} application(s) also deleted.`
                 );
 
             }
-
             catch (error) {
 
                 console.error(
@@ -1083,12 +1545,10 @@ function ManageStudents() {
 
 
                 alert(
-                    "Unable to delete this student and related applications. " +
-                    "Please check your Firebase permissions."
+                    "Unable to delete this student and related applications. Please check your Firebase permissions."
                 );
 
             }
-
             finally {
 
                 setDeletingId(
@@ -1123,7 +1583,9 @@ function ManageStudents() {
             students
                 .map(
                     student =>
-                        student.department
+                        normalize(
+                            student.department
+                        ).toLowerCase()
                 )
                 .filter(Boolean)
         ).size;
@@ -1148,7 +1610,7 @@ function ManageStudents() {
                     </h2>
 
                     <p>
-                        Please wait while student profiles are loaded.
+                        Please wait while active student profiles are loaded.
                     </p>
 
                 </div>
@@ -1199,9 +1661,7 @@ function ManageStudents() {
                             <div className="modal-header-left">
 
                                 <div className="modal-header-icon">
-
                                     <FaUserGraduate />
-
                                 </div>
 
                                 <div className="modal-header-title">
@@ -1266,12 +1726,14 @@ function ManageStudents() {
                                                 event.currentTarget.style.display =
                                                     "none";
 
+
                                                 const fallback =
                                                     event.currentTarget
                                                         .parentElement
                                                         ?.querySelector(
                                                             ".modal-avatar-fallback"
                                                         );
+
 
                                                 if (fallback) {
 
@@ -1504,9 +1966,11 @@ function ManageStudents() {
                                         </span>
 
                                         <strong>
+
                                             {selectedStudent.tenthPercentage
                                                 ? `${selectedStudent.tenthPercentage}%`
                                                 : "Not Available"}
+
                                         </strong>
 
                                     </div>
@@ -1519,9 +1983,11 @@ function ManageStudents() {
                                         </span>
 
                                         <strong>
+
                                             {selectedStudent.twelfthPercentage
                                                 ? `${selectedStudent.twelfthPercentage}%`
                                                 : "Not Available"}
+
                                         </strong>
 
                                     </div>
@@ -1534,9 +2000,11 @@ function ManageStudents() {
                                         </span>
 
                                         <strong>
+
                                             {selectedStudent.cgpa
                                                 ? `${selectedStudent.cgpa} / 10`
                                                 : "Not Available"}
+
                                         </strong>
 
                                     </div>
@@ -1605,9 +2073,7 @@ function ManageStudents() {
                                                     if (
                                                         !cleanSkill
                                                     ) {
-
                                                         return null;
-
                                                     }
 
 
@@ -1618,9 +2084,7 @@ function ManageStudents() {
                                                                 `${cleanSkill}-${index}`
                                                             }
                                                         >
-
                                                             {cleanSkill}
-
                                                         </span>
 
                                                     );
@@ -1692,9 +2156,7 @@ function ManageStudents() {
                                 ) : (
 
                                     <div className="resume-not-uploaded">
-
                                         Resume has not been uploaded.
-
                                     </div>
 
                                 )}
@@ -1786,7 +2248,7 @@ function ManageStudents() {
                     </h1>
 
                     <p>
-                        Manage student accounts, academic
+                        Manage active student accounts, academic
                         information, profiles and resumes.
                     </p>
 
@@ -1796,7 +2258,7 @@ function ManageStudents() {
                 <div className="student-total">
 
                     <span>
-                        Total Students
+                        Active Students
                     </span>
 
                     <strong>
@@ -1819,7 +2281,7 @@ function ManageStudents() {
                     <div>
 
                         <span>
-                            Total Students
+                            Active Students
                         </span>
 
                         <strong>
@@ -1912,7 +2374,7 @@ function ManageStudents() {
                                 event.target.value
                             )
                         }
-                        placeholder="Search students by name, email, department..."
+                        placeholder="Search active students by name, email, department..."
                     />
 
 
@@ -2014,7 +2476,7 @@ function ManageStudents() {
                                         </div>
 
                                         <h3>
-                                            No students found
+                                            No active students found
                                         </h3>
 
                                         <p>
@@ -2028,7 +2490,7 @@ function ManageStudents() {
                             ) : (
 
                                 filteredStudents.map(
-                                    (student) => (
+                                    student => (
 
                                         <tr
                                             key={
@@ -2061,12 +2523,14 @@ function ManageStudents() {
                                                                     event.currentTarget.style.display =
                                                                         "none";
 
+
                                                                     const fallback =
                                                                         event.currentTarget
                                                                             .parentElement
                                                                             ?.querySelector(
                                                                                 ".avatar-fallback"
                                                                             );
+
 
                                                                     if (
                                                                         fallback
@@ -2139,18 +2603,24 @@ function ManageStudents() {
                                                 <div className="contact-cell">
 
                                                     <span>
+
                                                         <FaEnvelope />
+
                                                         {displayValue(
                                                             student.email
                                                         )}
+
                                                     </span>
 
 
                                                     <span>
+
                                                         <FaPhone />
+
                                                         {displayValue(
                                                             student.phone
                                                         )}
+
                                                     </span>
 
                                                 </div>
@@ -2161,9 +2631,11 @@ function ManageStudents() {
                                             <td>
 
                                                 <span className="table-primary-text">
+
                                                     {displayValue(
                                                         student.degree
                                                     )}
+
                                                 </span>
 
                                             </td>
@@ -2177,9 +2649,11 @@ function ManageStudents() {
                                                         student.department
                                                     }
                                                 >
+
                                                     {displayValue(
                                                         student.department
                                                     )}
+
                                                 </span>
 
                                             </td>
@@ -2280,7 +2754,6 @@ function ManageStudents() {
                                         </tr>
 
                                     )
-
                                 )
 
                             )}

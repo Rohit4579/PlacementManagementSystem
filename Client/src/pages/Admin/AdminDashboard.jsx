@@ -110,7 +110,6 @@ function AdminDashboard() {
         return String(value)
             .trim()
             .toLowerCase();
-
     };
 
 
@@ -264,18 +263,18 @@ function AdminDashboard() {
 
 
     /* =====================================================
-       FIND COMPANY
+       FIND COMPANY FOR RECORD
        
-       IMPORTANT:
-       Company must still exist in companies collection.
-       
+       COMPANY MUST STILL EXIST.
+
        Matching order:
        1. Company ID
        2. Company email
        3. Company name
-       
-       record.email is NOT used because that can be
-       the student's email.
+
+       IMPORTANT:
+       record.email IS NOT USED because it may
+       belong to the student.
     ===================================================== */
 
     const findCompanyForRecord = (
@@ -325,9 +324,8 @@ function AdminDashboard() {
 
         /* =================================================
            COMPANY EMAIL VALUES
-           
-           IMPORTANT:
-           DO NOT USE record.email HERE.
+
+           DO NOT USE record.email
         ================================================= */
 
         const companyEmailValues = [
@@ -577,10 +575,151 @@ function AdminDashboard() {
 
 
                 /* =========================================
+                   BUILD PROFILE MAPS
+                ========================================= */
+
+                const profilesById = {};
+
+                const profilesByUid = {};
+
+
+                profilesData.forEach(
+                    (profile) => {
+
+                        profilesById[
+                            normalizeText(profile.id)
+                        ] = profile;
+
+
+                        if (profile.uid) {
+
+                            profilesByUid[
+                                normalizeText(profile.uid)
+                            ] = profile;
+
+                        }
+
+                    }
+                );
+
+
+                /* =========================================
+                   FIND STUDENT PROFILE
+
+                   IMPORTANT:
+
+                   If student profile does not exist,
+                   return null.
+
+                   That means the application is invalid
+                   and will NOT be counted or displayed.
+                ========================================= */
+
+                const findStudentProfile =
+                    (application) => {
+
+                        if (!application) {
+                            return null;
+                        }
+
+
+                        const studentIdValues = [
+
+                            application.studentId,
+
+                            application.studentID,
+
+                            application.studentUid,
+
+                            application.studentUID,
+
+                            application.uid,
+
+                            application.userId,
+
+                            application.userID
+
+                        ]
+                            .filter(
+                                value =>
+                                    value !== undefined &&
+                                    value !== null &&
+                                    String(value).trim() !== ""
+                            )
+                            .map(normalizeText);
+
+
+                        if (
+                            studentIdValues.length === 0
+                        ) {
+                            return null;
+                        }
+
+
+                        /* =================================
+                           FIND BY DOCUMENT ID
+                        ================================= */
+
+                        for (
+                            const studentId
+                            of studentIdValues
+                        ) {
+
+                            if (
+                                profilesById[
+                                    studentId
+                                ]
+                            ) {
+
+                                return profilesById[
+                                    studentId
+                                ];
+
+                            }
+
+                        }
+
+
+                        /* =================================
+                           FIND BY UID
+                        ================================= */
+
+                        for (
+                            const studentId
+                            of studentIdValues
+                        ) {
+
+                            if (
+                                profilesByUid[
+                                    studentId
+                                ]
+                            ) {
+
+                                return profilesByUid[
+                                    studentId
+                                ];
+
+                            }
+
+                        }
+
+
+                        /* =================================
+                           STUDENT DOES NOT EXIST
+                        ================================= */
+
+                        return null;
+
+                    };
+
+
+                /* =========================================
                    VALID JOBS
-                   
-                   A job is valid only when its company
+
+                   A job is valid ONLY when the company
                    still exists.
+
+                   Deleted company => job disappears.
                 ========================================= */
 
                 const validJobs =
@@ -639,87 +778,6 @@ function AdminDashboard() {
 
 
                 /* =========================================
-                   BUILD PROFILE MAPS
-                ========================================= */
-
-                const profilesById = {};
-
-                const profilesByUid = {};
-
-
-                profilesData.forEach(
-                    (profile) => {
-
-                        profilesById[
-                            profile.id
-                        ] = profile;
-
-
-                        if (profile.uid) {
-
-                            profilesByUid[
-                                profile.uid
-                            ] = profile;
-
-                        }
-
-                    }
-                );
-
-
-                /* =========================================
-                   FIND STUDENT PROFILE
-                   
-                   IMPORTANT:
-                   If profile is deleted, returns null.
-                ========================================= */
-
-                const findStudentProfile =
-                    (application) => {
-
-                        const studentId =
-                            application.studentId ||
-                            application.uid ||
-                            application.userId;
-
-
-                        if (!studentId) {
-                            return null;
-                        }
-
-
-                        if (
-                            profilesById[
-                                studentId
-                            ]
-                        ) {
-
-                            return profilesById[
-                                studentId
-                            ];
-
-                        }
-
-
-                        if (
-                            profilesByUid[
-                                studentId
-                            ]
-                        ) {
-
-                            return profilesByUid[
-                                studentId
-                            ];
-
-                        }
-
-
-                        return null;
-
-                    };
-
-
-                /* =========================================
                    COUNTERS
                 ========================================= */
 
@@ -730,7 +788,18 @@ function AdminDashboard() {
                 let pendingCount = 0;
 
 
-                const processedApplications = [];
+                /* =========================================
+                   VALID APPLICATIONS
+
+                   An application is valid ONLY when:
+
+                   1. Company exists
+                   2. Student exists
+
+                   Otherwise it is completely ignored.
+                ========================================= */
+
+                const validApplications = [];
 
 
                 /* =========================================
@@ -742,9 +811,7 @@ function AdminDashboard() {
                     of applicationsData
                 ) {
 
-
                     /* =====================================
-                       STEP 1:
                        COMPANY MUST EXIST
                     ===================================== */
 
@@ -758,10 +825,10 @@ function AdminDashboard() {
                     if (!company) {
 
                         /*
-                         * Company deleted.
+                         * Company was deleted or cannot
+                         * be found.
                          *
-                         * Ignore this application
-                         * completely.
+                         * Ignore application completely.
                          */
 
                         continue;
@@ -770,8 +837,7 @@ function AdminDashboard() {
 
 
                     /* =====================================
-                       STEP 2:
-                       STUDENT PROFILE MUST EXIST
+                       STUDENT MUST EXIST
                     ===================================== */
 
                     const profile =
@@ -783,12 +849,10 @@ function AdminDashboard() {
                     if (!profile) {
 
                         /*
-                         * Student profile deleted.
+                         * Student was deleted or cannot
+                         * be found.
                          *
-                         * Ignore this application
-                         * completely.
-                         *
-                         * This is the important fix.
+                         * Ignore application completely.
                          */
 
                         continue;
@@ -797,8 +861,7 @@ function AdminDashboard() {
 
 
                     /* =====================================
-                       STEP 3:
-                       STATUS
+                       APPLICATION IS VALID
                     ===================================== */
 
                     const status =
@@ -838,7 +901,7 @@ function AdminDashboard() {
 
 
                     /* =====================================
-                       COUNTERS
+                       COUNT ONLY VALID APPLICATIONS
                     ===================================== */
 
                     if (isSelected) {
@@ -853,21 +916,10 @@ function AdminDashboard() {
 
                     if (
                         isPending &&
-                        !isSelected
-                    ) {
-                        pendingCount++;
-                    }
-
-
-                    /* =====================================
-                       ONLY SELECTED / PLACED
-                    ===================================== */
-
-                    if (
                         !isSelected &&
                         !isPlaced
                     ) {
-                        continue;
+                        pendingCount++;
                     }
 
 
@@ -1012,14 +1064,18 @@ function AdminDashboard() {
 
                     /* =====================================
                        COMPANY NAME
+
+                       Use the verified company record
+                       first where possible.
                     ===================================== */
 
                     const companyName =
-                        application.companyName ||
-                        application.company ||
                         company.companyName ||
                         company.name ||
                         company.displayName ||
+                        company.businessName ||
+                        application.companyName ||
+                        application.company ||
                         "Company";
 
 
@@ -1027,7 +1083,7 @@ function AdminDashboard() {
                        PROCESSED APPLICATION
                     ===================================== */
 
-                    processedApplications.push({
+                    validApplications.push({
 
                         ...application,
 
@@ -1071,48 +1127,18 @@ function AdminDashboard() {
 
                 /* =========================================
                    TOTAL APPLICANTS
-                   
+
                    IMPORTANT:
-                   Only applications with both:
-                   - existing company
-                   - existing student
+
+                   Count ONLY applications where:
+
+                   student exists
+                   AND
+                   company exists
                 ========================================= */
 
-                const validApplicationCount =
-                    applicationsData.filter(
-                        (application) => {
-
-                            const company =
-                                findCompanyForRecord(
-                                    application,
-                                    companiesData
-                                );
-
-
-                            if (!company) {
-                                return false;
-                            }
-
-
-                            const profile =
-                                findStudentProfile(
-                                    application
-                                );
-
-
-                            if (!profile) {
-                                return false;
-                            }
-
-
-                            return true;
-
-                        }
-                    ).length;
-
-
                 setTotalApplicants(
-                    validApplicationCount
+                    validApplications.length
                 );
 
 
@@ -1156,7 +1182,7 @@ function AdminDashboard() {
                 ========================================= */
 
                 const selectedList =
-                    processedApplications
+                    validApplications
                         .filter(
                             application =>
                                 application.isSelected
@@ -1179,7 +1205,7 @@ function AdminDashboard() {
                 ========================================= */
 
                 const placedList =
-                    processedApplications
+                    validApplications
                         .filter(
                             application =>
                                 application.isPlaced
@@ -1331,13 +1357,24 @@ function AdminDashboard() {
 
         /* =================================================
            STUDENT PROFILES REALTIME LISTENER
-           
-           IMPORTANT:
-           When student profile is deleted,
-           this listener fires.
-           
-           processDashboard() then removes that
-           student's application from the dashboard.
+
+           If a student is deleted:
+
+           profilesData changes
+                 ↓
+           processDashboard()
+                 ↓
+           student cannot be found
+                 ↓
+           application becomes invalid
+                 ↓
+           application is removed from:
+             - applicants
+             - selected
+             - placed
+             - pending
+             - recent selected
+             - recent placed
         ================================================= */
 
         const unsubscribeProfiles =
@@ -1387,10 +1424,20 @@ function AdminDashboard() {
 
         /* =================================================
            COMPANIES REALTIME LISTENER
-           
-           When company is deleted, this fires and
-           processDashboard removes that company's
-           jobs/applications.
+
+           If a company is deleted:
+
+           companiesData changes
+                 ↓
+           processDashboard()
+                 ↓
+           company cannot be found
+                 ↓
+           related jobs disappear
+                 ↓
+           related applications disappear
+                 ↓
+           all related counters decrease
         ================================================= */
 
         const unsubscribeCompanies =
@@ -2491,6 +2538,7 @@ function AdminDashboard() {
                                                                     job.company ||
                                                                     job.companyData?.companyName ||
                                                                     job.companyData?.name ||
+                                                                    job.companyData?.displayName ||
                                                                     "Company"
                                                                 }
                                                             </span>

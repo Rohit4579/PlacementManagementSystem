@@ -23,80 +23,176 @@ import {
 } from "../firebase/firebaseConfig";
 
 
-const AuthContext =
-    createContext();
+// =====================================================
+// AUTH CONTEXT
+// =====================================================
 
+const AuthContext = createContext();
+
+
+// =====================================================
+// AUTH PROVIDER
+// =====================================================
 
 export function AuthProvider({ children }) {
 
-    const [user, setUser] =
-        useState(null);
+    const [user, setUser] = useState(null);
 
-    const [loading, setLoading] =
-        useState(true);
+    const [loading, setLoading] = useState(true);
 
+
+    // =================================================
+    // FIREBASE AUTH STATE
+    // =================================================
 
     useEffect(() => {
 
-        const unsubscribe =
-            onAuthStateChanged(
+        let mounted = true;
 
-                auth,
 
-                async (currentUser) => {
+        const unsubscribe = onAuthStateChanged(
 
-                    try {
+            auth,
 
-                        if (!currentUser) {
+            async (currentUser) => {
+
+                try {
+
+                    // =========================================
+                    // USER LOGGED OUT
+                    // =========================================
+
+                    if (!currentUser) {
+
+                        if (mounted) {
 
                             setUser(null);
 
                             setLoading(false);
 
-                            return;
-
                         }
 
+                        return;
 
-                        console.log(
-                            "Authenticated UID:",
-                            currentUser.uid
-                        );
+                    }
 
 
-                        const userRef =
-                            doc(
-                                db,
-                                "users",
-                                currentUser.uid
-                            );
+                    console.log(
+                        "Authenticated UID:",
+                        currentUser.uid
+                    );
 
 
-                        const userSnap =
-                            await getDoc(userRef);
+                    // =========================================
+                    // GET FIRESTORE USER PROFILE
+                    // =========================================
+
+                    const userRef = doc(
+                        db,
+                        "users",
+                        currentUser.uid
+                    );
 
 
-                        if (userSnap.exists()) {
+                    const userSnap = await getDoc(
+                        userRef
+                    );
 
-                            const data =
-                                userSnap.data();
 
+                    // =========================================
+                    // FIRESTORE PROFILE EXISTS
+                    // =========================================
+
+                    if (userSnap.exists()) {
+
+                        const data =
+                            userSnap.data();
+
+
+                        // -------------------------------------
+                        // NORMALIZE ROLE
+                        // -------------------------------------
+
+                        const normalizedRole =
+                            data.role
+                                ?.toString()
+                                .trim()
+                                .toLowerCase() || null;
+
+
+                        if (mounted) {
 
                             setUser({
 
+                                // Firebase Authentication data
                                 uid:
                                     currentUser.uid,
 
                                 email:
-                                    currentUser.email,
+                                    currentUser.email ||
+                                    data.email ||
+                                    "",
 
-                                ...data
+                                // Firestore profile data
+                                name:
+                                    data.name || "",
+
+                                role:
+                                    normalizedRole,
+
+                                // Keep any other Firestore
+                                // profile fields available.
+                                ...data,
+
+                                // IMPORTANT:
+                                // Firebase values are applied
+                                // again after ...data so that
+                                // Firestore cannot accidentally
+                                // overwrite them.
+                                uid:
+                                    currentUser.uid,
+
+                                email:
+                                    currentUser.email ||
+                                    data.email ||
+                                    "",
+
+                                role:
+                                    normalizedRole
 
                             });
 
                         }
 
-                        else {
+                    }
+
+
+                    // =========================================
+                    // AUTH EXISTS BUT FIRESTORE PROFILE
+                    // DOES NOT EXIST
+                    // =========================================
+
+                    else {
+
+                        console.warn(
+                            "Firebase Authentication user exists, but Firestore profile was not found:",
+                            currentUser.uid
+                        );
+
+
+                        /*
+                         * IMPORTANT
+                         *
+                         * We intentionally DO NOT create a
+                         * Firestore profile automatically.
+                         *
+                         * Therefore an Authentication account
+                         * without a users/{uid} document does
+                         * not receive a role automatically.
+                         */
+
+
+                        if (mounted) {
 
                             setUser({
 
@@ -104,7 +200,10 @@ export function AuthProvider({ children }) {
                                     currentUser.uid,
 
                                 email:
-                                    currentUser.email,
+                                    currentUser.email || "",
+
+                                name:
+                                    currentUser.displayName || "",
 
                                 role:
                                     null
@@ -115,18 +214,27 @@ export function AuthProvider({ children }) {
 
                     }
 
-                    catch (error) {
+                }
 
-                        console.error(
-                            "Auth Context Error:",
-                            error
-                        );
+                catch (error) {
+
+                    console.error(
+                        "Auth Context Error:",
+                        error
+                    );
+
+
+                    if (mounted) {
 
                         setUser(null);
 
                     }
 
-                    finally {
+                }
+
+                finally {
+
+                    if (mounted) {
 
                         setLoading(false);
 
@@ -134,13 +242,29 @@ export function AuthProvider({ children }) {
 
                 }
 
-            );
+            }
+
+        );
 
 
-        return unsubscribe;
+        // ==============================================
+        // CLEANUP
+        // ==============================================
+
+        return () => {
+
+            mounted = false;
+
+            unsubscribe();
+
+        };
 
     }, []);
 
+
+    // =================================================
+    // LOGOUT
+    // =================================================
 
     const logout = async () => {
 
@@ -149,9 +273,6 @@ export function AuthProvider({ children }) {
             await signOut(auth);
 
             setUser(null);
-
-            window.location.href =
-                "/login";
 
         }
 
@@ -166,6 +287,10 @@ export function AuthProvider({ children }) {
 
     };
 
+
+    // =================================================
+    // CONTEXT VALUE
+    // =================================================
 
     return (
 
@@ -185,6 +310,10 @@ export function AuthProvider({ children }) {
 
 }
 
+
+// =====================================================
+// USE AUTH
+// =====================================================
 
 export function useAuth() {
 

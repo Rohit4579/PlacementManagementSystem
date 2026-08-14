@@ -1,3 +1,4 @@
+// src/pages/Landing/Landing.jsx
 
 import { Link } from "react-router-dom";
 
@@ -24,6 +25,8 @@ function Landing() {
 
             <nav className="landing-navbar">
 
+                {/* LOGO */}
+
                 <Link
                     to="/"
                     className="landing-logo"
@@ -32,7 +35,11 @@ function Landing() {
                 </Link>
 
 
+                {/* AUTH ACTIONS */}
+
                 <div className="landing-nav-actions">
+
+                    {/* LOGIN */}
 
                     <Link
                         to="/login"
@@ -42,8 +49,20 @@ function Landing() {
                     </Link>
 
 
+                    {/* REGISTER */}
+
                     <Link
-                        to="/login"
+                        to="/register"
+                        className="landing-register"
+                    >
+                        Register
+                    </Link>
+
+
+                    {/* GET STARTED */}
+
+                    <Link
+                        to="/register"
                         className="landing-nav-button"
                     >
                         Get Started
@@ -60,8 +79,7 @@ function Landing() {
 
             <section className="landing-hero">
 
-
-                {/* ================= LEFT CONTENT ================= */}
+                {/* LEFT CONTENT */}
 
                 <div className="hero-content">
 
@@ -98,8 +116,10 @@ function Landing() {
 
                     <div className="hero-actions">
 
+                        {/* REGISTER */}
+
                         <Link
-                            to="/login"
+                            to="/register"
                             className="hero-primary-button"
                         >
 
@@ -110,12 +130,16 @@ function Landing() {
                         </Link>
 
 
-                        <a
-                            href="#features"
+                        {/* LOGIN */}
+
+                        <Link
+                            to="/login"
                             className="hero-secondary-button"
                         >
-                            Explore Platform
-                        </a>
+
+                            Login
+
+                        </Link>
 
                     </div>
 
@@ -161,7 +185,9 @@ function Landing() {
                 </div>
 
 
-                {/* ================= RIGHT IMAGE ================= */}
+                {/* =================================================
+                    RIGHT IMAGE
+                ================================================= */}
 
                 <div className="hero-image-container">
 
@@ -179,7 +205,7 @@ function Landing() {
                     </div>
 
 
-                    {/* FLOATING INFO CARD */}
+                    {/* FLOATING CARD */}
 
                     <div className="hero-floating-card">
 
@@ -307,7 +333,6 @@ function Landing() {
 
 
                 <div className="feature-grid">
-
 
                     {/* STUDENTS */}
 
@@ -448,11 +473,11 @@ function Landing() {
 
 
                 <Link
-                    to="/login"
+                    to="/register"
                     className="cta-button"
                 >
 
-                    Enter PlacementPro
+                    Create Account
 
                     <FaArrowRight />
 
