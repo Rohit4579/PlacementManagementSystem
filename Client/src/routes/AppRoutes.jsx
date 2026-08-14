@@ -6,6 +6,10 @@ import {
     Navigate
 } from "react-router-dom";
 
+import {
+    useAuth
+} from "../context/AuthContext";
+
 
 // ========================================
 // Public Pages
@@ -53,7 +57,7 @@ import Applicants from "../pages/Company/Applicants";
 
 
 // ========================================
-// Admin / TPO Pages
+// Admin Pages
 // ========================================
 
 import AdminDashboard from "../pages/Admin/AdminDashboard";
@@ -63,6 +67,246 @@ import AdminManageJobs from "../pages/Admin/ManageJobs";
 import AdminApplications from "../pages/Admin/AdminApplications";
 import PlacementReports from "../pages/Admin/PlacementReports";
 import Placements from "../pages/Admin/Placements";
+
+
+// =====================================================
+// ROLE NAVIGATION
+// =====================================================
+
+function getDashboardPath(role) {
+
+    const normalizedRole =
+        String(
+            role || ""
+        )
+            .trim()
+            .toLowerCase();
+
+
+    if (
+        normalizedRole ===
+        "student"
+    ) {
+
+        return "/student/dashboard";
+
+    }
+
+
+    if (
+        normalizedRole ===
+        "company"
+    ) {
+
+        return "/company/dashboard";
+
+    }
+
+
+    if (
+        normalizedRole ===
+        "admin"
+    ) {
+
+        return "/admin/dashboard";
+
+    }
+
+
+    return null;
+
+}
+
+
+// =====================================================
+// AUTH LOADING SCREEN
+// =====================================================
+
+function AuthLoadingScreen() {
+
+    return (
+
+        <div
+            style={{
+                minHeight: "100vh",
+                display: "flex",
+                alignItems: "center",
+                justifyContent: "center",
+                background: "#f8fafc",
+                padding: "24px"
+            }}
+        >
+
+            <div
+                style={{
+                    width: "100%",
+                    maxWidth: "420px",
+                    padding: "40px 30px",
+                    background: "#ffffff",
+                    borderRadius: "18px",
+                    textAlign: "center",
+                    boxShadow:
+                        "0 10px 40px rgba(15, 23, 42, 0.08)"
+                }}
+            >
+
+                <div
+                    style={{
+                        width: "48px",
+                        height: "48px",
+                        margin: "0 auto 20px",
+                        borderRadius: "50%",
+                        border:
+                            "4px solid #e2e8f0",
+                        borderTopColor:
+                            "#2563eb",
+                        animation:
+                            "authRouteSpin 0.8s linear infinite"
+                    }}
+                />
+
+                <h2
+                    style={{
+                        margin: "0 0 8px",
+                        color: "#0f172a",
+                        fontSize: "20px"
+                    }}
+                >
+                    PlacementPro
+                </h2>
+
+                <p
+                    style={{
+                        margin: 0,
+                        color: "#64748b",
+                        fontSize: "14px"
+                    }}
+                >
+                    Checking your login session...
+                </p>
+
+            </div>
+
+
+            <style>
+                {`
+                    @keyframes authRouteSpin {
+                        from {
+                            transform: rotate(0deg);
+                        }
+
+                        to {
+                            transform: rotate(360deg);
+                        }
+                    }
+                `}
+            </style>
+
+        </div>
+
+    );
+
+}
+
+
+// =====================================================
+// ROOT ROUTE
+// =====================================================
+//
+// This controls:
+//
+// OPEN WEBSITE
+//      ↓
+// AuthContext
+//      ↓
+// Firebase user?
+//      ↓
+// role?
+//      ↓
+// correct dashboard
+//
+// =====================================================
+
+function RootRedirect() {
+
+    const {
+        user,
+        loading
+    } = useAuth();
+
+
+    // -----------------------------------------
+    // AuthContext still loading
+    // -----------------------------------------
+
+    if (loading) {
+
+        return (
+            <AuthLoadingScreen />
+        );
+
+    }
+
+
+    // -----------------------------------------
+    // No Firebase session
+    // -----------------------------------------
+
+    if (!user) {
+
+        return (
+            <Landing />
+        );
+
+    }
+
+
+    // -----------------------------------------
+    // Firebase session exists
+    // -----------------------------------------
+
+    const dashboardPath =
+        getDashboardPath(
+            user.role
+        );
+
+
+    // -----------------------------------------
+    // Valid role
+    // -----------------------------------------
+
+    if (dashboardPath) {
+
+        return (
+
+            <Navigate
+                to={dashboardPath}
+                replace
+            />
+
+        );
+
+    }
+
+
+    // -----------------------------------------
+    // Firebase account exists but
+    // Firestore role is missing/invalid
+    // -----------------------------------------
+
+    return (
+
+        <Navigate
+            to="/login"
+            replace
+            state={{
+                roleError: true
+            }}
+        />
+
+    );
+
+}
 
 
 // =====================================================
@@ -76,17 +320,21 @@ function AppRoutes() {
         <Routes>
 
 
-            {/* ==================================
-                PUBLIC ROUTES
-            ================================== */}
+            {/* ==========================================
+                ROOT
+            ========================================== */}
 
             <Route
                 path="/"
                 element={
-                    <Landing />
+                    <RootRedirect />
                 }
             />
 
+
+            {/* ==========================================
+                PUBLIC ROUTES
+            ========================================== */}
 
             <Route
                 path="/login"
@@ -104,16 +352,18 @@ function AppRoutes() {
             />
 
 
-            {/* ==================================
+            {/* ==========================================
                 STUDENT ROUTES
-            ================================== */}
+            ========================================== */}
 
             <Route
                 path="/student/dashboard"
                 element={
 
                     <ProtectedRoute
-                        allowedRoles={["student"]}
+                        allowedRoles={[
+                            "student"
+                        ]}
                     >
 
                         <Layout>
@@ -133,7 +383,9 @@ function AppRoutes() {
                 element={
 
                     <ProtectedRoute
-                        allowedRoles={["student"]}
+                        allowedRoles={[
+                            "student"
+                        ]}
                     >
 
                         <Layout>
@@ -153,7 +405,9 @@ function AppRoutes() {
                 element={
 
                     <ProtectedRoute
-                        allowedRoles={["student"]}
+                        allowedRoles={[
+                            "student"
+                        ]}
                     >
 
                         <Layout>
@@ -173,7 +427,9 @@ function AppRoutes() {
                 element={
 
                     <ProtectedRoute
-                        allowedRoles={["student"]}
+                        allowedRoles={[
+                            "student"
+                        ]}
                     >
 
                         <Layout>
@@ -193,7 +449,9 @@ function AppRoutes() {
                 element={
 
                     <ProtectedRoute
-                        allowedRoles={["student"]}
+                        allowedRoles={[
+                            "student"
+                        ]}
                     >
 
                         <Layout>
@@ -208,16 +466,18 @@ function AppRoutes() {
             />
 
 
-            {/* ==================================
+            {/* ==========================================
                 COMPANY ROUTES
-            ================================== */}
+            ========================================== */}
 
             <Route
                 path="/company/dashboard"
                 element={
 
                     <ProtectedRoute
-                        allowedRoles={["company"]}
+                        allowedRoles={[
+                            "company"
+                        ]}
                     >
 
                         <Layout>
@@ -237,7 +497,9 @@ function AppRoutes() {
                 element={
 
                     <ProtectedRoute
-                        allowedRoles={["company"]}
+                        allowedRoles={[
+                            "company"
+                        ]}
                     >
 
                         <Layout>
@@ -257,7 +519,9 @@ function AppRoutes() {
                 element={
 
                     <ProtectedRoute
-                        allowedRoles={["company"]}
+                        allowedRoles={[
+                            "company"
+                        ]}
                     >
 
                         <Layout>
@@ -277,7 +541,9 @@ function AppRoutes() {
                 element={
 
                     <ProtectedRoute
-                        allowedRoles={["company"]}
+                        allowedRoles={[
+                            "company"
+                        ]}
                     >
 
                         <Layout>
@@ -297,7 +563,9 @@ function AppRoutes() {
                 element={
 
                     <ProtectedRoute
-                        allowedRoles={["company"]}
+                        allowedRoles={[
+                            "company"
+                        ]}
                     >
 
                         <Layout>
@@ -312,16 +580,18 @@ function AppRoutes() {
             />
 
 
-            {/* ==================================
-                ADMIN / TPO ROUTES
-            ================================== */}
+            {/* ==========================================
+                ADMIN ROUTES
+            ========================================== */}
 
             <Route
                 path="/admin/dashboard"
                 element={
 
                     <ProtectedRoute
-                        allowedRoles={["admin"]}
+                        allowedRoles={[
+                            "admin"
+                        ]}
                     >
 
                         <Layout>
@@ -341,7 +611,9 @@ function AppRoutes() {
                 element={
 
                     <ProtectedRoute
-                        allowedRoles={["admin"]}
+                        allowedRoles={[
+                            "admin"
+                        ]}
                     >
 
                         <Layout>
@@ -361,7 +633,9 @@ function AppRoutes() {
                 element={
 
                     <ProtectedRoute
-                        allowedRoles={["admin"]}
+                        allowedRoles={[
+                            "admin"
+                        ]}
                     >
 
                         <Layout>
@@ -381,7 +655,9 @@ function AppRoutes() {
                 element={
 
                     <ProtectedRoute
-                        allowedRoles={["admin"]}
+                        allowedRoles={[
+                            "admin"
+                        ]}
                     >
 
                         <Layout>
@@ -401,7 +677,9 @@ function AppRoutes() {
                 element={
 
                     <ProtectedRoute
-                        allowedRoles={["admin"]}
+                        allowedRoles={[
+                            "admin"
+                        ]}
                     >
 
                         <Layout>
@@ -416,16 +694,14 @@ function AppRoutes() {
             />
 
 
-            {/* ==================================
-                PLACEMENTS
-            ================================== */}
-
             <Route
                 path="/admin/placements"
                 element={
 
                     <ProtectedRoute
-                        allowedRoles={["admin"]}
+                        allowedRoles={[
+                            "admin"
+                        ]}
                     >
 
                         <Layout>
@@ -440,16 +716,14 @@ function AppRoutes() {
             />
 
 
-            {/* ==================================
-                PLACEMENT REPORTS
-            ================================== */}
-
             <Route
                 path="/admin/reports"
                 element={
 
                     <ProtectedRoute
-                        allowedRoles={["admin"]}
+                        allowedRoles={[
+                            "admin"
+                        ]}
                     >
 
                         <Layout>
@@ -464,40 +738,30 @@ function AppRoutes() {
             />
 
 
-            {/* ==================================
-                OPTIONAL /dashboard ROUTE
-            ==================================
-            
-            Do NOT redirect this to another dashboard
-            because that was causing the navigation loop.
-
-            If someone manually enters /dashboard,
-            send them to the landing page.
-
-            ================================== */}
+            {/* ==========================================
+                OLD /dashboard
+            ========================================== */}
 
             <Route
                 path="/dashboard"
                 element={
-                    <Navigate
-                        to="/"
-                        replace
-                    />
+
+                    <RootRedirect />
+
                 }
             />
 
 
-            {/* ==================================
+            {/* ==========================================
                 FALLBACK
-            ================================== */}
+            ========================================== */}
 
             <Route
                 path="*"
                 element={
-                    <Navigate
-                        to="/"
-                        replace
-                    />
+
+                    <RootRedirect />
+
                 }
             />
 

@@ -1,28 +1,17 @@
-import { Navigate, useLocation } from "react-router-dom";
-import { useAuth } from "../../context/AuthContext";
+// src/components/ProtectedRoute/ProtectedRoute.jsx
+
+import {
+    Navigate,
+    useLocation
+} from "react-router-dom";
+
+import {
+    useAuth
+} from "../../context/AuthContext";
+
 
 // =====================================================
 // PROTECTED ROUTE
-// =====================================================
-//
-// Usage:
-//
-// <ProtectedRoute>
-//     <Dashboard />
-// </ProtectedRoute>
-//
-// OR:
-//
-// <ProtectedRoute role="student">
-//     <StudentDashboard />
-// </ProtectedRoute>
-//
-// OR:
-//
-// <ProtectedRoute allowedRoles={["student", "company"]}>
-//     <SomePage />
-// </ProtectedRoute>
-//
 // =====================================================
 
 function ProtectedRoute({
@@ -36,31 +25,18 @@ function ProtectedRoute({
         loading
     } = useAuth();
 
-    const location = useLocation();
+    const location =
+        useLocation();
 
 
     // =====================================================
-    // AUTHENTICATION INITIALIZATION
-    // =====================================================
-    //
-    // Firebase must finish restoring the current session
-    // before we decide whether the user is logged in.
-    //
-    // This prevents:
-    //
-    // Firebase still loading
-    //        ↓
-    // user === null
-    //        ↓
-    // redirect to login
-    //        ↓
-    // session loads
-    //
+    // AUTH CONTEXT LOADING
     // =====================================================
 
     if (loading) {
 
         return (
+
             <div
                 style={{
                     minHeight: "100vh",
@@ -87,7 +63,8 @@ function ProtectedRoute({
                             border: "4px solid #e2e8f0",
                             borderTopColor: "#2563eb",
                             borderRadius: "50%",
-                            animation: "protectedRouteSpin 0.8s linear infinite"
+                            animation:
+                                "protectedRouteSpin 0.8s linear infinite"
                         }}
                     />
 
@@ -108,6 +85,7 @@ function ProtectedRoute({
                 <style>
                     {`
                         @keyframes protectedRouteSpin {
+
                             from {
                                 transform: rotate(0deg);
                             }
@@ -115,45 +93,49 @@ function ProtectedRoute({
                             to {
                                 transform: rotate(360deg);
                             }
+
                         }
                     `}
                 </style>
 
             </div>
+
         );
 
     }
 
 
     // =====================================================
-    // USER NOT AUTHENTICATED
+    // NOT LOGGED IN
     // =====================================================
 
     if (!user) {
 
         return (
+
             <Navigate
                 to="/login"
                 replace
                 state={{
-                    from: location.pathname + location.search
+                    from:
+                        location.pathname +
+                        location.search
                 }}
             />
+
         );
 
     }
 
 
     // =====================================================
-    // BUILD ALLOWED ROLE LIST
+    // BUILD ALLOWED ROLES
     // =====================================================
 
     let roles = [];
 
 
-    // =====================================================
-    // SINGLE ROLE
-    // =====================================================
+    // Single role
 
     if (
         role !== undefined &&
@@ -170,16 +152,15 @@ function ProtectedRoute({
     }
 
 
-    // =====================================================
-    // MULTIPLE ROLES
-    // =====================================================
+    // Multiple roles
 
     if (
         Array.isArray(allowedRoles)
     ) {
 
-        const normalizedAllowedRoles =
-            allowedRoles
+        roles = [
+            ...roles,
+            ...allowedRoles
                 .filter(
                     item =>
                         item !== undefined &&
@@ -191,19 +172,13 @@ function ProtectedRoute({
                         String(item)
                             .trim()
                             .toLowerCase()
-                );
-
-        roles = [
-            ...roles,
-            ...normalizedAllowedRoles
+                )
         ];
 
     }
 
 
-    // =====================================================
-    // REMOVE DUPLICATE ROLES
-    // =====================================================
+    // Remove duplicates
 
     roles = [
         ...new Set(roles)
@@ -211,30 +186,19 @@ function ProtectedRoute({
 
 
     // =====================================================
-    // GET USER ROLE
+    // USER ROLE
     // =====================================================
 
     const userRole =
-        String(user?.role || "")
+        String(
+            user.role || ""
+        )
             .trim()
             .toLowerCase();
 
 
     // =====================================================
-    // NO ROLE RESTRICTION
-    // =====================================================
-    //
-    // If neither role nor allowedRoles was supplied,
-    // the route only requires authentication.
-    //
-    // Example:
-    //
-    // <ProtectedRoute>
-    //     <Profile />
-    // </ProtectedRoute>
-    //
-    // Any logged-in user can access it.
-    //
+    // AUTHENTICATED ROUTE WITHOUT ROLE RESTRICTION
     // =====================================================
 
     if (roles.length === 0) {
@@ -245,83 +209,48 @@ function ProtectedRoute({
 
 
     // =====================================================
-    // USER HAS NO VALID ROLE
+    // INVALID USER ROLE
     // =====================================================
 
     if (!userRole) {
 
-        console.error(
-            "ProtectedRoute: authenticated user has no role.",
-            {
-                uid: user?.uid,
-                email: user?.email
-            }
-        );
-
         return (
+
             <Navigate
                 to="/"
                 replace
             />
+
         );
 
     }
 
 
     // =====================================================
-    // ROLE AUTHORIZATION CHECK
+    // ROLE CHECK
     // =====================================================
 
-    const hasPermission =
-        roles.includes(userRole);
-
-
-    // =====================================================
-    // USER DOES NOT HAVE REQUIRED ROLE
-    // =====================================================
-    //
-    // IMPORTANT:
-    //
-    // Do NOT redirect this user to another role dashboard.
-    //
-    // For example:
-    //
-    // Student tries:
-    // /admin/dashboard
-    //
-    // We simply send the student to "/".
-    //
-    // This prevents:
-    //
-    // /dashboard
-    //     ↓
-    // /admin/dashboard
-    //     ↓
-    // /dashboard
-    //     ↓
-    // /admin/dashboard
-    //
-    // redirect loops.
-    //
-    // =====================================================
-
-    if (!hasPermission) {
+    if (
+        !roles.includes(userRole)
+    ) {
 
         console.warn(
-            "ProtectedRoute: unauthorized route access.",
+            "Unauthorized route access:",
             {
-                uid: user?.uid,
                 userRole,
                 requiredRoles: roles,
                 pathname: location.pathname
             }
         );
 
+
         return (
+
             <Navigate
                 to="/"
                 replace
             />
+
         );
 
     }

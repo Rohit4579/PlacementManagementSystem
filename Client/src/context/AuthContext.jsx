@@ -27,7 +27,7 @@ import {
 // AUTH CONTEXT
 // =====================================================
 
-const AuthContext = createContext();
+const AuthContext = createContext(null);
 
 
 // =====================================================
@@ -41,9 +41,9 @@ export function AuthProvider({ children }) {
     const [loading, setLoading] = useState(true);
 
 
-    // =================================================
-    // FIREBASE AUTH STATE
-    // =================================================
+    // =====================================================
+    // LOAD FIREBASE AUTH SESSION
+    // =====================================================
 
     useEffect(() => {
 
@@ -51,41 +51,38 @@ export function AuthProvider({ children }) {
 
 
         const unsubscribe = onAuthStateChanged(
-
             auth,
-
             async (currentUser) => {
 
-                try {
+                // -----------------------------------------
+                // FIREBASE USER LOGGED OUT
+                // -----------------------------------------
 
-                    // =========================================
-                    // USER LOGGED OUT
-                    // =========================================
+                if (!currentUser) {
 
-                    if (!currentUser) {
+                    if (mounted) {
 
-                        if (mounted) {
+                        setUser(null);
 
-                            setUser(null);
-
-                            setLoading(false);
-
-                        }
-
-                        return;
+                        setLoading(false);
 
                     }
 
-
-                    console.log(
-                        "Authenticated UID:",
-                        currentUser.uid
-                    );
+                    return;
+                }
 
 
-                    // =========================================
+                console.log(
+                    "Authenticated UID:",
+                    currentUser.uid
+                );
+
+
+                try {
+
+                    // -----------------------------------------
                     // GET FIRESTORE USER PROFILE
-                    // =========================================
+                    // -----------------------------------------
 
                     const userRef = doc(
                         db,
@@ -99,9 +96,9 @@ export function AuthProvider({ children }) {
                     );
 
 
-                    // =========================================
-                    // FIRESTORE PROFILE EXISTS
-                    // =========================================
+                    // -----------------------------------------
+                    // PROFILE EXISTS
+                    // -----------------------------------------
 
                     if (userSnap.exists()) {
 
@@ -114,83 +111,88 @@ export function AuthProvider({ children }) {
                         // -------------------------------------
 
                         const normalizedRole =
-                            data.role
-                                ?.toString()
+                            String(
+                                data.role || ""
+                            )
                                 .trim()
-                                .toLowerCase() || null;
+                                .toLowerCase();
+
+
+                        // -------------------------------------
+                        // CREATE APPLICATION USER
+                        // -------------------------------------
+
+                        const authenticatedUser = {
+
+                            // Firebase Authentication
+                            uid:
+                                currentUser.uid,
+
+                            email:
+                                currentUser.email ||
+                                data.email ||
+                                "",
+
+                            // Firestore data
+                            ...data,
+
+                            // Keep Firebase values authoritative
+                            uid:
+                                currentUser.uid,
+
+                            email:
+                                currentUser.email ||
+                                data.email ||
+                                "",
+
+                            name:
+                                data.name ||
+                                currentUser.displayName ||
+                                "",
+
+                            role:
+                                normalizedRole || null
+
+                        };
+
+
+                        console.log(
+                            "Authenticated user profile:",
+                            authenticatedUser
+                        );
 
 
                         if (mounted) {
 
-                            setUser({
-
-                                // Firebase Authentication data
-                                uid:
-                                    currentUser.uid,
-
-                                email:
-                                    currentUser.email ||
-                                    data.email ||
-                                    "",
-
-                                // Firestore profile data
-                                name:
-                                    data.name || "",
-
-                                role:
-                                    normalizedRole,
-
-                                // Keep any other Firestore
-                                // profile fields available.
-                                ...data,
-
-                                // IMPORTANT:
-                                // Firebase values are applied
-                                // again after ...data so that
-                                // Firestore cannot accidentally
-                                // overwrite them.
-                                uid:
-                                    currentUser.uid,
-
-                                email:
-                                    currentUser.email ||
-                                    data.email ||
-                                    "",
-
-                                role:
-                                    normalizedRole
-
-                            });
+                            setUser(
+                                authenticatedUser
+                            );
 
                         }
 
                     }
 
 
-                    // =========================================
-                    // AUTH EXISTS BUT FIRESTORE PROFILE
-                    // DOES NOT EXIST
-                    // =========================================
+                    // -----------------------------------------
+                    // PROFILE DOES NOT EXIST
+                    // -----------------------------------------
 
                     else {
 
                         console.warn(
-                            "Firebase Authentication user exists, but Firestore profile was not found:",
+                            "Firebase user exists but users/{uid} profile does not exist:",
                             currentUser.uid
                         );
 
 
                         /*
-                         * IMPORTANT
+                         * Do NOT automatically create a profile.
                          *
-                         * We intentionally DO NOT create a
-                         * Firestore profile automatically.
-                         *
-                         * Therefore an Authentication account
-                         * without a users/{uid} document does
-                         * not receive a role automatically.
+                         * Without a Firestore users/{uid}
+                         * document, the application cannot
+                         * determine whether this is a student,
+                         * company, or admin.
                          */
-
 
                         if (mounted) {
 
@@ -219,7 +221,7 @@ export function AuthProvider({ children }) {
                 catch (error) {
 
                     console.error(
-                        "Auth Context Error:",
+                        "AuthContext profile loading error:",
                         error
                     );
 
@@ -243,13 +245,12 @@ export function AuthProvider({ children }) {
                 }
 
             }
-
         );
 
 
-        // ==============================================
+        // =================================================
         // CLEANUP
-        // ==============================================
+        // =================================================
 
         return () => {
 
@@ -262,9 +263,9 @@ export function AuthProvider({ children }) {
     }, []);
 
 
-    // =================================================
+    // =====================================================
     // LOGOUT
-    // =================================================
+    // =====================================================
 
     const logout = async () => {
 
@@ -283,14 +284,16 @@ export function AuthProvider({ children }) {
                 error
             );
 
+            throw error;
+
         }
 
     };
 
 
-    // =================================================
+    // =====================================================
     // CONTEXT VALUE
-    // =================================================
+    // =====================================================
 
     return (
 
@@ -317,6 +320,8 @@ export function AuthProvider({ children }) {
 
 export function useAuth() {
 
-    return useContext(AuthContext);
+    return useContext(
+        AuthContext
+    );
 
 }

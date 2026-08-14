@@ -6,13 +6,9 @@ import {
 } from "react";
 
 import {
+    useLocation,
     useNavigate
 } from "react-router-dom";
-
-import {
-    getAuth,
-    onAuthStateChanged
-} from "firebase/auth";
 
 import {
     FaGraduationCap,
@@ -20,16 +16,19 @@ import {
     FaLock
 } from "react-icons/fa";
 
-import "./Login.css";
+import {
+    useAuth
+} from "../../context/AuthContext";
 
 import {
     loginUser,
     loginWithGoogle,
-    resetPassword,
-    getAuthenticatedUserProfile
+    resetPassword
 } from "../../services/authService";
 
 import sendEmail from "../../services/emailService";
+
+import "./Login.css";
 
 
 // =====================================================
@@ -37,6 +36,7 @@ import sendEmail from "../../services/emailService";
 // =====================================================
 
 const MAX_EMAIL_LENGTH = 254;
+
 const MAX_PASSWORD_LENGTH = 128;
 
 
@@ -46,9 +46,12 @@ const MAX_PASSWORD_LENGTH = 128;
 
 const normalizeEmail = (email) => {
 
-    return String(email || "")
+    return String(
+        email || ""
+    )
         .trim()
         .toLowerCase();
+
 };
 
 
@@ -56,14 +59,19 @@ const isValidEmail = (email) => {
 
     if (
         !email ||
-        email.length > MAX_EMAIL_LENGTH
+        email.length >
+        MAX_EMAIL_LENGTH
     ) {
+
         return false;
+
     }
+
 
     return /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/.test(
         email
     );
+
 };
 
 
@@ -77,7 +85,9 @@ const navigateByRole = (
 ) => {
 
     if (!user) {
+
         return false;
+
     }
 
 
@@ -89,7 +99,9 @@ const navigateByRole = (
             .toLowerCase();
 
 
-    if (role === "student") {
+    if (
+        role === "student"
+    ) {
 
         navigate(
             "/student/dashboard",
@@ -99,10 +111,13 @@ const navigateByRole = (
         );
 
         return true;
+
     }
 
 
-    if (role === "company") {
+    if (
+        role === "company"
+    ) {
 
         navigate(
             "/company/dashboard",
@@ -112,10 +127,13 @@ const navigateByRole = (
         );
 
         return true;
+
     }
 
 
-    if (role === "admin") {
+    if (
+        role === "admin"
+    ) {
 
         navigate(
             "/admin/dashboard",
@@ -125,10 +143,12 @@ const navigateByRole = (
         );
 
         return true;
+
     }
 
 
     return false;
+
 };
 
 
@@ -167,7 +187,9 @@ function GoogleIcon() {
             />
 
         </svg>
+
     );
+
 }
 
 
@@ -179,6 +201,16 @@ function Login() {
 
     const navigate =
         useNavigate();
+
+
+    const location =
+        useLocation();
+
+
+    const {
+        user,
+        loading: authLoading
+    } = useAuth();
 
 
     // =================================================
@@ -205,9 +237,6 @@ function Login() {
     const [resetLoading, setResetLoading] =
         useState(false);
 
-    const [checkingSession, setCheckingSession] =
-        useState(true);
-
 
     // =================================================
     // MESSAGES
@@ -221,201 +250,95 @@ function Login() {
 
 
     // =================================================
-    // RESTORE EXISTING FIREBASE SESSION
+    // AUTH CONTEXT SESSION RESTORATION
     // =================================================
     //
-    // THIS IS THE IMPORTANT FIX.
-    //
-    // Firebase persists authentication by default.
-    //
-    // When the browser/site is reopened:
+    // AuthContext already checks:
     //
     // Firebase user
-    //       ↓
-    // onAuthStateChanged
-    //       ↓
-    // Firestore users/{uid}
-    //       ↓
+    //      ↓
+    // users/{uid}
+    //      ↓
     // role
-    //       ↓
-    // correct dashboard
     //
-    // Therefore a logged-in user will NOT remain on
-    // the Login page after reopening the website.
+    // Therefore Login only needs to redirect when
+    // AuthContext has finished loading.
     //
     // =================================================
 
     useEffect(() => {
 
-        const auth =
-            getAuth();
+        if (authLoading) {
+
+            return;
+
+        }
 
 
-        let mounted = true;
+        if (!user) {
+
+            return;
+
+        }
 
 
-        const unsubscribe =
-            onAuthStateChanged(
-
-                auth,
-
-                async (firebaseUser) => {
-
-                    if (!mounted) {
-                        return;
-                    }
-
-
-                    // =================================================
-                    // NO SESSION
-                    // =================================================
-
-                    if (!firebaseUser) {
-
-                        setCheckingSession(false);
-
-                        return;
-                    }
-
-
-                    // =================================================
-                    // EXISTING SESSION FOUND
-                    // =================================================
-
-                    console.log(
-                        "Existing Firebase session found:",
-                        firebaseUser.uid
-                    );
-
-
-                    try {
-
-                        const user =
-                            await getAuthenticatedUserProfile(
-                                firebaseUser
-                            );
-
-
-                        if (!mounted) {
-                            return;
-                        }
-
-
-                        // =================================================
-                        // PROFILE FOUND
-                        // =================================================
-
-                        if (user) {
-
-                            console.log(
-                                "Existing session profile:",
-                                user
-                            );
-
-
-                            const navigated =
-                                navigateByRole(
-                                    user,
-                                    navigate
-                                );
-
-
-                            if (!navigated) {
-
-                                await auth.signOut();
-
-                                setErrorMessage(
-                                    "Your account role could not be verified. Please contact the administrator."
-                                );
-
-                                setCheckingSession(
-                                    false
-                                );
-
-                                return;
-                            }
-
-
-                            // Don't render Login page.
-                            return;
-                        }
-
-
-                        // =================================================
-                        // AUTH EXISTS BUT FIRESTORE PROFILE MISSING
-                        // =================================================
-
-                        console.error(
-                            "Authenticated Firebase user has no valid Firestore profile."
-                        );
-
-
-                        await auth.signOut();
-
-
-                        if (!mounted) {
-                            return;
-                        }
-
-
-                        setErrorMessage(
-                            "Your login session could not be restored. Please log in again."
-                        );
-
-                        setCheckingSession(
-                            false
-                        );
-
-                    }
-                    catch (error) {
-
-                        console.error(
-                            "Session restoration failed:",
-                            error
-                        );
-
-
-                        try {
-                            await auth.signOut();
-                        }
-                        catch (signOutError) {
-                            console.error(
-                                "Session cleanup failed:",
-                                signOutError
-                            );
-                        }
-
-
-                        if (!mounted) {
-                            return;
-                        }
-
-
-                        setErrorMessage(
-                            "Unable to restore your login session. Please log in again."
-                        );
-
-                        setCheckingSession(
-                            false
-                        );
-                    }
-                }
+        const navigated =
+            navigateByRole(
+                user,
+                navigate
             );
 
 
-        return () => {
+        if (!navigated) {
 
-            mounted = false;
+            setErrorMessage(
+                "Your account role could not be verified. Please contact the administrator."
+            );
 
-            unsubscribe();
-        };
+        }
 
-    }, [navigate]);
+    }, [
+        user,
+        authLoading,
+        navigate
+    ]);
 
 
-    // =====================================================
+    // =================================================
+    // ROLE ERROR FROM ROOT REDIRECT
+    // =================================================
+
+    useEffect(() => {
+
+        if (
+            location.state?.roleError
+        ) {
+
+            setErrorMessage(
+                "Your account exists, but your account role could not be verified. Please contact the administrator."
+            );
+
+
+            // Clear navigation state
+            navigate(
+                location.pathname,
+                {
+                    replace: true,
+                    state: {}
+                }
+            );
+
+        }
+
+    }, [
+        location,
+        navigate
+    ]);
+
+
+    // =================================================
     // INPUT CHANGE
-    // =====================================================
+    // =================================================
 
     const change = (e) => {
 
@@ -426,6 +349,7 @@ function Login() {
 
 
         setErrorMessage("");
+
         setSuccessMessage("");
 
 
@@ -439,12 +363,13 @@ function Login() {
 
             })
         );
+
     };
 
 
-    // =====================================================
-    // VALIDATE FORM
-    // =====================================================
+    // =================================================
+    // VALIDATE
+    // =================================================
 
     const validateForm = () => {
 
@@ -453,6 +378,7 @@ function Login() {
                 data.email
             );
 
+
         const password =
             data.password;
 
@@ -460,6 +386,7 @@ function Login() {
         if (!email) {
 
             return "Please enter your email address.";
+
         }
 
 
@@ -469,18 +396,23 @@ function Login() {
         ) {
 
             return "Email address is too long.";
+
         }
 
 
-        if (!isValidEmail(email)) {
+        if (
+            !isValidEmail(email)
+        ) {
 
             return "Please enter a valid email address.";
+
         }
 
 
         if (!password) {
 
             return "Please enter your password.";
+
         }
 
 
@@ -490,28 +422,39 @@ function Login() {
         ) {
 
             return "Invalid email or password.";
+
         }
 
 
         return null;
+
     };
 
 
-    // =====================================================
+    // =================================================
     // LOGIN EMAIL NOTIFICATION
-    // =====================================================
+    // =================================================
 
     const sendLoginNotification = async (
-        user,
+        authenticatedUser,
         google = false
     ) => {
 
         try {
 
+            if (
+                !authenticatedUser?.email
+            ) {
+
+                return;
+
+            }
+
+
             await sendEmail({
 
                 to:
-                    user.email,
+                    authenticatedUser.email,
 
                 subject:
                     google
@@ -521,7 +464,7 @@ function Login() {
                 message:
                     google
 
-                        ? `Hello ${user.name || "User"},
+                        ? `Hello ${authenticatedUser.name || "User"},
 
 You have successfully logged in to the Placement Management System using Google.
 
@@ -530,7 +473,7 @@ If this was not you, please contact the administrator immediately.
 Regards,
 Placement Management System`
 
-                        : `Hello ${user.name || "User"},
+                        : `Hello ${authenticatedUser.name || "User"},
 
 You have successfully logged in to the Placement Management System.
 
@@ -544,21 +487,24 @@ Placement Management System`
             });
 
         }
-        catch (emailError) {
+
+        catch (error) {
 
             console.error(
                 "Login notification failed:",
-                emailError
+                error
             );
 
-            // Email failure must never prevent login.
+            // Email failure must never block login.
+
         }
+
     };
 
 
-    // =====================================================
-    // EMAIL/PASSWORD LOGIN
-    // =====================================================
+    // =================================================
+    // EMAIL / PASSWORD LOGIN
+    // =================================================
 
     const submit = async (e) => {
 
@@ -570,11 +516,14 @@ Placement Management System`
             googleLoading ||
             resetLoading
         ) {
+
             return;
+
         }
 
 
         setErrorMessage("");
+
         setSuccessMessage("");
 
 
@@ -589,6 +538,7 @@ Placement Management System`
             );
 
             return;
+
         }
 
 
@@ -596,6 +546,7 @@ Placement Management System`
             normalizeEmail(
                 data.email
             );
+
 
         const password =
             data.password;
@@ -606,38 +557,45 @@ Placement Management System`
             setLoading(true);
 
 
-            const user =
+            const authenticatedUser =
                 await loginUser(
                     email,
                     password
                 );
 
 
-            if (!user) {
+            if (!authenticatedUser) {
 
                 setErrorMessage(
                     "Unable to load your account profile. Please try again."
                 );
 
                 return;
+
             }
 
 
             await sendLoginNotification(
-                user,
+                authenticatedUser,
                 false
             );
 
 
+            // -----------------------------------------
+            // Navigate immediately using returned profile
+            // -----------------------------------------
+
             const navigated =
                 navigateByRole(
-                    user,
+                    authenticatedUser,
                     navigate
                 );
 
 
             if (navigated) {
+
                 return;
+
             }
 
 
@@ -646,6 +604,7 @@ Placement Management System`
             );
 
         }
+
         catch (error) {
 
             console.error(
@@ -665,6 +624,7 @@ Placement Management System`
 
                 message =
                     "Too many login attempts. Please wait and try again later.";
+
             }
 
             else if (
@@ -674,6 +634,7 @@ Placement Management System`
 
                 message =
                     "Network error. Please check your connection and try again.";
+
             }
 
             else if (
@@ -683,6 +644,7 @@ Placement Management System`
 
                 message =
                     "This account is currently unavailable. Please contact the administrator.";
+
             }
 
             else if (
@@ -692,6 +654,7 @@ Placement Management System`
 
                 message =
                     "Please enter a valid email address.";
+
             }
 
             else if (
@@ -701,6 +664,7 @@ Placement Management System`
 
                 message =
                     "Invalid email or password.";
+
             }
 
             else if (
@@ -710,6 +674,7 @@ Placement Management System`
 
                 message =
                     "Invalid email or password.";
+
             }
 
             else if (
@@ -719,6 +684,7 @@ Placement Management System`
 
                 message =
                     "Invalid email or password.";
+
             }
 
             else if (
@@ -728,23 +694,28 @@ Placement Management System`
 
                 message =
                     "Your account was authenticated, but your user profile could not be found. Please contact the administrator.";
+
             }
+
 
             setErrorMessage(
                 message
             );
 
         }
+
         finally {
 
             setLoading(false);
+
         }
+
     };
 
 
-    // =====================================================
+    // =================================================
     // GOOGLE LOGIN
-    // =====================================================
+    // =================================================
 
     const handleGoogleLogin = async () => {
 
@@ -753,11 +724,14 @@ Placement Management System`
             googleLoading ||
             resetLoading
         ) {
+
             return;
+
         }
 
 
         setErrorMessage("");
+
         setSuccessMessage("");
 
 
@@ -765,6 +739,7 @@ Placement Management System`
             normalizeEmail(
                 data.email
             );
+
 
         const password =
             data.password;
@@ -775,52 +750,56 @@ Placement Management System`
             setGoogleLoading(true);
 
 
-            const user =
+            const authenticatedUser =
                 await loginWithGoogle(
                     email,
                     password
                 );
 
 
-            if (!user) {
+            if (!authenticatedUser) {
 
                 setErrorMessage(
                     "Unable to complete Google login. Please try again."
                 );
 
                 return;
+
             }
 
 
-            // =================================================
-            // GOOGLE LINKED
-            // =================================================
+            // -----------------------------------------
+            // Google linked to existing account
+            // -----------------------------------------
 
             if (
-                user.linkedGoogle
+                authenticatedUser.linkedGoogle
             ) {
 
                 setSuccessMessage(
                     "Google has been safely linked to your existing account. Your existing password has not been changed."
                 );
+
             }
 
 
             await sendLoginNotification(
-                user,
+                authenticatedUser,
                 true
             );
 
 
             const navigated =
                 navigateByRole(
-                    user,
+                    authenticatedUser,
                     navigate
                 );
 
 
             if (navigated) {
+
                 return;
+
             }
 
 
@@ -829,6 +808,7 @@ Placement Management System`
             );
 
         }
+
         catch (error) {
 
             console.error(
@@ -841,10 +821,6 @@ Placement Management System`
                 "Unable to login with Google. Please try again.";
 
 
-            // =================================================
-            // PASSWORD REQUIRED
-            // =================================================
-
             if (
                 error?.code ===
                 "auth/password-required-for-linking"
@@ -852,12 +828,8 @@ Placement Management System`
 
                 message =
                     "This email already has a password account. Enter your existing password above, then click Continue with Google again to safely link Google.";
+
             }
-
-
-            // =================================================
-            // WRONG PASSWORD
-            // =================================================
 
             else if (
                 error?.code ===
@@ -866,12 +838,8 @@ Placement Management System`
 
                 message =
                     "The existing password is incorrect. Enter your current password and try Google again.";
+
             }
-
-
-            // =================================================
-            // INVALID CREDENTIAL
-            // =================================================
 
             else if (
                 error?.code ===
@@ -880,8 +848,8 @@ Placement Management System`
 
                 message =
                     "The existing email or password could not be verified. Enter the current password for this account and try again.";
-            }
 
+            }
 
             else if (
                 error?.code ===
@@ -890,8 +858,8 @@ Placement Management System`
 
                 message =
                     "No password account was found for this email.";
-            }
 
+            }
 
             else if (
                 error?.code ===
@@ -900,8 +868,8 @@ Placement Management System`
 
                 message =
                     "Google login was cancelled.";
-            }
 
+            }
 
             else if (
                 error?.code ===
@@ -910,8 +878,8 @@ Placement Management System`
 
                 message =
                     "Google login popup was blocked. Please allow popups and try again.";
-            }
 
+            }
 
             else if (
                 error?.code ===
@@ -920,8 +888,8 @@ Placement Management System`
 
                 message =
                     "Network error. Please check your connection and try again.";
-            }
 
+            }
 
             else if (
                 error?.code ===
@@ -930,8 +898,8 @@ Placement Management System`
 
                 message =
                     "This Google account is already connected to another Placement Management account.";
-            }
 
+            }
 
             else if (
                 error?.code ===
@@ -940,8 +908,8 @@ Placement Management System`
 
                 message =
                     "Google is already linked to this account.";
-            }
 
+            }
 
             else if (
                 error?.code ===
@@ -950,8 +918,8 @@ Placement Management System`
 
                 message =
                     "This email is already connected to another account.";
-            }
 
+            }
 
             else if (
                 error?.code ===
@@ -960,6 +928,7 @@ Placement Management System`
 
                 message =
                     "Your Google account was authenticated, but your Placement Management profile could not be found.";
+
             }
 
 
@@ -968,16 +937,19 @@ Placement Management System`
             );
 
         }
+
         finally {
 
             setGoogleLoading(false);
+
         }
+
     };
 
 
-    // =====================================================
+    // =================================================
     // FORGOT PASSWORD
-    // =====================================================
+    // =================================================
 
     const handleForgotPassword = async () => {
 
@@ -986,11 +958,14 @@ Placement Management System`
             googleLoading ||
             resetLoading
         ) {
+
             return;
+
         }
 
 
         setErrorMessage("");
+
         setSuccessMessage("");
 
 
@@ -1007,16 +982,20 @@ Placement Management System`
             );
 
             return;
+
         }
 
 
-        if (!isValidEmail(email)) {
+        if (
+            !isValidEmail(email)
+        ) {
 
             setErrorMessage(
                 "Please enter a valid email address."
             );
 
             return;
+
         }
 
 
@@ -1035,6 +1014,7 @@ Placement Management System`
             );
 
         }
+
         catch (error) {
 
             console.error(
@@ -1054,6 +1034,7 @@ Placement Management System`
 
                 message =
                     "Please enter a valid email address.";
+
             }
 
             else if (
@@ -1063,6 +1044,7 @@ Placement Management System`
 
                 message =
                     "Too many password reset requests. Please try again later.";
+
             }
 
             else if (
@@ -1072,6 +1054,7 @@ Placement Management System`
 
                 message =
                     "Network error. Please check your connection and try again.";
+
             }
 
 
@@ -1080,16 +1063,19 @@ Placement Management System`
             );
 
         }
+
         finally {
 
             setResetLoading(false);
+
         }
+
     };
 
 
-    // =====================================================
+    // =================================================
     // REGISTER
-    // =====================================================
+    // =================================================
 
     const goToRegister = () => {
 
@@ -1102,15 +1088,17 @@ Placement Management System`
             navigate(
                 "/register"
             );
+
         }
+
     };
 
 
-    // =====================================================
-    // SESSION CHECK SCREEN
-    // =====================================================
+    // =================================================
+    // SESSION LOADING
+    // =================================================
 
-    if (checkingSession) {
+    if (authLoading) {
 
         return (
 
@@ -1137,13 +1125,52 @@ Placement Management System`
                 </div>
 
             </div>
+
         );
+
     }
 
 
-    // =====================================================
+    // =================================================
+    // IF ALREADY LOGGED IN
+    // =================================================
+
+    if (user) {
+
+        return (
+
+            <div className="auth-page">
+
+                <div className="session-loading-card">
+
+                    <div className="brand-mark small">
+
+                        <FaGraduationCap />
+
+                    </div>
+
+                    <h2>
+                        PlacementPro
+                    </h2>
+
+                    <p>
+                        Opening your dashboard...
+                    </p>
+
+                    <div className="loading-spinner" />
+
+                </div>
+
+            </div>
+
+        );
+
+    }
+
+
+    // =================================================
     // DISABLED
-    // =====================================================
+    // =================================================
 
     const disabled =
         loading ||
@@ -1151,9 +1178,9 @@ Placement Management System`
         resetLoading;
 
 
-    // =====================================================
+    // =================================================
     // RENDER
-    // =====================================================
+    // =================================================
 
     return (
 
@@ -1237,6 +1264,7 @@ Placement Management System`
                                 </span>
 
                             </div>
+
                         )}
 
 
@@ -1259,6 +1287,7 @@ Placement Management System`
                                 </span>
 
                             </div>
+
                         )}
 
 
@@ -1479,7 +1508,9 @@ Placement Management System`
             </div>
 
         </div>
+
     );
+
 }
 
 
