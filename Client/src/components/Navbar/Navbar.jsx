@@ -7,6 +7,7 @@ import {
     query,
     where,
     updateDoc,
+    deleteDoc,
     doc
 } from "firebase/firestore";
 
@@ -20,7 +21,8 @@ import {
     FaCheckCircle,
     FaUser,
     FaChevronDown,
-    FaSignOutAlt
+    FaSignOutAlt,
+    FaTimes
 } from "react-icons/fa";
 
 import { useAuth } from "../../context/AuthContext";
@@ -100,9 +102,21 @@ function Navbar() {
         user?.role?.toLowerCase() || "student";
 
 
-    /* =========================================================
-       PROFILE MENU RULES
-    ========================================================= */
+    /*
+     * PROFILE MENU RULES
+     *
+     * Student:
+     *      My Profile
+     *
+     * Company:
+     *      Company Profile
+     *
+     * TPO:
+     *      No profile option
+     *
+     * Admin:
+     *      No profile option
+     */
 
     const hideProfileOption =
         role === "tpo" ||
@@ -127,6 +141,12 @@ function Navbar() {
 
     /* =========================================================
        LOAD PROFILE PHOTO
+
+       Currently listens to:
+
+       studentProfiles/{user.uid}
+
+       This keeps the existing Student profile photo behavior.
     ========================================================= */
 
     useEffect(() => {
@@ -307,6 +327,10 @@ function Navbar() {
                         );
 
 
+                    /*
+                     * Sort newest notifications first
+                     */
+
                     notificationData.sort(
                         (a, b) => {
 
@@ -485,6 +509,48 @@ function Navbar() {
 
 
     /* =========================================================
+       DELETE SINGLE NOTIFICATION
+    ========================================================= */
+
+    const deleteNotification =
+        async (notification, event) => {
+
+            /*
+             * VERY IMPORTANT:
+             *
+             * Stop the click from reaching the parent
+             * notification-item.
+             *
+             * Therefore markNotificationRead()
+             * will NOT be triggered.
+             */
+
+            event.stopPropagation();
+
+
+            try {
+
+                await deleteDoc(
+                    doc(
+                        db,
+                        "notifications",
+                        notification.id
+                    )
+                );
+
+            } catch (error) {
+
+                console.error(
+                    "Error deleting notification:",
+                    error
+                );
+
+            }
+
+        };
+
+
+    /* =========================================================
        MARK ALL NOTIFICATIONS READ
     ========================================================= */
 
@@ -560,6 +626,7 @@ function Navbar() {
 
     /* =========================================================
        SEARCH RESULT CLICK
+       ROLE-BASED NAVIGATION
     ========================================================= */
 
     const handleJobClick = (job) => {
@@ -781,7 +848,7 @@ function Navbar() {
                     <span>
 
                         Placement
-                        <span>Connect</span>
+                        <span>Pro</span>
 
                     </span>
 
@@ -859,7 +926,9 @@ function Navbar() {
                 </div>
 
 
-                {/* SEARCH RESULTS */}
+                {/* =================================================
+                    SEARCH RESULTS
+                ================================================= */}
 
                 {showSearchResults &&
                     search.trim() !== "" && (
@@ -881,6 +950,7 @@ function Navbar() {
                                                 )
                                             }
                                         >
+
 
                                             <div className="search-result-icon">
 
@@ -960,7 +1030,9 @@ function Navbar() {
                 </button>
 
 
-                {/* NOTIFICATIONS */}
+                {/* =================================================
+                    NOTIFICATIONS
+                ================================================= */}
 
                 <div className="notification-wrapper">
 
@@ -1001,12 +1073,16 @@ function Navbar() {
                     </button>
 
 
-                    {/* NOTIFICATION DROPDOWN */}
+                    {/* =================================================
+                        NOTIFICATION DROPDOWN
+                    ================================================= */}
 
                     {showNotifications && (
 
                         <div className="notification-dropdown">
 
+
+                            {/* HEADER */}
 
                             <div className="notification-header">
 
@@ -1039,6 +1115,8 @@ function Navbar() {
 
                             </div>
 
+
+                            {/* LIST */}
 
                             <div className="notification-list">
 
@@ -1080,6 +1158,7 @@ function Navbar() {
                                                     }
                                                 >
 
+
                                                     <div className="notification-icon">
 
                                                         <FaBell />
@@ -1114,6 +1193,28 @@ function Navbar() {
 
                                                     </div>
 
+
+                                                    {/* =================================================
+                                                        DELETE NOTIFICATION
+                                                    ================================================= */}
+
+                                                    <button
+                                                        type="button"
+                                                        className="notification-delete"
+                                                        title="Delete notification"
+                                                        aria-label="Delete notification"
+                                                        onClick={(event) =>
+                                                            deleteNotification(
+                                                                notification,
+                                                                event
+                                                            )
+                                                        }
+                                                    >
+
+                                                        <FaTimes />
+
+                                                    </button>
+
                                                 </div>
 
                                             )
@@ -1130,7 +1231,9 @@ function Navbar() {
                 </div>
 
 
-                {/* USER PROFILE */}
+                {/* =================================================
+                    USER PROFILE DROPDOWN
+                ================================================= */}
 
                 <div
                     className="user-profile-wrapper"
@@ -1311,8 +1414,6 @@ function Navbar() {
                             )}
 
 
-                            {/* LOGOUT */}
-
                             <button
                                 className="profile-dropdown-item logout-item"
                                 onClick={
@@ -1351,6 +1452,7 @@ function Navbar() {
 
 
             </div>
+
 
         </nav>
 

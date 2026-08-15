@@ -1702,3 +1702,78 @@ body.dark-mode .clear-search:hover {
 body.dark-mode .notification-count {
     border-color: #0f172a;
 }
+
+/* =========================================================
+   DELETE NOTIFICATION BUTTON
+========================================================= */
+
+.notification-delete {
+    width: 26px;
+    height: 26px;
+
+    flex-shrink: 0;
+
+    border: none;
+
+    border-radius: 7px;
+
+    background: transparent;
+
+    color: #94a3b8;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+
+    font-size: 11px;
+
+    opacity: 0;
+
+    transition:
+        opacity 0.2s ease,
+        background 0.2s ease,
+        color 0.2s ease,
+        transform 0.2s ease;
+}
+
+
+/* Show delete button when hovering notification */
+
+.notification-item:hover .notification-delete {
+    opacity: 1;
+}
+
+
+/* Delete button hover */
+
+.notification-delete:hover {
+    background: #fee2e2;
+
+    color: #ef4444;
+
+    transform: scale(1.08);
+}
+
+
+/* Delete button active */
+
+.notification-delete:active {
+    transform: scale(0.94);
+}
+
+
+/* =========================================================
+   DARK MODE - DELETE NOTIFICATION
+========================================================= */
+
+body.dark-mode .notification-delete {
+    color: #64748b;
+}
+
+body.dark-mode .notification-delete:hover {
+    background: #3b2025;
+
+    color: #f87171;
+}
