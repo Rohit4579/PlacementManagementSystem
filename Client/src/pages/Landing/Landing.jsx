@@ -13,11 +13,13 @@ import {
 
 import "./Landing.css";
 
+
 function Landing() {
 
     return (
 
         <div className="landing-page">
+
 
             {/* =====================================================
                 NAVBAR
@@ -25,13 +27,16 @@ function Landing() {
 
             <nav className="landing-navbar">
 
+
                 {/* LOGO */}
 
                 <Link
                     to="/"
                     className="landing-logo"
                 >
-                    Placement<span>Pro</span>
+
+                    Placement<span>Connect</span>
+
                 </Link>
 
 
@@ -39,13 +44,16 @@ function Landing() {
 
                 <div className="landing-nav-actions">
 
+
                     {/* LOGIN */}
 
                     <Link
                         to="/login"
                         className="landing-login"
                     >
+
                         Login
+
                     </Link>
 
 
@@ -55,7 +63,9 @@ function Landing() {
                         to="/register"
                         className="landing-register"
                     >
+
                         Register
+
                     </Link>
 
 
@@ -65,8 +75,11 @@ function Landing() {
                         to="/register"
                         className="landing-nav-button"
                     >
+
                         Get Started
+
                     </Link>
+
 
                 </div>
 
@@ -79,9 +92,11 @@ function Landing() {
 
             <section className="landing-hero">
 
+
                 {/* LEFT CONTENT */}
 
                 <div className="hero-content">
+
 
                     <div className="hero-badge">
 
@@ -105,7 +120,7 @@ function Landing() {
 
                     <p>
 
-                        PlacementPro connects students, companies
+                        PlacementConnect connects students, companies
                         and placement teams through one simple,
                         reliable and professional platform.
 
@@ -115,6 +130,7 @@ function Landing() {
                     {/* HERO BUTTONS */}
 
                     <div className="hero-actions">
+
 
                         {/* REGISTER */}
 
@@ -141,12 +157,14 @@ function Landing() {
 
                         </Link>
 
+
                     </div>
 
 
                     {/* TRUST POINTS */}
 
                     <div className="hero-trust">
+
 
                         <div>
 
@@ -180,6 +198,7 @@ function Landing() {
 
                         </div>
 
+
                     </div>
 
                 </div>
@@ -191,6 +210,7 @@ function Landing() {
 
                 <div className="hero-image-container">
 
+
                     <div className="hero-image-glow"></div>
 
 
@@ -198,7 +218,7 @@ function Landing() {
 
                         <img
                             src="/landing-hero.png"
-                            alt="PlacementPro placement management platform"
+                            alt="PlacementConnect placement management platform"
                             className="landing-hero-image"
                         />
 
@@ -208,6 +228,7 @@ function Landing() {
                     {/* FLOATING CARD */}
 
                     <div className="hero-floating-card">
+
 
                         <div className="floating-card-icon">
 
@@ -230,6 +251,7 @@ function Landing() {
 
                     </div>
 
+
                 </div>
 
             </section>
@@ -240,6 +262,7 @@ function Landing() {
             ===================================================== */}
 
             <section className="landing-stats">
+
 
                 <div className="landing-stat">
 
@@ -292,6 +315,7 @@ function Landing() {
 
                 </div>
 
+
             </section>
 
 
@@ -304,7 +328,9 @@ function Landing() {
                 id="features"
             >
 
+
                 <div className="section-heading">
+
 
                     <span>
                         PLATFORM FEATURES
@@ -329,14 +355,17 @@ function Landing() {
 
                     </p>
 
+
                 </div>
 
 
                 <div className="feature-grid">
 
+
                     {/* STUDENTS */}
 
                     <div className="feature-card">
+
 
                         <div className="feature-icon blue">
 
@@ -358,12 +387,14 @@ function Landing() {
 
                         </p>
 
+
                     </div>
 
 
                     {/* COMPANIES */}
 
                     <div className="feature-card">
+
 
                         <div className="feature-icon purple">
 
@@ -385,12 +416,14 @@ function Landing() {
 
                         </p>
 
+
                     </div>
 
 
                     {/* JOBS */}
 
                     <div className="feature-card">
+
 
                         <div className="feature-icon green">
 
@@ -411,12 +444,14 @@ function Landing() {
 
                         </p>
 
+
                     </div>
 
 
                     {/* PLACEMENT */}
 
                     <div className="feature-card">
+
 
                         <div className="feature-icon orange">
 
@@ -437,7 +472,9 @@ function Landing() {
 
                         </p>
 
+
                     </div>
+
 
                 </div>
 
@@ -449,6 +486,7 @@ function Landing() {
             ===================================================== */}
 
             <section className="landing-cta">
+
 
                 <div>
 
@@ -483,6 +521,7 @@ function Landing() {
 
                 </Link>
 
+
             </section>
 
 
@@ -492,9 +531,10 @@ function Landing() {
 
             <footer className="landing-footer">
 
+
                 <div className="footer-logo">
 
-                    Placement<span>Pro</span>
+                    Placement<span>Connect</span>
 
                 </div>
 
@@ -507,14 +547,19 @@ function Landing() {
                 <span>
 
                     © {new Date().getFullYear()}
-                    {" "}PlacementPro
+                    {" "}PlacementConnect
 
                 </span>
 
+
             </footer>
 
+
         </div>
+
     );
+
 }
+
 
 export default Landing;

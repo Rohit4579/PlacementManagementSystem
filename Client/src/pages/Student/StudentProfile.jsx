@@ -136,6 +136,87 @@ function StudentProfile() {
 
 
     /* =========================================================
+       PEXELS CAREER / EDUCATION IMAGE
+       Decorative only - does not affect profile logic.
+    ========================================================= */
+
+    const [careerImage, setCareerImage] = useState("");
+    const [careerPhotographer, setCareerPhotographer] = useState("");
+    const [careerPhotographerUrl, setCareerPhotographerUrl] = useState("");
+    const [careerPexelsUrl, setCareerPexelsUrl] = useState("");
+    const [careerImageLoading, setCareerImageLoading] = useState(true);
+
+
+    useEffect(() => {
+
+        let cancelled = false;
+
+        const loadCareerImage = async () => {
+
+            const apiKey = import.meta.env.VITE_PEXELS_API_KEY;
+
+            if (!apiKey) {
+                setCareerImageLoading(false);
+                return;
+            }
+
+            try {
+
+                const response = await fetch(
+                    "https://api.pexels.com/v1/search?query=college%20student%20career%20education&orientation=landscape&per_page=10",
+                    {
+                        headers: {
+                            Authorization: apiKey
+                        }
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(`Pexels request failed: ${response.status}`);
+                }
+
+                const data = await response.json();
+
+                if (cancelled || !data?.photos?.length) {
+                    return;
+                }
+
+                const photo = data.photos[Math.floor(Math.random() * Math.min(data.photos.length, 6))];
+
+                if (!photo) {
+                    return;
+                }
+
+                setCareerImage(
+                    photo.src?.large2x ||
+                    photo.src?.large ||
+                    photo.src?.original ||
+                    ""
+                );
+
+                setCareerPhotographer(photo.photographer || "Pexels");
+                setCareerPhotographerUrl(photo.photographer_url || "https://www.pexels.com/");
+                setCareerPexelsUrl(photo.url || "https://www.pexels.com/");
+
+            } catch (error) {
+                console.error("Student Profile Pexels image error:", error);
+            } finally {
+                if (!cancelled) {
+                    setCareerImageLoading(false);
+                }
+            }
+        };
+
+        loadCareerImage();
+
+        return () => {
+            cancelled = true;
+        };
+
+    }, []);
+
+
+    /* =========================================================
        CAMERA REFS
     ========================================================= */
 
@@ -1724,6 +1805,42 @@ function StudentProfile() {
                         that match your eligibility.
                     </p>
 
+                </div>
+
+            </div>
+
+
+            {/* =================================================
+                CAREER / EDUCATION VISUAL
+                Pexels is decorative only.
+            ================================================= */}
+
+            <div className="student-profile-career-banner">
+
+                <div className="career-banner-content">
+                    <span className="career-banner-label">CAREER JOURNEY</span>
+                    <h2>Build a stronger profile for better opportunities</h2>
+                    <p>Keep your academic details and skills updated so companies can quickly understand your placement profile.</p>
+                </div>
+
+                <div className="career-banner-visual">
+                    {careerImageLoading ? (
+                        <div className="career-image-loading">
+                            <div className="career-image-spinner"></div>
+                        </div>
+                    ) : careerImage ? (
+                        <img src={careerImage} alt="College students preparing for their careers" />
+                    ) : (
+                        <div className="career-image-fallback">
+                            <FaGraduationCap />
+                        </div>
+                    )}
+
+                    {careerImage && (
+                        <div className="career-pexels-credit">
+                            Photo by <a href={careerPhotographerUrl} target="_blank" rel="noopener noreferrer">{careerPhotographer}</a> on <a href={careerPexelsUrl} target="_blank" rel="noopener noreferrer">Pexels</a>
+                        </div>
+                    )}
                 </div>
 
             </div>

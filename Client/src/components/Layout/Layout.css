@@ -20,7 +20,7 @@
 
 /* =========================================================
    MAIN CONTENT AREA
-   SIDEBAR = 260px
+   DESKTOP SIDEBAR = 260px
 ========================================================= */
 
 .main-content {
@@ -34,7 +34,6 @@
     margin-left: 260px;
 
     display: flex;
-
     flex-direction: column;
 
     box-sizing: border-box;
@@ -44,12 +43,14 @@
     transition:
         width 0.25s ease,
         margin-left 0.25s ease;
+
+    min-width: 0;
 }
 
 
 /* =========================================================
    COLLAPSED SIDEBAR
-   SIDEBAR = 80px
+   DESKTOP SIDEBAR = 80px
 ========================================================= */
 
 .main-content.collapsed {
@@ -70,16 +71,17 @@
     min-height: 100dvh;
 
     display: flex;
-
     flex-direction: column;
 
     box-sizing: border-box;
 
     /*
-        Navbar occupies the top 74px.
-        The wrapper starts below it.
+        Navbar desktop height = 75px
     */
-    padding-top: 74px;
+
+    padding-top: 75px;
+
+    min-width: 0;
 }
 
 
@@ -116,14 +118,14 @@
 
 
 /* =========================================================
-   IMPORTANT
-   Prevent layout overflow from wide children
+   PREVENT OVERFLOW
 ========================================================= */
 
 .main-content,
 .main-wrapper,
 .content {
     min-width: 0;
+    max-width: 100%;
 }
 
 
@@ -153,13 +155,11 @@
         margin-left: 80px;
     }
 
-
     .main-content.collapsed {
         width: calc(100% - 80px);
 
         margin-left: 80px;
     }
-
 
     .content {
         padding: 26px 24px;
@@ -181,11 +181,13 @@
         margin-left: 80px;
     }
 
+    /*
+        Navbar is still 75px here
+    */
 
     .main-wrapper {
-        padding-top: 72px;
+        padding-top: 75px;
     }
-
 
     .content {
         padding: 24px 22px;
@@ -196,9 +198,63 @@
 
 /* =========================================================
    MOBILE
+   481px - 768px
 ========================================================= */
 
 @media (max-width: 768px) {
+
+    /*
+        Sidebar becomes an overlay drawer.
+        Main content must occupy the complete screen.
+    */
+
+    .main-content,
+    .main-content.collapsed {
+        width: 100%;
+
+        margin-left: 0;
+
+        min-width: 0;
+    }
+
+
+    /*
+        Navbar height = 75px
+        Keep content exactly below navbar.
+    */
+
+    .main-wrapper {
+        width: 100%;
+
+        padding-top: 75px;
+
+        min-height: 100vh;
+        min-height: 100dvh;
+
+        box-sizing: border-box;
+    }
+
+
+    .content {
+        width: 100%;
+
+        padding: 20px 18px;
+
+        box-sizing: border-box;
+    }
+
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+   <= 480px
+
+   Navbar becomes 70px in Navbar.css,
+   therefore everything must use 70px.
+========================================================= */
+
+@media (max-width: 480px) {
 
     .main-content,
     .main-content.collapsed {
@@ -209,29 +265,18 @@
 
 
     .main-wrapper {
-        padding-top: 64px;
+        width: 100%;
+
+        padding-top: 70px;
+
+        min-height: 100vh;
+        min-height: 100dvh;
     }
 
 
     .content {
-        padding: 20px 18px;
-    }
+        width: 100%;
 
-}
-
-
-/* =========================================================
-   SMALL MOBILE
-========================================================= */
-
-@media (max-width: 480px) {
-
-    .main-wrapper {
-        padding-top: 62px;
-    }
-
-
-    .content {
         padding: 16px 14px;
     }
 
@@ -240,9 +285,14 @@
 
 /* =========================================================
    VERY SMALL MOBILE
+   <= 360px
 ========================================================= */
 
 @media (max-width: 360px) {
+
+    .main-wrapper {
+        padding-top: 70px;
+    }
 
     .content {
         padding: 14px 10px;

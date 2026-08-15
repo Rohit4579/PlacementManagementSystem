@@ -575,12 +575,19 @@
     border-radius: 10px;
 }
 
+
+/* =========================================================
+   NOTIFICATION ITEM
+========================================================= */
+
 .notification-item {
     display: flex;
 
+    align-items: flex-start;
+
     gap: 11px;
 
-    padding: 13px 16px;
+    padding: 13px 12px 13px 16px;
 
     cursor: pointer;
 
@@ -621,6 +628,8 @@
     min-width: 0;
 
     flex: 1;
+
+    padding-top: 1px;
 }
 
 .notification-content p {
@@ -640,6 +649,75 @@
 
     font-size: 10px;
 }
+
+
+/* =========================================================
+   DELETE NOTIFICATION BUTTON
+========================================================= */
+
+.notification-delete {
+    width: 27px;
+    height: 27px;
+
+    border: none;
+
+    border-radius: 7px;
+
+    background: transparent;
+
+    color: #94a3b8;
+
+    display: flex;
+    align-items: center;
+    justify-content: center;
+
+    cursor: pointer;
+
+    flex-shrink: 0;
+
+    margin-top: 1px;
+
+    opacity: 0;
+
+    transition:
+        background 0.2s ease,
+        color 0.2s ease,
+        opacity 0.2s ease,
+        transform 0.2s ease;
+}
+
+
+/*
+ * Show delete button when hovering notification.
+ */
+
+.notification-item:hover .notification-delete {
+    opacity: 1;
+}
+
+
+.notification-delete:hover {
+    background: #fee2e2;
+
+    color: #ef4444;
+
+    transform: scale(1.05);
+}
+
+
+.notification-delete:active {
+    transform: scale(0.95);
+}
+
+
+.notification-delete svg {
+    font-size: 10px;
+}
+
+
+/* =========================================================
+   EMPTY NOTIFICATIONS
+========================================================= */
 
 .empty-notifications {
     padding: 35px 20px;
@@ -1272,6 +1350,15 @@
         max-width: none;
     }
 
+    /*
+     * On mobile the delete button is always visible
+     * because there is no hover interaction.
+     */
+
+    .notification-delete {
+        opacity: 1;
+    }
+
 }
 
 
@@ -1499,6 +1586,21 @@ body.dark-mode .notification-content p {
 
 body.dark-mode .notification-content small {
     color: #64748b;
+}
+
+
+/* =========================================================
+   DELETE NOTIFICATION - DARK MODE
+========================================================= */
+
+body.dark-mode .notification-delete {
+    color: #64748b;
+}
+
+body.dark-mode .notification-delete:hover {
+    background: #4c1d25;
+
+    color: #fca5a5;
 }
 
 

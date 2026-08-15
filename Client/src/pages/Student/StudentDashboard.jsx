@@ -26,10 +26,12 @@ import {
     FaBuilding,
     FaCalendarAlt,
     FaCheckCircle,
-    FaAward
+    FaAward,
+    FaExternalLinkAlt
 } from "react-icons/fa";
 
 import "./StudentDashboard.css";
+
 
 /* =========================================================
    STUDENT DASHBOARD
@@ -56,9 +58,191 @@ function StudentDashboard() {
 
     const [recentJobs, setRecentJobs] = useState([]);
 
-    const [profileCompletion, setProfileCompletion] = useState(0);
+    const [profileCompletion, setProfileCompletion] =
+        useState(0);
 
     const [loading, setLoading] = useState(true);
+
+
+    /* =====================================================
+       PEXELS IMAGE STATES
+    ===================================================== */
+
+    const [heroImage, setHeroImage] = useState("");
+
+    const [heroPhotographer, setHeroPhotographer] =
+        useState("");
+
+    const [heroPhotographerUrl, setHeroPhotographerUrl] =
+        useState("");
+
+    const [heroPexelsUrl, setHeroPexelsUrl] =
+        useState("");
+
+    const [imageLoading, setImageLoading] =
+        useState(true);
+
+
+    /* =====================================================
+       LOAD PEXELS CAREER IMAGE
+    ===================================================== */
+
+    useEffect(() => {
+
+        let cancelled = false;
+
+
+        const loadCareerImage = async () => {
+
+            const apiKey =
+                import.meta.env.VITE_PEXELS_API_KEY;
+
+
+            /*
+             * If API key is not configured,
+             * simply use the CSS background design.
+             */
+
+            if (!apiKey) {
+
+                console.warn(
+                    "VITE_PEXELS_API_KEY is not configured."
+                );
+
+                setImageLoading(false);
+
+                return;
+
+            }
+
+
+            try {
+
+                setImageLoading(true);
+
+
+                const response = await fetch(
+                    "https://api.pexels.com/v1/search?query=college%20students%20career%20technology&orientation=landscape&per_page=10",
+                    {
+                        headers: {
+                            Authorization: apiKey
+                        }
+                    }
+                );
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        `Pexels request failed: ${response.status}`
+                    );
+
+                }
+
+
+                const data =
+                    await response.json();
+
+
+                if (
+                    cancelled ||
+                    !data?.photos?.length
+                ) {
+
+                    setImageLoading(false);
+
+                    return;
+
+                }
+
+
+                /*
+                 * Select a random image from the first
+                 * few relevant results so the dashboard
+                 * doesn't always look identical.
+                 */
+
+                const photos =
+                    data.photos.slice(0, 6);
+
+
+                const selectedPhoto =
+                    photos[
+                        Math.floor(
+                            Math.random() *
+                            photos.length
+                        )
+                    ];
+
+
+                if (!selectedPhoto) {
+
+                    setImageLoading(false);
+
+                    return;
+
+                }
+
+
+                setHeroImage(
+                    selectedPhoto.src?.large2x ||
+                    selectedPhoto.src?.large ||
+                    selectedPhoto.src?.original ||
+                    ""
+                );
+
+
+                setHeroPhotographer(
+                    selectedPhoto.photographer ||
+                    "Pexels"
+                );
+
+
+                setHeroPhotographerUrl(
+                    selectedPhoto.photographer_url ||
+                    "https://www.pexels.com/"
+                );
+
+
+                setHeroPexelsUrl(
+                    selectedPhoto.url ||
+                    "https://www.pexels.com/"
+                );
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "Pexels image error:",
+                    error
+                );
+
+            }
+
+            finally {
+
+                if (!cancelled) {
+
+                    setImageLoading(false);
+
+                }
+
+            }
+
+        };
+
+
+        loadCareerImage();
+
+
+        return () => {
+
+            cancelled = true;
+
+        };
+
+    }, []);
 
 
     /* =====================================================
@@ -70,11 +254,17 @@ function StudentDashboard() {
         if (!user?.uid) {
 
             setAvailableJobs(0);
+
             setAppliedJobs(0);
+
             setShortlisted(0);
+
             setPlaced(0);
+
             setRecentJobs([]);
+
             setProfileCompletion(0);
+
             setLoading(false);
 
             return;
@@ -119,7 +309,9 @@ function StudentDashboard() {
 
 
                 if (cancelled) {
+
                     return;
+
                 }
 
 
@@ -133,12 +325,16 @@ function StudentDashboard() {
 
 
                     if (profile.phone) {
+
                         completed++;
+
                     }
 
 
                     if (profile.department) {
+
                         completed++;
+
                     }
 
 
@@ -154,12 +350,16 @@ function StudentDashboard() {
 
 
                     if (profile.skills) {
+
                         completed++;
+
                     }
 
 
                     if (profile.graduationYear) {
+
                         completed++;
+
                     }
 
 
@@ -191,7 +391,9 @@ function StudentDashboard() {
 
 
                 if (cancelled) {
+
                     return;
+
                 }
 
 
@@ -199,7 +401,8 @@ function StudentDashboard() {
                     jobsSnap.docs.map(
                         (document) => ({
 
-                            id: document.id,
+                            id:
+                                document.id,
 
                             ...document.data()
 
@@ -218,9 +421,11 @@ function StudentDashboard() {
                             a.createdAt?.seconds ||
                             0;
 
+
                         const dateB =
                             b.createdAt?.seconds ||
                             0;
+
 
                         return dateB - dateA;
 
@@ -279,7 +484,9 @@ function StudentDashboard() {
                         (snapshot) => {
 
                             if (cancelled) {
+
                                 return;
+
                             }
 
 
@@ -318,23 +525,9 @@ function StudentDashboard() {
 
 
                                     /*
-                                     * IMPORTANT:
-                                     *
-                                     * placedStudent is the source of truth
-                                     * for placement.
-                                     *
-                                     * The company keeps:
-                                     *
-                                     * status = "Accepted"
-                                     *
-                                     * and changes:
-                                     *
-                                     * placedStudent = true
-                                     *
-                                     * Therefore we must check
-                                     * placedStudent here.
+                                     * placedStudent is the source
+                                     * of truth for placement.
                                      */
-
 
                                     const isPlaced =
                                         application.placedStudent === true ||
@@ -389,19 +582,7 @@ function StudentDashboard() {
                                 placedCount
                             );
 
-
-                            console.log(
-                                "Student dashboard applications updated:",
-                                snapshot.docs.map(
-                                    (doc) => ({
-                                        id: doc.id,
-                                        ...doc.data()
-                                    })
-                                )
-                            );
-
                         },
-
 
                         (error) => {
 
@@ -565,12 +746,18 @@ function StudentDashboard() {
 
             <div className="dashboard-header">
 
+
                 <div className="welcome-content">
 
-                    <div>
+
+                    {/* TEXT */}
+
+                    <div className="welcome-text">
 
                         <span className="welcome-label">
+
                             STUDENT DASHBOARD
+
                         </span>
 
 
@@ -597,19 +784,150 @@ function StudentDashboard() {
 
                         </p>
 
+
+                        {/* QUICK ACTIONS */}
+
+                        <div className="welcome-actions">
+
+                            <button
+                                type="button"
+                                onClick={handleViewAllJobs}
+                            >
+
+                                <FaBriefcase />
+
+                                Explore Jobs
+
+                                <FaArrowRight />
+
+                            </button>
+
+
+                            <button
+                                type="button"
+                                className="secondary"
+                                onClick={handleProfile}
+                            >
+
+                                <FaUser />
+
+                                My Profile
+
+                            </button>
+
+                        </div>
+
                     </div>
 
 
-                    <div className="welcome-icon">
+                    {/* =================================================
+                        PEXELS IMAGE
+                    ================================================= */}
 
-                        <FaGraduationCap />
+                    <div className="dashboard-hero-visual">
+
+
+                        {imageLoading ? (
+
+                            <div className="hero-image-loading">
+
+                                <div className="hero-image-spinner"></div>
+
+                            </div>
+
+                        ) : heroImage ? (
+
+                            <img
+                                src={heroImage}
+                                alt="Students preparing for career opportunities"
+                                className="dashboard-hero-image"
+                            />
+
+                        ) : (
+
+                            <div className="hero-fallback">
+
+                                <FaGraduationCap />
+
+                                <span>
+                                    Build your career
+                                </span>
+
+                            </div>
+
+                        )}
+
+
+                        <div className="hero-image-overlay"></div>
+
+
+                        <div className="hero-floating-card">
+
+                            <span className="hero-floating-icon">
+
+                                <FaCheckCircle />
+
+                            </span>
+
+
+                            <div>
+
+                                <strong>
+                                    Your career journey
+                                </strong>
+
+                                <small>
+                                    Starts with the right opportunity
+                                </small>
+
+                            </div>
+
+                        </div>
+
+
+                        {heroImage && (
+
+                            <div className="pexels-credit">
+
+                                Photo by{" "}
+
+                                <a
+                                    href={
+                                        heroPhotographerUrl ||
+                                        "https://www.pexels.com/"
+                                    }
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+
+                                    {heroPhotographer}
+
+                                </a>
+
+                                {" "}on{" "}
+
+                                <a
+                                    href={
+                                        heroPexelsUrl ||
+                                        "https://www.pexels.com/"
+                                    }
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+
+                                    Pexels
+                                    
+                                </a>
+
+                            </div>
+
+                        )}
 
                     </div>
 
                 </div>
 
             </div>
-
 
 
             {/* =================================================
@@ -636,9 +954,11 @@ function StudentDashboard() {
                             Available Jobs
                         </span>
 
+
                         <h2>
                             {availableJobs}
                         </h2>
+
 
                         <small>
                             Opportunities
@@ -647,7 +967,6 @@ function StudentDashboard() {
                     </div>
 
                 </div>
-
 
 
                 {/* APPLICATIONS */}
@@ -667,9 +986,11 @@ function StudentDashboard() {
                             Applications
                         </span>
 
+
                         <h2>
                             {appliedJobs}
                         </h2>
+
 
                         <small>
                             Jobs applied
@@ -678,7 +999,6 @@ function StudentDashboard() {
                     </div>
 
                 </div>
-
 
 
                 {/* SHORTLISTED */}
@@ -698,9 +1018,11 @@ function StudentDashboard() {
                             Shortlisted
                         </span>
 
+
                         <h2>
                             {shortlisted}
                         </h2>
+
 
                         <small>
                             Shortlisted applications
@@ -709,7 +1031,6 @@ function StudentDashboard() {
                     </div>
 
                 </div>
-
 
 
                 {/* PLACED */}
@@ -729,9 +1050,11 @@ function StudentDashboard() {
                             Placed
                         </span>
 
+
                         <h2>
                             {placed}
                         </h2>
+
 
                         <small>
                             Placement confirmed
@@ -740,7 +1063,6 @@ function StudentDashboard() {
                     </div>
 
                 </div>
-
 
 
                 {/* PROFILE */}
@@ -760,9 +1082,11 @@ function StudentDashboard() {
                             Profile
                         </span>
 
+
                         <h2>
                             {profileCompletion}%
                         </h2>
+
 
                         <small>
                             Completion
@@ -772,9 +1096,7 @@ function StudentDashboard() {
 
                 </div>
 
-
             </div>
-
 
 
             {/* =================================================
@@ -783,7 +1105,9 @@ function StudentDashboard() {
 
             <div className="profile-card">
 
+
                 <div className="profile-card-left">
+
 
                     <div className="profile-card-icon">
 
@@ -809,9 +1133,12 @@ function StudentDashboard() {
                             Profile Completion
                         </h3>
 
+
                         <p>
+
                             Complete your profile to
                             improve your placement opportunities.
+
                         </p>
 
                     </div>
@@ -819,14 +1146,15 @@ function StudentDashboard() {
                 </div>
 
 
-
                 <div className="profile-progress-area">
+
 
                     <div className="progress-header">
 
                         <span>
                             Profile Progress
                         </span>
+
 
                         <strong>
                             {profileCompletion}%
@@ -870,23 +1198,29 @@ function StudentDashboard() {
             </div>
 
 
-
             {/* =================================================
                 RECENT JOBS
             ================================================= */}
 
             <div className="recent-section">
 
+
                 <div className="section-header">
+
 
                     <div>
 
                         <span className="section-label">
+
                             OPPORTUNITIES
+
                         </span>
 
+
                         <h2>
+
                             Recent Job Opportunities
+
                         </h2>
 
                     </div>
@@ -907,7 +1241,6 @@ function StudentDashboard() {
                 </div>
 
 
-
                 {
                     recentJobs.length === 0
 
@@ -924,8 +1257,10 @@ function StudentDashboard() {
                                 </h3>
 
                                 <p>
+
                                     New placement opportunities
                                     will appear here.
+
                                 </p>
 
                             </div>
@@ -967,13 +1302,17 @@ function StudentDashboard() {
                                                 >
 
 
+                                                    {/* COMPANY */}
+
                                                     <div className="job-company">
+
 
                                                         <div className="company-badge">
 
                                                             <FaBuilding />
 
                                                         </div>
+
 
                                                         <span>
 
@@ -987,6 +1326,7 @@ function StudentDashboard() {
                                                     </div>
 
 
+                                                    {/* TITLE */}
 
                                                     <h3>
 
@@ -999,6 +1339,7 @@ function StudentDashboard() {
                                                     </h3>
 
 
+                                                    {/* SKILLS */}
 
                                                     <p className="job-skills">
 
@@ -1022,8 +1363,10 @@ function StudentDashboard() {
                                                     </p>
 
 
+                                                    {/* DETAILS */}
 
                                                     <div className="job-details">
+
 
                                                         <span>
 
@@ -1065,8 +1408,10 @@ function StudentDashboard() {
                                                     </div>
 
 
+                                                    {/* ELIGIBILITY */}
 
                                                     <div className="eligibility-box">
+
 
                                                         <div className="eligibility-title">
 
@@ -1078,6 +1423,7 @@ function StudentDashboard() {
 
 
                                                         <div className="eligibility-items">
+
 
                                                             <span>
 
@@ -1131,11 +1477,13 @@ function StudentDashboard() {
 
                                                             </span>
 
+
                                                         </div>
 
                                                     </div>
 
 
+                                                    {/* VIEW JOB */}
 
                                                     <button
                                                         type="button"
@@ -1153,7 +1501,6 @@ function StudentDashboard() {
 
                                                     </button>
 
-
                                                 </div>
 
                                             );
@@ -1167,9 +1514,7 @@ function StudentDashboard() {
                         )
                 }
 
-
             </div>
-
 
         </div>
 

@@ -1105,3 +1105,131 @@
     }
 
 }
+
+
+/* =========================================================
+   PEXELS JOB POSTING VISUAL
+   Visual enhancement only - existing AddJob styles remain intact.
+========================================================= */
+
+.add-job .job-posting-visual {
+    position: relative;
+    width: 100%;
+    height: 230px;
+    margin: 0 0 24px;
+    border-radius: 20px;
+    overflow: hidden;
+    border: 1px solid #e8ebf2;
+    background: #e9edf7;
+    box-shadow: 0 10px 30px rgba(15, 23, 42, 0.07);
+}
+
+.add-job .job-posting-visual-image {
+    width: 100%;
+    height: 100%;
+    display: block;
+    object-fit: cover;
+    object-position: center 45%;
+}
+
+.add-job .job-posting-visual-overlay {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    padding: 28px 34px;
+    box-sizing: border-box;
+    background: linear-gradient(90deg, rgba(15, 23, 42, 0.84) 0%, rgba(15, 23, 42, 0.58) 42%, rgba(15, 23, 42, 0.08) 100%);
+}
+
+.add-job .job-posting-visual-content {
+    max-width: 560px;
+    color: #ffffff;
+}
+
+.add-job .job-posting-visual-badge {
+    display: inline-flex;
+    align-items: center;
+    margin-bottom: 9px;
+    padding: 6px 9px;
+    border: 1px solid rgba(255, 255, 255, 0.28);
+    border-radius: 7px;
+    background: rgba(255, 255, 255, 0.12);
+    backdrop-filter: blur(8px);
+    color: #ffffff;
+    font-size: 8px;
+    line-height: 1;
+    font-weight: 800;
+    letter-spacing: 1.15px;
+}
+
+.add-job .job-posting-visual-content h2 {
+    margin: 0;
+    max-width: 520px;
+    color: #ffffff;
+    font-size: 27px;
+    line-height: 1.18;
+    font-weight: 800;
+    letter-spacing: -0.5px;
+}
+
+.add-job .job-posting-visual-content p {
+    max-width: 510px;
+    margin: 9px 0 0;
+    color: rgba(255, 255, 255, 0.88);
+    font-size: 12px;
+    line-height: 1.55;
+}
+
+@media (max-width: 760px) {
+    .add-job .job-posting-visual {
+        height: 190px;
+        margin-bottom: 18px;
+        border-radius: 16px;
+    }
+
+    .add-job .job-posting-visual-overlay {
+        padding: 22px 20px;
+    }
+
+    .add-job .job-posting-visual-content h2 {
+        font-size: 22px;
+    }
+}
+
+@media (max-width: 600px) {
+    .add-job .job-posting-visual {
+        height: 165px;
+    }
+
+    .add-job .job-posting-visual-content h2 {
+        font-size: 19px;
+    }
+
+    .add-job .job-posting-visual-content p {
+        font-size: 10px;
+        max-width: 390px;
+    }
+}
+
+@media (max-width: 380px) {
+    .add-job .job-posting-visual {
+        height: 150px;
+    }
+
+    .add-job .job-posting-visual-overlay {
+        padding: 18px 16px;
+    }
+
+    .add-job .job-posting-visual-badge {
+        font-size: 7px;
+    }
+
+    .add-job .job-posting-visual-content h2 {
+        font-size: 17px;
+    }
+
+    .add-job .job-posting-visual-content p {
+        display: none;
+    }
+}

@@ -1,6 +1,6 @@
 /* =========================================================
    STUDENT DASHBOARD — PREMIUM UI
-   ========================================================= */
+========================================================= */
 
 .student-dashboard {
     width: 100%;
@@ -11,14 +11,16 @@
     color: #172033;
 }
 
+
 /* =========================================================
    HEADER
-   ========================================================= */
+========================================================= */
 
 .dashboard-header {
     position: relative;
     overflow: hidden;
-    padding: 34px 38px;
+
+    padding: 0;
     margin-bottom: 24px;
 
     background:
@@ -39,124 +41,533 @@
     box-shadow:
         0 12px 35px rgba(31, 41, 55, 0.06),
         inset 0 1px 0 rgba(255, 255, 255, 0.9);
+
+    min-height: 300px;
 }
+
 
 .dashboard-header::before {
     content: "";
+
     position: absolute;
+
     width: 180px;
     height: 180px;
+
     right: -70px;
     bottom: -100px;
 
     background: rgba(99, 102, 241, 0.08);
+
     border-radius: 50%;
+
     filter: blur(5px);
+
+    pointer-events: none;
 }
+
 
 .welcome-content {
     position: relative;
     z-index: 1;
 
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    gap: 30px;
+    display: grid;
+
+    grid-template-columns:
+        minmax(0, 1.2fr)
+        minmax(340px, 0.8fr);
+
+    align-items: stretch;
+
+    min-height: 300px;
 }
+
+
+.welcome-text {
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+
+    padding: 34px 20px 34px 38px;
+
+    min-width: 0;
+}
+
 
 .welcome-label {
     display: inline-flex;
     align-items: center;
+
     gap: 7px;
 
     margin-bottom: 9px;
 
     color: #6366f1;
+
     font-size: 10px;
+
     font-weight: 800;
+
     letter-spacing: 1.3px;
 }
 
+
 .welcome-label::before {
     content: "";
+
     width: 7px;
     height: 7px;
+
     border-radius: 50%;
+
     background: #6366f1;
-    box-shadow: 0 0 0 4px rgba(99, 102, 241, 0.1);
+
+    box-shadow:
+        0 0 0 4px rgba(99, 102, 241, 0.1);
 }
+
 
 .dashboard-header h1 {
     margin: 0 0 9px;
 
     color: #111827;
+
     font-size: 31px;
+
     line-height: 1.2;
+
     font-weight: 800;
+
     letter-spacing: -0.8px;
 }
 
+
 .dashboard-header p {
     max-width: 690px;
+
     margin: 0;
 
     color: #667085;
+
     font-size: 13px;
+
     line-height: 1.7;
 }
 
-.welcome-icon {
+
+/* =========================================================
+   WELCOME ACTIONS
+========================================================= */
+
+.welcome-actions {
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    margin-top: 22px;
+}
+
+
+.welcome-actions button {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+
+    gap: 8px;
+
+    padding: 10px 15px;
+
+    border: none;
+
+    border-radius: 10px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #667eea,
+            #5b5fe8
+        );
+
+    color: white;
+
+    font-size: 10px;
+
+    font-weight: 700;
+
+    cursor: pointer;
+
+    box-shadow:
+        0 7px 16px rgba(99, 102, 241, 0.18);
+
+    transition:
+        transform 0.2s ease,
+        box-shadow 0.2s ease,
+        background 0.2s ease;
+}
+
+
+.welcome-actions button:hover {
+    transform: translateY(-2px);
+
+    box-shadow:
+        0 10px 22px rgba(99, 102, 241, 0.25);
+}
+
+
+.welcome-actions button svg:last-child {
+    font-size: 9px;
+
+    transition:
+        transform 0.2s ease;
+}
+
+
+.welcome-actions button:hover svg:last-child {
+    transform: translateX(3px);
+}
+
+
+.welcome-actions button.secondary {
+    background: #ffffff;
+
+    color: #6366f1;
+
+    border: 1px solid #dfe4ff;
+
+    box-shadow: none;
+}
+
+
+.welcome-actions button.secondary:hover {
+    background: #f5f7ff;
+
+    border-color: #cfd5ff;
+}
+
+
+/* =========================================================
+   PEXELS HERO IMAGE
+========================================================= */
+
+.dashboard-hero-visual {
     position: relative;
 
-    width: 72px;
-    height: 72px;
-    min-width: 72px;
+    min-height: 300px;
+
+    overflow: hidden;
+
+    border-radius: 0 23px 23px 0;
+
+    background:
+        linear-gradient(
+            135deg,
+            #e8ebff,
+            #cfd5ff
+        );
+}
+
+
+.dashboard-hero-image {
+    position: absolute;
+
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+
+    object-position: center;
+
+    display: block;
+
+    animation:
+        heroImageAppear
+        0.55s ease;
+}
+
+
+.hero-image-overlay {
+    position: absolute;
+
+    inset: 0;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(255, 255, 255, 0.15),
+            rgba(17, 24, 39, 0.15)
+        );
+
+    pointer-events: none;
+}
+
+
+.dashboard-hero-visual::after {
+    content: "";
+
+    position: absolute;
+
+    inset: 0;
+
+    background:
+        linear-gradient(
+            180deg,
+            transparent 55%,
+            rgba(15, 23, 42, 0.48) 100%
+        );
+
+    pointer-events: none;
+}
+
+
+/* =========================================================
+   HERO FALLBACK
+========================================================= */
+
+.hero-fallback {
+    position: absolute;
+
+    inset: 0;
+
+    display: flex;
+
+    flex-direction: column;
+
+    align-items: center;
+
+    justify-content: center;
+
+    gap: 10px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #eef2ff,
+            #dbe4ff
+        );
+
+    color: #6366f1;
+
+    font-size: 14px;
+
+    font-weight: 700;
+}
+
+
+.hero-fallback svg {
+    font-size: 55px;
+}
+
+
+/* =========================================================
+   IMAGE LOADING
+========================================================= */
+
+.hero-image-loading {
+    position: absolute;
+
+    inset: 0;
+
+    display: flex;
+
+    align-items: center;
+
+    justify-content: center;
+
+    background:
+        linear-gradient(
+            135deg,
+            #eef2ff,
+            #dbe4ff
+        );
+}
+
+
+.hero-image-spinner {
+    width: 34px;
+    height: 34px;
+
+    border: 3px solid rgba(99, 102, 241, 0.18);
+
+    border-top-color: #6366f1;
+
+    border-radius: 50%;
+
+    animation:
+        hero-spin
+        0.75s
+        linear
+        infinite;
+}
+
+
+/* =========================================================
+   FLOATING HERO CARD
+========================================================= */
+
+.hero-floating-card {
+    position: absolute;
+
+    z-index: 4;
+
+    left: 20px;
+    bottom: 38px;
+
+    display: flex;
+    align-items: center;
+
+    gap: 10px;
+
+    max-width: calc(100% - 40px);
+
+    padding: 10px 13px;
+
+    border: 1px solid rgba(255, 255, 255, 0.55);
+
+    border-radius: 12px;
+
+    background:
+        rgba(255, 255, 255, 0.93);
+
+    backdrop-filter: blur(10px);
+
+    -webkit-backdrop-filter: blur(10px);
+
+    box-shadow:
+        0 12px 28px rgba(15, 23, 42, 0.15);
+}
+
+
+.hero-floating-icon {
+    width: 31px;
+    height: 31px;
+
+    flex-shrink: 0;
 
     display: flex;
     align-items: center;
     justify-content: center;
 
-    border: 1px solid rgba(99, 102, 241, 0.15);
-    border-radius: 20px;
+    border-radius: 9px;
+
+    background: #eafaf3;
+
+    color: #10b981;
+
+    font-size: 13px;
+}
+
+
+.hero-floating-card div {
+    display: flex;
+
+    flex-direction: column;
+
+    min-width: 0;
+}
+
+
+.hero-floating-card strong {
+    color: #1e293b;
+
+    font-size: 10px;
+
+    font-weight: 800;
+}
+
+
+.hero-floating-card small {
+    margin-top: 2px;
+
+    color: #64748b;
+
+    font-size: 8px;
+
+    line-height: 1.3;
+}
+
+
+/* =========================================================
+   PEXELS CREDIT
+========================================================= */
+
+.pexels-credit {
+    position: absolute;
+
+    z-index: 5;
+
+    right: 12px;
+    bottom: 10px;
+
+    padding: 4px 7px;
+
+    border-radius: 6px;
 
     background:
-        linear-gradient(
-            145deg,
-            #eef2ff,
-            #e0e7ff
-        );
+        rgba(15, 23, 42, 0.48);
 
-    color: #6366f1;
-    font-size: 29px;
+    color: rgba(255, 255, 255, 0.9);
 
-    box-shadow:
-        0 12px 25px rgba(99, 102, 241, 0.12);
+    font-size: 7px;
+
+    line-height: 1.3;
+
+    backdrop-filter: blur(4px);
 }
+
+
+.pexels-credit a {
+    color: white;
+
+    text-decoration: underline;
+
+    text-underline-offset: 2px;
+}
+
+
+.pexels-credit a:hover {
+    opacity: 0.8;
+}
+
 
 /* =========================================================
    STATISTICS
-   ========================================================= */
+========================================================= */
 
 .stats-container {
     display: grid;
-    grid-template-columns: repeat(5, minmax(0, 1fr));
+
+    grid-template-columns:
+        repeat(5, minmax(0, 1fr));
+
     gap: 16px;
+
     margin-bottom: 24px;
 }
 
+
 .stat-card {
     position: relative;
+
     overflow: hidden;
 
     display: flex;
+
     align-items: center;
+
     gap: 14px;
 
     min-width: 0;
+
     padding: 20px;
 
-    background: rgba(255, 255, 255, 0.95);
+    background:
+        rgba(255, 255, 255, 0.95);
+
     border: 1px solid #e8ebf2;
+
     border-radius: 18px;
 
     box-shadow:
@@ -168,8 +579,10 @@
         border-color 0.25s ease;
 }
 
+
 .stat-card::after {
     content: "";
+
     position: absolute;
 
     width: 90px;
@@ -179,8 +592,11 @@
     top: -45px;
 
     border-radius: 50%;
-    background: rgba(99, 102, 241, 0.045);
+
+    background:
+        rgba(99, 102, 241, 0.045);
 }
+
 
 .stat-card:hover {
     transform: translateY(-4px);
@@ -191,92 +607,127 @@
         0 15px 32px rgba(15, 23, 42, 0.09);
 }
 
+
 .stat-icon {
     position: relative;
+
     z-index: 1;
 
     width: 48px;
     height: 48px;
+
     min-width: 48px;
 
     display: flex;
+
     align-items: center;
+
     justify-content: center;
 
     border-radius: 14px;
 
     font-size: 17px;
 
-    transition: transform 0.25s ease;
+    transition:
+        transform 0.25s ease;
 }
 
+
 .stat-card:hover .stat-icon {
-    transform: scale(1.07) rotate(-3deg);
+    transform:
+        scale(1.07)
+        rotate(-3deg);
 }
+
 
 .stat-icon.blue {
     background: #eef2ff;
+
     color: #6366f1;
 }
 
+
 .stat-icon.purple {
     background: #f5edff;
+
     color: #8b5cf6;
 }
 
+
 .stat-icon.green {
     background: #eafaf3;
+
     color: #10b981;
 }
 
+
 .stat-icon.placed {
     background: #e8f9f1;
+
     color: #059669;
 }
 
+
 .stat-icon.orange {
     background: #fff4e8;
+
     color: #f97316;
 }
+
 
 .stat-content {
     min-width: 0;
 }
 
+
 .stat-content span {
     display: block;
 
     color: #667085;
+
     font-size: 11px;
+
     font-weight: 600;
 }
+
 
 .stat-content h2 {
     margin: 4px 0 1px;
 
     color: #111827;
+
     font-size: 27px;
+
     line-height: 1;
+
     font-weight: 800;
+
     letter-spacing: -0.5px;
 }
 
+
 .stat-content small {
     color: #98a2b3;
+
     font-size: 9px;
 }
 
+
 /* =========================================================
    PROFILE COMPLETION
-   ========================================================= */
+========================================================= */
 
 .profile-card {
     display: flex;
+
     align-items: center;
+
     justify-content: space-between;
+
     gap: 35px;
 
     padding: 22px 25px;
+
     margin-bottom: 24px;
 
     background:
@@ -287,86 +738,114 @@
         );
 
     border: 1px solid #e7eaf2;
+
     border-radius: 19px;
 
     box-shadow:
         0 8px 26px rgba(15, 23, 42, 0.05);
 }
 
+
 .profile-card-left {
     display: flex;
+
     align-items: center;
+
     gap: 14px;
 
     min-width: 260px;
 }
 
+
 .profile-card-icon {
     width: 45px;
     height: 45px;
+
     min-width: 45px;
 
     display: flex;
+
     align-items: center;
+
     justify-content: center;
 
     border-radius: 13px;
 
     background: #eef2ff;
+
     color: #6366f1;
 
     font-size: 16px;
 }
 
+
 .profile-card h3 {
     margin: 0 0 4px;
 
     color: #1e293b;
+
     font-size: 14px;
+
     font-weight: 750;
 }
 
+
 .profile-card p {
     max-width: 350px;
+
     margin: 0;
 
     color: #98a2b3;
+
     font-size: 10px;
+
     line-height: 1.55;
 }
 
+
 .profile-progress-area {
     width: 460px;
+
     max-width: 100%;
 }
 
+
 .progress-header {
     display: flex;
+
     justify-content: space-between;
 
     margin-bottom: 8px;
 
     color: #667085;
+
     font-size: 10px;
+
     font-weight: 600;
 }
 
+
 .progress-header strong {
     color: #6366f1;
+
     font-weight: 800;
 }
+
 
 .progress-bar {
     position: relative;
 
     width: 100%;
+
     height: 8px;
 
     overflow: hidden;
 
     border-radius: 20px;
+
     background: #edf0f7;
 }
+
 
 .progress-fill {
     height: 100%;
@@ -383,24 +862,32 @@
     box-shadow:
         0 0 12px rgba(99, 102, 241, 0.25);
 
-    transition: width 0.6s ease;
+    transition:
+        width 0.6s ease;
 }
+
 
 .profile-progress-area button {
     display: inline-flex;
+
     align-items: center;
+
     gap: 7px;
 
     margin-top: 11px;
+
     padding: 8px 12px;
 
     border: 1px solid #e0e5ff;
+
     border-radius: 9px;
 
     background: #f4f5ff;
+
     color: #6366f1;
 
     font-size: 10px;
+
     font-weight: 700;
 
     cursor: pointer;
@@ -411,15 +898,19 @@
         transform 0.2s ease;
 }
 
+
 .profile-progress-area button:hover {
     background: #6366f1;
+
     color: #ffffff;
+
     transform: translateY(-1px);
 }
 
+
 /* =========================================================
    RECENT JOB SECTION
-   ========================================================= */
+========================================================= */
 
 .recent-section {
     padding: 27px;
@@ -427,20 +918,26 @@
     background: #ffffff;
 
     border: 1px solid #e7eaf0;
+
     border-radius: 22px;
 
     box-shadow:
         0 10px 30px rgba(15, 23, 42, 0.055);
 }
 
+
 .section-header {
     display: flex;
+
     align-items: center;
+
     justify-content: space-between;
 
     gap: 20px;
+
     margin-bottom: 21px;
 }
+
 
 .section-label {
     display: block;
@@ -448,34 +945,47 @@
     margin-bottom: 5px;
 
     color: #6366f1;
+
     font-size: 9px;
+
     font-weight: 800;
+
     letter-spacing: 1.3px;
 }
+
 
 .section-header h2 {
     margin: 0;
 
     color: #111827;
+
     font-size: 21px;
+
     font-weight: 800;
+
     letter-spacing: -0.35px;
 }
 
+
 .view-all-btn {
     display: inline-flex;
+
     align-items: center;
+
     gap: 7px;
 
     padding: 9px 13px;
 
     border: 1px solid #e0e5ff;
+
     border-radius: 10px;
 
     background: #f7f8ff;
+
     color: #6366f1;
 
     font-size: 10px;
+
     font-weight: 700;
 
     cursor: pointer;
@@ -483,23 +993,31 @@
     transition: 0.2s ease;
 }
 
+
 .view-all-btn svg {
-    transition: transform 0.2s ease;
+    transition:
+        transform 0.2s ease;
 }
+
 
 .view-all-btn:hover {
     background: #6366f1;
+
     border-color: #6366f1;
+
     color: #ffffff;
 }
 
+
 .view-all-btn:hover svg {
-    transform: translateX(3px);
+    transform:
+        translateX(3px);
 }
+
 
 /* =========================================================
    JOB GRID
-   ========================================================= */
+========================================================= */
 
 .job-container {
     display: grid;
@@ -512,14 +1030,16 @@
     gap: 18px;
 }
 
+
 /* =========================================================
    JOB CARD
-   ========================================================= */
+========================================================= */
 
 .job-card {
     position: relative;
 
     display: flex;
+
     flex-direction: column;
 
     min-width: 0;
@@ -534,6 +1054,7 @@
         );
 
     border: 1px solid #e5e7eb;
+
     border-radius: 17px;
 
     box-shadow:
@@ -544,6 +1065,7 @@
         box-shadow 0.25s ease,
         border-color 0.25s ease;
 }
+
 
 .job-card::before {
     content: "";
@@ -556,7 +1078,8 @@
 
     height: 2px;
 
-    border-radius: 0 0 5px 5px;
+    border-radius:
+        0 0 5px 5px;
 
     background:
         linear-gradient(
@@ -568,11 +1091,14 @@
 
     opacity: 0;
 
-    transition: opacity 0.25s ease;
+    transition:
+        opacity 0.25s ease;
 }
 
+
 .job-card:hover {
-    transform: translateY(-5px);
+    transform:
+        translateY(-5px);
 
     border-color: #cfd5ff;
 
@@ -580,28 +1106,35 @@
         0 17px 35px rgba(15, 23, 42, 0.09);
 }
 
+
 .job-card:hover::before {
     opacity: 1;
 }
 
+
 /* =========================================================
    COMPANY
-   ========================================================= */
+========================================================= */
 
 .job-company {
     display: flex;
+
     align-items: center;
 
     gap: 10px;
+
     margin-bottom: 15px;
 }
+
 
 .company-badge {
     width: 39px;
     height: 39px;
 
     display: flex;
+
     align-items: center;
+
     justify-content: center;
 
     border-radius: 11px;
@@ -621,20 +1154,25 @@
         0 5px 12px rgba(99, 102, 241, 0.09);
 }
 
+
 .job-company span {
     overflow: hidden;
 
     color: #6366f1;
 
     font-size: 12px;
+
     font-weight: 750;
+
     text-overflow: ellipsis;
+
     white-space: nowrap;
 }
 
+
 /* =========================================================
    JOB TITLE
-   ========================================================= */
+========================================================= */
 
 .job-card h3 {
     margin: 0 0 7px;
@@ -642,15 +1180,18 @@
     color: #172033;
 
     font-size: 16px;
+
     line-height: 1.35;
+
     font-weight: 800;
 
     letter-spacing: -0.2px;
 }
 
+
 /* =========================================================
    SKILLS
-   ========================================================= */
+========================================================= */
 
 .job-skills {
     min-height: 34px;
@@ -660,26 +1201,33 @@
     color: #667085;
 
     font-size: 10px;
+
     line-height: 1.65;
 }
 
+
 /* =========================================================
    JOB DETAILS
-   ========================================================= */
+========================================================= */
 
 .job-details {
     display: flex;
+
     flex-direction: column;
+
     gap: 8px;
 
     padding: 13px 0;
 
     border-top: 1px solid #edf0f4;
+
     border-bottom: 1px solid #edf0f4;
 }
 
+
 .job-details span {
     display: flex;
+
     align-items: center;
 
     gap: 8px;
@@ -689,46 +1237,58 @@
     color: #667085;
 
     font-size: 10px;
+
     line-height: 1.4;
 }
+
 
 .job-details span svg {
     flex-shrink: 0;
 
     color: #6366f1;
+
     font-size: 9px;
 }
 
+
 /* =========================================================
    ELIGIBILITY
-   ========================================================= */
+========================================================= */
 
 .eligibility-box {
     margin-top: 13px;
+
     padding: 11px;
 
     border: 1px solid #e9ebf1;
+
     border-radius: 11px;
 
     background: #ffffff;
 }
 
+
 .eligibility-title {
     display: flex;
+
     align-items: center;
 
     gap: 6px;
+
     margin-bottom: 9px;
 
     color: #475467;
 
     font-size: 10px;
+
     font-weight: 750;
 }
+
 
 .eligibility-title svg {
     color: #6366f1;
 }
+
 
 .eligibility-items {
     display: grid;
@@ -739,12 +1299,14 @@
     gap: 6px;
 }
 
+
 .eligibility-items span {
     display: block;
 
     padding: 7px 4px;
 
     border: 1px solid #edf0f5;
+
     border-radius: 8px;
 
     background: #f8fafc;
@@ -756,6 +1318,7 @@
     font-size: 9px;
 }
 
+
 .eligibility-items strong {
     display: block;
 
@@ -764,26 +1327,32 @@
     color: #1e293b;
 
     font-size: 10px;
+
     font-weight: 800;
 }
 
+
 /* =========================================================
    VIEW JOB BUTTON
-   ========================================================= */
+========================================================= */
 
 .view-job-btn {
     width: 100%;
 
     display: flex;
+
     align-items: center;
+
     justify-content: center;
 
     gap: 7px;
 
     margin-top: 13px;
+
     padding: 10px 14px;
 
     border: none;
+
     border-radius: 10px;
 
     background:
@@ -796,6 +1365,7 @@
     color: #ffffff;
 
     font-size: 10px;
+
     font-weight: 700;
 
     cursor: pointer;
@@ -809,12 +1379,16 @@
         background 0.2s ease;
 }
 
+
 .view-job-btn svg {
-    transition: transform 0.2s ease;
+    transition:
+        transform 0.2s ease;
 }
 
+
 .view-job-btn:hover {
-    transform: translateY(-2px);
+    transform:
+        translateY(-2px);
 
     background:
         linear-gradient(
@@ -827,13 +1401,16 @@
         0 9px 20px rgba(99, 102, 241, 0.28);
 }
 
+
 .view-job-btn:hover svg {
-    transform: translateX(4px);
+    transform:
+        translateX(4px);
 }
+
 
 /* =========================================================
    EMPTY STATE
-   ========================================================= */
+========================================================= */
 
 .empty-jobs {
     padding: 55px 20px;
@@ -843,19 +1420,24 @@
     color: #98a2b3;
 }
 
+
 .empty-jobs svg {
     margin-bottom: 12px;
 
     color: #c7d2fe;
+
     font-size: 31px;
 }
+
 
 .empty-jobs h3 {
     margin: 0 0 5px;
 
     color: #475467;
+
     font-size: 15px;
 }
+
 
 .empty-jobs p {
     margin: 0;
@@ -863,20 +1445,25 @@
     font-size: 10px;
 }
 
+
 /* =========================================================
    LOADING
-   ========================================================= */
+========================================================= */
 
 .dashboard-loading {
     min-height: 450px;
 
     display: flex;
+
     flex-direction: column;
+
     align-items: center;
+
     justify-content: center;
 
     color: #98a2b3;
 }
+
 
 .loading-spinner {
     width: 34px;
@@ -885,6 +1472,7 @@
     margin-bottom: 13px;
 
     border: 3px solid #e5e7eb;
+
     border-top-color: #6366f1;
 
     border-radius: 50%;
@@ -896,165 +1484,442 @@
         infinite;
 }
 
+
 .dashboard-loading p {
     margin: 0;
+
     font-size: 12px;
 }
 
+
+/* =========================================================
+   ANIMATIONS
+========================================================= */
+
 @keyframes dashboard-spin {
+
     to {
         transform: rotate(360deg);
     }
+
 }
+
+
+@keyframes hero-spin {
+
+    to {
+        transform: rotate(360deg);
+    }
+
+}
+
+
+@keyframes heroImageAppear {
+
+    from {
+        opacity: 0;
+
+        transform: scale(1.03);
+    }
+
+    to {
+        opacity: 1;
+
+        transform: scale(1);
+    }
+
+}
+
 
 /* =========================================================
    LARGE TABLET
-   ========================================================= */
+========================================================= */
 
 @media (max-width: 1200px) {
 
     .stats-container {
+
         grid-template-columns:
             repeat(3, minmax(0, 1fr));
+
     }
+
 
     .job-container {
+
         grid-template-columns:
             repeat(2, minmax(0, 1fr));
+
     }
+
 
     .profile-card {
+
         align-items: flex-start;
+
     }
 
+
     .profile-progress-area {
+
         width: 400px;
+
     }
+
+
+    .welcome-content {
+
+        grid-template-columns:
+            minmax(0, 1fr)
+            minmax(300px, 0.75fr);
+
+    }
+
 }
+
 
 /* =========================================================
    TABLET
-   ========================================================= */
+========================================================= */
 
 @media (max-width: 900px) {
 
     .student-dashboard {
+
         padding: 20px;
+
     }
+
 
     .stats-container {
+
         grid-template-columns:
             repeat(2, minmax(0, 1fr));
+
     }
+
 
     .profile-card {
+
         flex-direction: column;
+
         gap: 20px;
+
     }
 
+
     .profile-progress-area {
+
         width: 100%;
+
     }
+
+
+    .welcome-content {
+
+        grid-template-columns:
+            1fr;
+
+    }
+
+
+    .welcome-text {
+
+        padding: 28px;
+
+    }
+
+
+    .dashboard-hero-visual {
+
+        min-height: 230px;
+
+        border-radius:
+            0 0 23px 23px;
+
+    }
+
+
+    .hero-floating-card {
+
+        left: 18px;
+
+        bottom: 30px;
+
+    }
+
+
+    .pexels-credit {
+
+        right: 10px;
+
+    }
+
 }
+
 
 /* =========================================================
    MOBILE
-   ========================================================= */
+========================================================= */
 
 @media (max-width: 700px) {
 
     .student-dashboard {
+
         padding: 14px;
+
     }
+
 
     .dashboard-header {
-        padding: 24px;
+
         border-radius: 18px;
+
     }
+
 
     .welcome-content {
+
         display: block;
+
     }
+
+
+    .welcome-text {
+
+        padding: 24px;
+
+    }
+
 
     .dashboard-header h1 {
+
         font-size: 24px;
+
     }
+
 
     .dashboard-header p {
+
         font-size: 11px;
+
     }
 
-    .welcome-icon {
-        display: none;
+
+    .welcome-actions {
+
+        flex-wrap: wrap;
+
     }
+
+
+    .welcome-actions button {
+
+        flex: 1;
+
+        min-width: 125px;
+
+    }
+
+
+    .dashboard-hero-visual {
+
+        min-height: 210px;
+
+        border-radius:
+            0 0 17px 17px;
+
+    }
+
+
+    .hero-floating-card {
+
+        left: 15px;
+
+        bottom: 28px;
+
+        max-width:
+            calc(100% - 30px);
+
+    }
+
+
+    .hero-floating-card strong {
+
+        font-size: 9px;
+
+    }
+
+
+    .hero-floating-card small {
+
+        font-size: 7px;
+
+    }
+
+
+    .pexels-credit {
+
+        font-size: 6px;
+
+    }
+
 
     .stats-container {
+
         grid-template-columns: 1fr;
+
         gap: 10px;
+
     }
+
 
     .stat-card {
+
         padding: 17px;
+
     }
+
 
     .recent-section {
+
         padding: 20px;
+
         border-radius: 18px;
+
     }
+
 
     .section-header {
+
         align-items: flex-start;
+
     }
+
 
     .section-header h2 {
+
         font-size: 18px;
+
     }
+
 
     .job-container {
+
         grid-template-columns: 1fr;
+
     }
+
 
     .job-card {
+
         padding: 18px;
+
     }
 
+
     .profile-card-left {
+
         min-width: 0;
+
     }
+
 }
+
 
 /* =========================================================
    SMALL MOBILE
-   ========================================================= */
+========================================================= */
 
 @media (max-width: 430px) {
 
     .student-dashboard {
+
         padding: 10px;
+
     }
+
 
     .dashboard-header {
-        padding: 20px;
+
+        border-radius: 17px;
+
     }
+
+
+    .welcome-text {
+
+        padding: 20px;
+
+    }
+
 
     .dashboard-header h1 {
+
         font-size: 21px;
+
     }
 
-    .profile-card {
-        padding: 17px;
+
+    .welcome-actions {
+
+        flex-direction: column;
+
+        align-items: stretch;
+
     }
+
+
+    .welcome-actions button {
+
+        width: 100%;
+
+    }
+
+
+    .dashboard-hero-visual {
+
+        min-height: 190px;
+
+    }
+
+
+    .hero-floating-card {
+
+        padding: 8px 10px;
+
+    }
+
+
+    .hero-floating-icon {
+
+        width: 27px;
+
+        height: 27px;
+
+    }
+
 
     .eligibility-items {
+
         gap: 4px;
+
     }
+
 
     .eligibility-items span {
+
         padding: 7px 2px;
+
         font-size: 8px;
+
     }
 
+
     .eligibility-items strong {
+
         font-size: 9px;
+
     }
+
 }

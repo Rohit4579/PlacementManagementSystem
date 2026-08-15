@@ -19,7 +19,8 @@ import {
     FaCalendarAlt,
     FaMoneyBillWave,
     FaChartLine,
-    FaGraduationCap
+    FaGraduationCap,
+    FaExternalLinkAlt
 } from "react-icons/fa";
 
 import { useNavigate } from "react-router-dom";
@@ -29,6 +30,7 @@ import { db } from "../../firebase/firebaseConfig";
 import { useAuth } from "../../context/AuthContext";
 
 import "./CompanyDashboard.css";
+
 
 /* =========================================================
    COMPANY DASHBOARD
@@ -62,6 +64,198 @@ function CompanyDashboard() {
 
 
     /* =====================================================
+       PEXELS IMAGE STATES
+    ===================================================== */
+
+    const [heroImage, setHeroImage] =
+        useState("");
+
+    const [heroPhotographer, setHeroPhotographer] =
+        useState("");
+
+    const [heroPhotographerUrl, setHeroPhotographerUrl] =
+        useState("");
+
+    const [heroPexelsUrl, setHeroPexelsUrl] =
+        useState("");
+
+    const [imageLoading, setImageLoading] =
+        useState(true);
+
+
+    /* =====================================================
+       LOAD COMPANY / RECRUITMENT IMAGE FROM PEXELS
+       
+       This is only a visual enhancement.
+       It does NOT affect Firebase dashboard logic.
+    ===================================================== */
+
+    useEffect(() => {
+
+        let cancelled = false;
+
+
+        const loadCompanyImage = async () => {
+
+            const apiKey =
+                import.meta.env.VITE_PEXELS_API_KEY;
+
+
+            /*
+             * If the Pexels key does not exist,
+             * the dashboard continues normally.
+             */
+
+            if (!apiKey) {
+
+                console.warn(
+                    "VITE_PEXELS_API_KEY is not configured."
+                );
+
+                setImageLoading(false);
+
+                return;
+
+            }
+
+
+            try {
+
+                setImageLoading(true);
+
+
+                /*
+                 * Company / recruitment related search.
+                 */
+
+                const response = await fetch(
+                    "https://api.pexels.com/v1/search?query=business%20team%20recruitment%20office%20hiring&orientation=landscape&per_page=10",
+                    {
+                        headers: {
+                            Authorization: apiKey
+                        }
+                    }
+                );
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        `Pexels request failed: ${response.status}`
+                    );
+
+                }
+
+
+                const data =
+                    await response.json();
+
+
+                if (
+                    cancelled ||
+                    !data?.photos?.length
+                ) {
+
+                    setImageLoading(false);
+
+                    return;
+
+                }
+
+
+                /*
+                 * Use a few relevant results and select
+                 * one so the dashboard can have a little
+                 * visual variation.
+                 */
+
+                const photos =
+                    data.photos.slice(0, 6);
+
+
+                const selectedPhoto =
+                    photos[
+                        Math.floor(
+                            Math.random() *
+                            photos.length
+                        )
+                    ];
+
+
+                if (!selectedPhoto) {
+
+                    setImageLoading(false);
+
+                    return;
+
+                }
+
+
+                if (cancelled) {
+                    return;
+                }
+
+
+                setHeroImage(
+                    selectedPhoto.src?.large2x ||
+                    selectedPhoto.src?.large ||
+                    selectedPhoto.src?.original ||
+                    ""
+                );
+
+
+                setHeroPhotographer(
+                    selectedPhoto.photographer ||
+                    "Pexels"
+                );
+
+
+                setHeroPhotographerUrl(
+                    selectedPhoto.photographer_url ||
+                    "https://www.pexels.com/"
+                );
+
+
+                setHeroPexelsUrl(
+                    selectedPhoto.url ||
+                    "https://www.pexels.com/"
+                );
+
+            }
+            catch (error) {
+
+                console.error(
+                    "Pexels company image error:",
+                    error
+                );
+
+            }
+            finally {
+
+                if (!cancelled) {
+
+                    setImageLoading(false);
+
+                }
+
+            }
+
+        };
+
+
+        loadCompanyImage();
+
+
+        return () => {
+
+            cancelled = true;
+
+        };
+
+    }, []);
+
+
+    /* =====================================================
        LOAD DASHBOARD
     ===================================================== */
 
@@ -70,11 +264,17 @@ function CompanyDashboard() {
         if (!user?.uid) {
 
             setTotalJobs(0);
+
             setTotalApplicants(0);
+
             setSelected(0);
+
             setPlaced(0);
+
             setPending(0);
+
             setJobs([]);
+
             setLoading(false);
 
             return;
@@ -101,13 +301,18 @@ function CompanyDashboard() {
                 const jobsSnap = await getDocs(
 
                     query(
-                        collection(db, "jobs"),
+
+                        collection(
+                            db,
+                            "jobs"
+                        ),
 
                         where(
                             "companyId",
                             "==",
                             user.uid
                         )
+
                     )
 
                 );
@@ -236,18 +441,12 @@ function CompanyDashboard() {
 
 
                                     /*
-                                     * IMPORTANT:
-                                     *
                                      * Placement is controlled by
                                      * placedStudent.
                                      *
-                                     * The application status stays
-                                     * "Accepted" even after placement.
-                                     *
-                                     * Therefore DO NOT depend only
-                                     * on status === "placed".
+                                     * Application status can remain
+                                     * Accepted even after placement.
                                      */
-
 
                                     const isPlaced =
                                         application.placedStudent === true ||
@@ -277,8 +476,6 @@ function CompanyDashboard() {
 
                                     /* =================================================
                                        PLACED
-                                       
-                                       IMPORTANT FIX
                                     ================================================= */
 
                                     if (isPlaced) {
@@ -328,8 +525,11 @@ function CompanyDashboard() {
                                 "Company dashboard applications updated:",
                                 snapshot.docs.map(
                                     (doc) => ({
+
                                         id: doc.id,
+
                                         ...doc.data()
+
                                     })
                                 )
                             );
@@ -500,6 +700,131 @@ function CompanyDashboard() {
             </section>
 
 
+            {/* =================================================
+                COMPANY / RECRUITMENT PEXELS HERO
+            ================================================= */}
+
+            <section className="company-pexels-hero">
+
+
+                <div className="company-pexels-image">
+
+                    {imageLoading ? (
+
+                        <div className="company-pexels-loading">
+
+                            <div className="company-pexels-spinner"></div>
+
+                            <span>
+                                Loading recruitment visual...
+                            </span>
+
+                        </div>
+
+                    ) : heroImage ? (
+
+                        <img
+                            src={heroImage}
+                            alt="Professional recruitment team"
+                            className="company-hero-image"
+                        />
+
+                    ) : null}
+
+                </div>
+
+
+                <div className="company-pexels-overlay"></div>
+
+
+                <div className="company-pexels-content">
+
+                    <span className="company-pexels-label">
+
+                        RECRUITMENT & TALENT
+
+                    </span>
+
+
+                    <h2>
+
+                        Build Your
+                        <br />
+                        Next Great Team
+
+                    </h2>
+
+
+                    <p>
+
+                        Discover talented students,
+                        manage applications and
+                        grow your organization.
+
+                    </p>
+
+
+                    <button
+                        type="button"
+                        className="company-pexels-button"
+                        onClick={() =>
+                            navigate(
+                                "/company/applicants"
+                            )
+                        }
+                    >
+
+                        View Applicants
+
+                        <FaArrowRight />
+
+                    </button>
+
+
+                    {heroPhotographer && (
+
+                        <div className="company-pexels-credit">
+
+                            Photo by{" "}
+
+                            <a
+                                href={
+                                    heroPhotographerUrl ||
+                                    "https://www.pexels.com/"
+                                }
+                                target="_blank"
+                                rel="noopener noreferrer"
+                            >
+
+                                {heroPhotographer}
+
+                            </a>
+
+
+                            {heroPexelsUrl && (
+
+                                <a
+                                    href={heroPexelsUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="company-pexels-link"
+                                    aria-label="View photo on Pexels"
+                                >
+
+                                    <FaExternalLinkAlt />
+
+                                </a>
+
+                            )}
+
+                        </div>
+
+                    )}
+
+                </div>
+
+            </section>
+
 
             {/* =================================================
                 STATISTICS
@@ -525,9 +850,11 @@ function CompanyDashboard() {
                             Total Jobs
                         </span>
 
+
                         <h3>
                             {totalJobs}
                         </h3>
+
 
                         <small>
                             Active job postings
@@ -536,7 +863,6 @@ function CompanyDashboard() {
                     </div>
 
                 </div>
-
 
 
                 {/* APPLICANTS */}
@@ -556,9 +882,11 @@ function CompanyDashboard() {
                             Applicants
                         </span>
 
+
                         <h3>
                             {totalApplicants}
                         </h3>
+
 
                         <small>
                             Total applications
@@ -567,7 +895,6 @@ function CompanyDashboard() {
                     </div>
 
                 </div>
-
 
 
                 {/* SELECTED */}
@@ -587,9 +914,11 @@ function CompanyDashboard() {
                             Selected
                         </span>
 
+
                         <h3>
                             {selected}
                         </h3>
+
 
                         <small>
                             Successful candidates
@@ -598,7 +927,6 @@ function CompanyDashboard() {
                     </div>
 
                 </div>
-
 
 
                 {/* PLACED */}
@@ -618,9 +946,11 @@ function CompanyDashboard() {
                             Placed
                         </span>
 
+
                         <h3>
                             {placed}
                         </h3>
+
 
                         <small>
                             Placed candidates
@@ -629,7 +959,6 @@ function CompanyDashboard() {
                     </div>
 
                 </div>
-
 
 
                 {/* PENDING */}
@@ -649,9 +978,11 @@ function CompanyDashboard() {
                             Pending
                         </span>
 
+
                         <h3>
                             {pending}
                         </h3>
+
 
                         <small>
                             Applications to review
@@ -665,12 +996,12 @@ function CompanyDashboard() {
             </section>
 
 
-
             {/* =================================================
                 OVERVIEW BANNER
             ================================================= */}
 
             <section className="company-overview">
+
 
                 <div className="overview-icon">
 
@@ -701,6 +1032,7 @@ function CompanyDashboard() {
                         </strong>{" "}
 
                         job posting
+
                         {totalJobs !== 1
                             ? "s"
                             : ""}.
@@ -712,9 +1044,11 @@ function CompanyDashboard() {
                         </strong>{" "}
 
                         candidate
+
                         {placed !== 1
                             ? "s are"
                             : " is"}{" "}
+
                         placed.
 
                     </p>
@@ -740,7 +1074,6 @@ function CompanyDashboard() {
             </section>
 
 
-
             {/* =================================================
                 RECENT JOBS
             ================================================= */}
@@ -760,13 +1093,17 @@ function CompanyDashboard() {
 
 
                         <h2>
+
                             Recent Job Posts
+
                         </h2>
 
 
                         <p>
+
                             Keep track of your latest
                             recruitment opportunities.
+
                         </p>
 
                     </div>
@@ -791,10 +1128,10 @@ function CompanyDashboard() {
                 </div>
 
 
-
                 {jobs.length === 0 ? (
 
                     <div className="empty-jobs">
+
 
                         <div className="empty-icon">
 
@@ -804,7 +1141,9 @@ function CompanyDashboard() {
 
 
                         <h3>
+
                             No job posts yet
+
                         </h3>
 
 
@@ -832,6 +1171,7 @@ function CompanyDashboard() {
 
                         </button>
 
+
                     </div>
 
                 ) : (
@@ -839,6 +1179,7 @@ function CompanyDashboard() {
                     <div className="jobs-table-wrapper">
 
                         <table className="jobs-table">
+
 
                             <thead>
 
@@ -883,6 +1224,7 @@ function CompanyDashboard() {
                                                 <td>
 
                                                     <div className="job-info">
+
 
                                                         <div className="job-icon">
 
@@ -990,7 +1332,6 @@ function CompanyDashboard() {
                     </div>
 
                 )}
-
 
             </section>
 

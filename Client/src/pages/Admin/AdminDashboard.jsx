@@ -61,6 +61,13 @@ function AdminDashboard() {
 
     const [loading, setLoading] = useState(true);
 
+    /* =====================================================
+       PEXELS ADMIN / PLACEMENT IMAGE
+       Visual enhancement only. Firebase logic is unchanged.
+    ===================================================== */
+    const [placementImage, setPlacementImage] = useState("");
+    const [placementImageError, setPlacementImageError] = useState(false);
+
 
     /* =====================================================
        GET FIRST AVAILABLE VALUE
@@ -526,6 +533,86 @@ function AdminDashboard() {
         return null;
 
     };
+
+
+    /* =====================================================
+       LOAD PEXELS PLACEMENT IMAGE
+       If Pexels fails or no key exists, dashboard continues
+       normally without the visual.
+    ===================================================== */
+    useEffect(() => {
+
+        const apiKey = import.meta.env.VITE_PEXELS_API_KEY;
+
+        if (!apiKey) {
+            return;
+        }
+
+        const controller = new AbortController();
+
+        const fetchPlacementImage = async () => {
+
+            try {
+
+                const response = await fetch(
+                    "https://api.pexels.com/v1/search?query=college%20placement%20recruitment%20interview&orientation=landscape&per_page=12",
+                    {
+                        headers: {
+                            Authorization: apiKey
+                        },
+                        signal: controller.signal
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(
+                        `Pexels request failed: ${response.status}`
+                    );
+                }
+
+                const data = await response.json();
+
+                const photos = Array.isArray(data.photos)
+                    ? data.photos
+                    : [];
+
+                const photo = photos.find(
+                    item =>
+                        item?.src?.large2x ||
+                        item?.src?.large ||
+                        item?.src?.medium
+                );
+
+                const imageUrl =
+                    photo?.src?.large2x ||
+                    photo?.src?.large ||
+                    photo?.src?.medium ||
+                    "";
+
+                if (imageUrl) {
+                    setPlacementImage(imageUrl);
+                    setPlacementImageError(false);
+                }
+
+            } catch (error) {
+
+                if (error?.name !== "AbortError") {
+
+                    console.warn(
+                        "Pexels placement image unavailable:",
+                        error
+                    );
+
+                    setPlacementImageError(true);
+                }
+            }
+        };
+
+        fetchPlacementImage();
+
+        return () => controller.abort();
+
+    }, []);
 
 
     /* =====================================================
@@ -1670,6 +1757,47 @@ function AdminDashboard() {
             {/* =================================================
                 HEADER
             ================================================= */}
+
+            {/* =================================================
+                PEXELS PLACEMENT VISUAL
+                Visual-only enhancement.
+            ================================================= */}
+            {placementImage && !placementImageError && (
+                <section className="admin-placement-hero">
+
+                    <img
+                        src={placementImage}
+                        alt="College placement and recruitment"
+                        className="admin-placement-hero-image"
+                        loading="lazy"
+                        referrerPolicy="no-referrer"
+                        onError={() => {
+                            setPlacementImageError(true);
+                        }}
+                    />
+
+                    <div className="admin-placement-hero-overlay"></div>
+
+                    <div className="admin-placement-hero-content">
+
+                        <span className="admin-placement-hero-label">
+                            PLACEMENT MANAGEMENT
+                        </span>
+
+                        <h2>
+                            Connecting Students With Better Opportunities
+                        </h2>
+
+                        <p>
+                            Monitor recruitment activity, student selection
+                            and placement progress from one dashboard.
+                        </p>
+
+                    </div>
+
+                </section>
+            )}
+
 
             <section className="admin-header">
 

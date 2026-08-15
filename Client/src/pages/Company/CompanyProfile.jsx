@@ -21,7 +21,9 @@ import {
     FaSave,
     FaCheckCircle,
     FaPhone,
-    FaIndustry
+    FaIndustry,
+    FaBriefcase,
+    FaExternalLinkAlt
 } from "react-icons/fa";
 
 
@@ -37,17 +39,11 @@ function CompanyProfile() {
     const [company, setCompany] = useState({
 
         companyName: "",
-
         email: "",
-
         phone: "",
-
         industry: "",
-
         website: "",
-
         location: "",
-
         description: ""
 
     });
@@ -66,7 +62,207 @@ function CompanyProfile() {
 
 
     /* =====================================================
+       PEXELS IMAGE STATE
+
+       This is only visual.
+       It does NOT affect company profile data.
+    ===================================================== */
+
+    const [companyImage, setCompanyImage] =
+        useState("");
+
+
+    const [imageLoading, setImageLoading] =
+        useState(true);
+
+
+    const [photographer, setPhotographer] =
+        useState("");
+
+
+    const [photographerUrl, setPhotographerUrl] =
+        useState("");
+
+
+    const [pexelsUrl, setPexelsUrl] =
+        useState("");
+
+
+    /* =====================================================
+       LOAD COMPANY / WORKPLACE IMAGE
+    ===================================================== */
+
+    useEffect(() => {
+
+        let cancelled = false;
+
+
+        const loadCompanyImage = async () => {
+
+            const apiKey =
+                import.meta.env.VITE_PEXELS_API_KEY;
+
+
+            /*
+             * If API key is not configured,
+             * keep the existing CSS design.
+             */
+
+            if (!apiKey) {
+
+                console.warn(
+                    "VITE_PEXELS_API_KEY is not configured."
+                );
+
+                setImageLoading(false);
+
+                return;
+
+            }
+
+
+            try {
+
+                setImageLoading(true);
+
+
+                /*
+                 * Company / workplace / recruitment
+                 * related images.
+                 */
+
+                const response =
+                    await fetch(
+                        "https://api.pexels.com/v1/search?query=modern%20office%20business%20team%20workplace%20recruitment&orientation=landscape&per_page=12",
+                        {
+                            headers: {
+                                Authorization: apiKey
+                            }
+                        }
+                    );
+
+
+                if (!response.ok) {
+
+                    throw new Error(
+                        `Pexels request failed: ${response.status}`
+                    );
+
+                }
+
+
+                const data =
+                    await response.json();
+
+
+                if (
+                    cancelled ||
+                    !data?.photos?.length
+                ) {
+
+                    setImageLoading(false);
+
+                    return;
+
+                }
+
+
+                /*
+                 * Use the first few relevant images
+                 * and randomly select one.
+                 */
+
+                const photos =
+                    data.photos.slice(0, 8);
+
+
+                const selectedPhoto =
+                    photos[
+                        Math.floor(
+                            Math.random() *
+                            photos.length
+                        )
+                    ];
+
+
+                if (!selectedPhoto) {
+
+                    setImageLoading(false);
+
+                    return;
+
+                }
+
+
+                if (cancelled) {
+                    return;
+                }
+
+
+                setCompanyImage(
+                    selectedPhoto.src?.large2x ||
+                    selectedPhoto.src?.large ||
+                    selectedPhoto.src?.original ||
+                    ""
+                );
+
+
+                setPhotographer(
+                    selectedPhoto.photographer ||
+                    "Pexels"
+                );
+
+
+                setPhotographerUrl(
+                    selectedPhoto.photographer_url ||
+                    "https://www.pexels.com/"
+                );
+
+
+                setPexelsUrl(
+                    selectedPhoto.url ||
+                    "https://www.pexels.com/"
+                );
+
+            }
+
+            catch (error) {
+
+                console.error(
+                    "Pexels company image error:",
+                    error
+                );
+
+            }
+
+            finally {
+
+                if (!cancelled) {
+
+                    setImageLoading(false);
+
+                }
+
+            }
+
+        };
+
+
+        loadCompanyImage();
+
+
+        return () => {
+
+            cancelled = true;
+
+        };
+
+    }, []);
+
+
+    /* =====================================================
        FETCH COMPANY PROFILE
+       EXISTING LOGIC PRESERVED
     ===================================================== */
 
     useEffect(() => {
@@ -143,27 +339,21 @@ function CompanyProfile() {
 
                     setCompany({
 
-                        companyName:
-                            "",
+                        companyName: "",
 
                         email:
                             user.email ||
                             "",
 
-                        phone:
-                            "",
+                        phone: "",
 
-                        industry:
-                            "",
+                        industry: "",
 
-                        website:
-                            "",
+                        website: "",
 
-                        location:
-                            "",
+                        location: "",
 
-                        description:
-                            ""
+                        description: ""
 
                     });
 
@@ -206,13 +396,15 @@ function CompanyProfile() {
         } = e.target;
 
 
-        setCompany((previous) => ({
+        setCompany(
+            (previous) => ({
 
-            ...previous,
+                ...previous,
 
-            [name]: value
+                [name]: value
 
-        }));
+            })
+        );
 
 
         setSuccess(false);
@@ -222,6 +414,7 @@ function CompanyProfile() {
 
     /* =====================================================
        SAVE PROFILE
+       EXISTING FIRESTORE LOGIC PRESERVED
     ===================================================== */
 
     const handleSubmit = async (e) => {
@@ -230,9 +423,7 @@ function CompanyProfile() {
 
 
         if (!user) {
-
             return;
-
         }
 
 
@@ -242,10 +433,6 @@ function CompanyProfile() {
 
             setSuccess(false);
 
-
-            /* =================================================
-               SAVE COMPANY DATA
-            ================================================= */
 
             const companyData = {
 
@@ -277,10 +464,6 @@ function CompanyProfile() {
             };
 
 
-            /* =================================================
-               SAVE TO FIRESTORE
-            ================================================= */
-
             await setDoc(
 
                 doc(
@@ -297,10 +480,6 @@ function CompanyProfile() {
 
             );
 
-
-            /* =================================================
-               UPDATE LOCAL STATE
-            ================================================= */
 
             setCompany(
                 companyData
@@ -369,6 +548,101 @@ function CompanyProfile() {
 
 
             {/* =================================================
+                COMPANY IMAGE HERO
+            ================================================= */}
+
+            <div
+                className={`company-photo-hero ${
+                    imageLoading
+                        ? "image-loading"
+                        : ""
+                }`}
+            >
+
+                {companyImage && (
+
+                    <img
+                        src={companyImage}
+                        alt="Modern company workplace"
+                        className="company-photo-image"
+                    />
+
+                )}
+
+
+                <div className="company-photo-overlay"></div>
+
+
+                <div className="company-photo-content">
+
+                    <div className="company-photo-badge">
+
+                        <FaBriefcase />
+
+                        <span>
+                            BUSINESS & RECRUITMENT
+                        </span>
+
+                    </div>
+
+
+                    <h2>
+                        Build your company presence
+                    </h2>
+
+
+                    <p>
+                        Help students discover your organization,
+                        opportunities and workplace culture.
+                    </p>
+
+
+                    {photographer && (
+
+                        <div className="pexels-credit">
+
+                            Photo by{" "}
+
+                            {photographerUrl ? (
+
+                                <a
+                                    href={photographerUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                >
+                                    {photographer}
+                                </a>
+
+                            ) : (
+
+                                photographer
+
+                            )}
+
+                            {pexelsUrl && (
+
+                                <a
+                                    href={pexelsUrl}
+                                    target="_blank"
+                                    rel="noopener noreferrer"
+                                    className="pexels-open"
+                                    aria-label="View photo on Pexels"
+                                >
+                                    <FaExternalLinkAlt />
+                                </a>
+
+                            )}
+
+                        </div>
+
+                    )}
+
+                </div>
+
+            </div>
+
+
+            {/* =================================================
                 HEADER
             ================================================= */}
 
@@ -386,16 +660,24 @@ function CompanyProfile() {
                     <div>
 
                         <span className="profile-eyebrow">
+
                             COMPANY SETTINGS
+
                         </span>
 
+
                         <h1>
+
                             Company Profile
+
                         </h1>
 
+
                         <p>
+
                             Manage your company information
                             and public profile details.
+
                         </p>
 
                     </div>
@@ -417,6 +699,7 @@ function CompanyProfile() {
                 ================================================= */}
 
                 <div className="profile-summary">
+
 
                     <div className="summary-avatar">
 
@@ -449,8 +732,10 @@ function CompanyProfile() {
                         <FaEnvelope />
 
                         <span>
+
                             {company.email ||
                                 "Email not added"}
+
                         </span>
 
                     </div>
@@ -461,8 +746,10 @@ function CompanyProfile() {
                         <FaPhone />
 
                         <span>
+
                             {company.phone ||
                                 "Phone not added"}
+
                         </span>
 
                     </div>
@@ -473,8 +760,10 @@ function CompanyProfile() {
                         <FaIndustry />
 
                         <span>
+
                             {company.industry ||
                                 "Industry not added"}
+
                         </span>
 
                     </div>
@@ -485,8 +774,10 @@ function CompanyProfile() {
                         <FaMapMarkerAlt />
 
                         <span>
+
                             {company.location ||
                                 "Location not added"}
+
                         </span>
 
                     </div>
@@ -497,8 +788,10 @@ function CompanyProfile() {
                         <FaGlobe />
 
                         <span>
+
                             {company.website ||
                                 "Website not added"}
+
                         </span>
 
                     </div>
@@ -536,15 +829,14 @@ function CompanyProfile() {
                         </div>
 
 
-                        {/* =================================================
-                            COMPANY NAME
-                        ================================================= */}
+                        {/* COMPANY NAME */}
 
                         <div className="form-group">
 
                             <label htmlFor="companyName">
                                 Company Name
                             </label>
+
 
                             <div className="input-wrapper">
 
@@ -569,15 +861,14 @@ function CompanyProfile() {
                         </div>
 
 
-                        {/* =================================================
-                            EMAIL
-                        ================================================= */}
+                        {/* EMAIL */}
 
                         <div className="form-group">
 
                             <label htmlFor="email">
                                 Company Email
                             </label>
+
 
                             <div className="input-wrapper disabled-input">
 
@@ -597,17 +888,18 @@ function CompanyProfile() {
 
                             </div>
 
+
                             <small>
+
                                 Your account email cannot be
                                 changed from this page.
+
                             </small>
 
                         </div>
 
 
-                        {/* =================================================
-                            PHONE + INDUSTRY
-                        ================================================= */}
+                        {/* PHONE + INDUSTRY */}
 
                         <div className="form-row">
 
@@ -617,6 +909,7 @@ function CompanyProfile() {
                                 <label htmlFor="phone">
                                     Phone Number
                                 </label>
+
 
                                 <div className="input-wrapper">
 
@@ -646,6 +939,7 @@ function CompanyProfile() {
                                     Industry
                                 </label>
 
+
                                 <div className="input-wrapper">
 
                                     <FaIndustry />
@@ -670,9 +964,7 @@ function CompanyProfile() {
                         </div>
 
 
-                        {/* =================================================
-                            WEBSITE + LOCATION
-                        ================================================= */}
+                        {/* WEBSITE + LOCATION */}
 
                         <div className="form-row">
 
@@ -682,6 +974,7 @@ function CompanyProfile() {
                                 <label htmlFor="website">
                                     Website
                                 </label>
+
 
                                 <div className="input-wrapper">
 
@@ -711,6 +1004,7 @@ function CompanyProfile() {
                                     Location
                                 </label>
 
+
                                 <div className="input-wrapper">
 
                                     <FaMapMarkerAlt />
@@ -735,15 +1029,14 @@ function CompanyProfile() {
                         </div>
 
 
-                        {/* =================================================
-                            DESCRIPTION
-                        ================================================= */}
+                        {/* DESCRIPTION */}
 
                         <div className="form-group">
 
                             <label htmlFor="description">
                                 Company Description
                             </label>
+
 
                             <div className="textarea-wrapper">
 
@@ -763,9 +1056,12 @@ function CompanyProfile() {
 
                             </div>
 
+
                             <small>
+
                                 A clear description helps students
                                 understand your organization.
+
                             </small>
 
                         </div>
@@ -823,6 +1119,7 @@ function CompanyProfile() {
                             )}
 
                         </button>
+
 
                     </div>
 

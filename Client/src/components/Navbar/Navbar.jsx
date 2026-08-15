@@ -100,21 +100,9 @@ function Navbar() {
         user?.role?.toLowerCase() || "student";
 
 
-    /*
-     * PROFILE MENU RULES
-     *
-     * Student:
-     *      My Profile
-     *
-     * Company:
-     *      Company Profile
-     *
-     * TPO:
-     *      No profile option
-     *
-     * Admin:
-     *      No profile option
-     */
+    /* =========================================================
+       PROFILE MENU RULES
+    ========================================================= */
 
     const hideProfileOption =
         role === "tpo" ||
@@ -139,12 +127,6 @@ function Navbar() {
 
     /* =========================================================
        LOAD PROFILE PHOTO
-       
-       Currently listens to:
-       
-       studentProfiles/{user.uid}
-       
-       This keeps the existing Student profile photo behavior.
     ========================================================= */
 
     useEffect(() => {
@@ -324,10 +306,6 @@ function Navbar() {
                             })
                         );
 
-
-                    /*
-                     * Sort newest notifications first
-                     */
 
                     notificationData.sort(
                         (a, b) => {
@@ -582,7 +560,6 @@ function Navbar() {
 
     /* =========================================================
        SEARCH RESULT CLICK
-       ROLE-BASED NAVIGATION
     ========================================================= */
 
     const handleJobClick = (job) => {
@@ -687,11 +664,6 @@ function Navbar() {
 
     /* =========================================================
        PROFILE CLICK
-       
-       Student -> /student/profile
-       Company -> /company/profile
-       
-       TPO/Admin never get this button.
     ========================================================= */
 
     const handleProfileClick = () => {
@@ -809,7 +781,7 @@ function Navbar() {
                     <span>
 
                         Placement
-                        <span>Pro</span>
+                        <span>Connect</span>
 
                     </span>
 
@@ -887,9 +859,7 @@ function Navbar() {
                 </div>
 
 
-                {/* =================================================
-                    SEARCH RESULTS
-                ================================================= */}
+                {/* SEARCH RESULTS */}
 
                 {showSearchResults &&
                     search.trim() !== "" && (
@@ -911,7 +881,6 @@ function Navbar() {
                                                 )
                                             }
                                         >
-
 
                                             <div className="search-result-icon">
 
@@ -973,9 +942,7 @@ function Navbar() {
             <div className="navbar-right">
 
 
-                {/* =================================================
-                    DARK MODE
-                ================================================= */}
+                {/* DARK MODE */}
 
                 <button
                     className="icon-btn"
@@ -993,9 +960,7 @@ function Navbar() {
                 </button>
 
 
-                {/* =================================================
-                    NOTIFICATIONS
-                ================================================= */}
+                {/* NOTIFICATIONS */}
 
                 <div className="notification-wrapper">
 
@@ -1036,19 +1001,14 @@ function Navbar() {
                     </button>
 
 
-                    {/* =================================================
-                        NOTIFICATION DROPDOWN
-                    ================================================= */}
+                    {/* NOTIFICATION DROPDOWN */}
 
                     {showNotifications && (
 
                         <div className="notification-dropdown">
 
 
-                            {/* HEADER */}
-
                             <div className="notification-header">
-
 
                                 <div>
 
@@ -1079,8 +1039,6 @@ function Navbar() {
 
                             </div>
 
-
-                            {/* LIST */}
 
                             <div className="notification-list">
 
@@ -1121,7 +1079,6 @@ function Navbar() {
                                                         )
                                                     }
                                                 >
-
 
                                                     <div className="notification-icon">
 
@@ -1173,15 +1130,12 @@ function Navbar() {
                 </div>
 
 
-                {/* =================================================
-                    USER PROFILE DROPDOWN
-                ================================================= */}
+                {/* USER PROFILE */}
 
                 <div
                     className="user-profile-wrapper"
                     ref={profileMenuRef}
                 >
-
 
                     <button
                         className={`user-profile ${
@@ -1196,11 +1150,7 @@ function Navbar() {
                         }
                     >
 
-
-                        {/* PROFILE PHOTO / INITIAL */}
-
                         <div className="avatar">
-
 
                             {profilePhotoURL &&
                             !photoError ? (
@@ -1230,10 +1180,7 @@ function Navbar() {
                         </div>
 
 
-                        {/* USER INFORMATION */}
-
                         <div className="user-info">
-
 
                             <h4>
 
@@ -1253,34 +1200,25 @@ function Navbar() {
                         </div>
 
 
-                        {/* ARROW */}
-
                         <span className="profile-arrow">
 
                             <FaChevronDown />
 
                         </span>
 
-
                     </button>
 
 
-                    {/* =================================================
-                        PROFILE DROPDOWN
-                    ================================================= */}
+                    {/* PROFILE DROPDOWN */}
 
                     {showProfileMenu && (
 
                         <div className="profile-dropdown">
 
 
-                            {/* PROFILE DROPDOWN USER HEADER */}
-
                             <div className="profile-dropdown-header">
 
-
                                 <div className="profile-dropdown-avatar">
-
 
                                     {profilePhotoURL &&
                                     !photoError ? (
@@ -1312,7 +1250,6 @@ function Navbar() {
 
                                 <div className="profile-dropdown-user">
 
-
                                     <strong>
 
                                         {user?.name ||
@@ -1336,22 +1273,6 @@ function Navbar() {
                             <div className="profile-dropdown-divider" />
 
 
-                            {/* =================================================
-                                PROFILE OPTION
-
-                                STUDENT:
-                                My Profile
-
-                                COMPANY:
-                                Company Profile
-
-                                TPO:
-                                Hidden
-
-                                ADMIN:
-                                Hidden
-                            ================================================= */}
-
                             {!hideProfileOption && (
 
                                 <button
@@ -1361,7 +1282,6 @@ function Navbar() {
                                     }
                                 >
 
-
                                     <span className="profile-dropdown-item-icon">
 
                                         <FaUser />
@@ -1370,7 +1290,6 @@ function Navbar() {
 
 
                                     <span className="profile-dropdown-item-content">
-
 
                                         <strong>
 
@@ -1385,18 +1304,14 @@ function Navbar() {
 
                                         </small>
 
-
                                     </span>
-
 
                                 </button>
 
                             )}
 
 
-                            {/* =================================================
-                                LOGOUT
-                            ================================================= */}
+                            {/* LOGOUT */}
 
                             <button
                                 className="profile-dropdown-item logout-item"
@@ -1404,7 +1319,6 @@ function Navbar() {
                                     handleLogout
                                 }
                             >
-
 
                                 <span className="profile-dropdown-item-icon">
 
@@ -1415,7 +1329,6 @@ function Navbar() {
 
                                 <span className="profile-dropdown-item-content">
 
-
                                     <strong>
                                         Logout
                                     </strong>
@@ -1425,9 +1338,7 @@ function Navbar() {
                                         Sign out of your account
                                     </small>
 
-
                                 </span>
-
 
                             </button>
 
@@ -1440,7 +1351,6 @@ function Navbar() {
 
 
             </div>
-
 
         </nav>
 

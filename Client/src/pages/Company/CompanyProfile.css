@@ -1414,3 +1414,561 @@
         transition-duration: 0.01ms !important;
     }
 }
+
+/* =========================================================
+   PEXELS COMPANY HERO IMAGE
+   ADDITIONAL STYLES
+   ========================================================= */
+
+.company-photo-hero {
+    position: relative;
+
+    width: 100%;
+
+    height: 245px;
+
+    margin-bottom: 24px;
+
+    overflow: hidden;
+
+    border-radius: 22px;
+
+    background:
+        linear-gradient(
+            135deg,
+            #312e81,
+            #6366f1
+        );
+
+    border: 1px solid #e7eaf4;
+
+    box-shadow:
+        0 14px 35px rgba(15, 23, 42, 0.10);
+
+    isolation: isolate;
+}
+
+
+/* =========================================================
+   IMAGE
+========================================================= */
+
+.company-photo-image {
+    position: absolute;
+
+    inset: 0;
+
+    width: 100%;
+    height: 100%;
+
+    object-fit: cover;
+
+    object-position: center;
+
+    display: block;
+
+    z-index: -3;
+
+    animation:
+        companyImageReveal
+        0.7s
+        ease;
+}
+
+
+/* =========================================================
+   IMAGE OVERLAY
+========================================================= */
+
+.company-photo-overlay {
+    position: absolute;
+
+    inset: 0;
+
+    z-index: -2;
+
+    background:
+        linear-gradient(
+            90deg,
+            rgba(15, 23, 42, 0.88) 0%,
+            rgba(15, 23, 42, 0.66) 40%,
+            rgba(15, 23, 42, 0.28) 100%
+        );
+}
+
+
+/* =========================================================
+   DECORATIVE GLOW
+========================================================= */
+
+.company-photo-hero::after {
+    content: "";
+
+    position: absolute;
+
+    width: 260px;
+    height: 260px;
+
+    right: -90px;
+    top: -110px;
+
+    border-radius: 50%;
+
+    background:
+        rgba(129, 140, 248, 0.28);
+
+    filter: blur(4px);
+
+    z-index: -1;
+
+    pointer-events: none;
+}
+
+
+/* =========================================================
+   HERO CONTENT
+========================================================= */
+
+.company-photo-content {
+    position: relative;
+
+    z-index: 3;
+
+    width: 100%;
+    height: 100%;
+
+    box-sizing: border-box;
+
+    padding:
+        32px
+        38px;
+
+    display: flex;
+
+    flex-direction: column;
+
+    justify-content: center;
+
+    align-items: flex-start;
+
+    color: #ffffff;
+}
+
+
+/* =========================================================
+   BADGE
+========================================================= */
+
+.company-photo-badge {
+    display: inline-flex;
+
+    align-items: center;
+
+    gap: 7px;
+
+    padding:
+        7px
+        11px;
+
+    margin-bottom: 11px;
+
+    border:
+        1px solid
+        rgba(255, 255, 255, 0.22);
+
+    border-radius: 999px;
+
+    background:
+        rgba(255, 255, 255, 0.12);
+
+    backdrop-filter: blur(8px);
+    -webkit-backdrop-filter: blur(8px);
+
+    color: #e0e7ff;
+
+    font-size: 9px;
+
+    font-weight: 800;
+
+    letter-spacing: 1.2px;
+
+    text-transform: uppercase;
+}
+
+
+.company-photo-badge svg {
+    font-size: 11px;
+}
+
+
+/* =========================================================
+   HERO TITLE
+========================================================= */
+
+.company-photo-content h2 {
+    margin: 0;
+
+    max-width: 650px;
+
+    color: #ffffff;
+
+    font-size: 28px;
+
+    line-height: 1.2;
+
+    font-weight: 800;
+
+    letter-spacing: -0.6px;
+
+    text-shadow:
+        0 2px 12px
+        rgba(0, 0, 0, 0.18);
+}
+
+
+/* =========================================================
+   HERO DESCRIPTION
+========================================================= */
+
+.company-photo-content > p {
+    max-width: 620px;
+
+    margin:
+        9px
+        0
+        0;
+
+    color:
+        rgba(255, 255, 255, 0.82);
+
+    font-size: 12px;
+
+    line-height: 1.6;
+}
+
+
+/* =========================================================
+   PEXELS CREDIT
+========================================================= */
+
+.pexels-credit {
+    display: flex;
+
+    align-items: center;
+
+    gap: 5px;
+
+    margin-top: 15px;
+
+    color:
+        rgba(255, 255, 255, 0.65);
+
+    font-size: 9px;
+}
+
+
+.pexels-credit a {
+    color: #ffffff;
+
+    text-decoration: none;
+
+    font-weight: 600;
+}
+
+
+.pexels-credit a:hover {
+    text-decoration: underline;
+}
+
+
+.pexels-open {
+    width: 18px;
+    height: 18px;
+
+    display: inline-flex;
+
+    align-items: center;
+    justify-content: center;
+
+    margin-left: 3px;
+
+    border-radius: 50%;
+
+    background:
+        rgba(255, 255, 255, 0.12);
+
+    color: #ffffff !important;
+
+    text-decoration: none !important;
+
+    transition:
+        background 0.2s ease,
+        transform 0.2s ease;
+}
+
+
+.pexels-open:hover {
+    background:
+        rgba(255, 255, 255, 0.22);
+
+    transform:
+        translateY(-1px);
+}
+
+
+.pexels-open svg {
+    font-size: 7px;
+}
+
+
+/* =========================================================
+   IMAGE LOADING STATE
+========================================================= */
+
+.company-photo-hero.image-loading {
+
+    background:
+        linear-gradient(
+            135deg,
+            #3730a3,
+            #6366f1,
+            #818cf8
+        );
+
+    background-size:
+        200%
+        200%;
+
+    animation:
+        companyHeroGradient
+        2.5s
+        ease
+        infinite;
+}
+
+
+.company-photo-hero.image-loading
+.company-photo-overlay {
+    background:
+        linear-gradient(
+            90deg,
+            rgba(15, 23, 42, 0.50),
+            rgba(49, 46, 129, 0.28)
+        );
+}
+
+
+/* =========================================================
+   IMAGE ANIMATION
+========================================================= */
+
+@keyframes companyImageReveal {
+
+    from {
+        opacity: 0;
+
+        transform:
+            scale(1.04);
+    }
+
+    to {
+        opacity: 1;
+
+        transform:
+            scale(1);
+    }
+
+}
+
+
+@keyframes companyHeroGradient {
+
+    0% {
+        background-position:
+            0%
+            50%;
+    }
+
+    50% {
+        background-position:
+            100%
+            50%;
+    }
+
+    100% {
+        background-position:
+            0%
+            50%;
+    }
+
+}
+
+
+/* =========================================================
+   TABLET
+========================================================= */
+
+@media (max-width: 850px) {
+
+    .company-photo-hero {
+
+        height: 225px;
+
+        border-radius: 18px;
+
+        margin-bottom: 20px;
+
+    }
+
+
+    .company-photo-content {
+
+        padding:
+            27px
+            29px;
+
+    }
+
+
+    .company-photo-content h2 {
+
+        font-size: 25px;
+
+    }
+
+}
+
+
+/* =========================================================
+   MOBILE
+========================================================= */
+
+@media (max-width: 650px) {
+
+    .company-photo-hero {
+
+        height: 220px;
+
+        margin-bottom: 17px;
+
+        border-radius: 17px;
+
+    }
+
+
+    .company-photo-content {
+
+        padding:
+            23px
+            22px;
+
+    }
+
+
+    .company-photo-content h2 {
+
+        font-size: 22px;
+
+        max-width: 450px;
+
+    }
+
+
+    .company-photo-content > p {
+
+        max-width: 100%;
+
+        font-size: 10px;
+
+        line-height: 1.55;
+
+    }
+
+
+    .company-photo-badge {
+
+        font-size: 8px;
+
+        padding:
+            6px
+            9px;
+
+    }
+
+
+    .pexels-credit {
+
+        margin-top: 11px;
+
+        font-size: 8px;
+
+    }
+
+}
+
+
+/* =========================================================
+   SMALL MOBILE
+========================================================= */
+
+@media (max-width: 420px) {
+
+    .company-photo-hero {
+
+        height: 205px;
+
+        border-radius: 15px;
+
+    }
+
+
+    .company-photo-content {
+
+        padding:
+            20px
+            18px;
+
+    }
+
+
+    .company-photo-content h2 {
+
+        font-size: 20px;
+
+        letter-spacing: -0.3px;
+
+    }
+
+
+    .company-photo-content > p {
+
+        margin-top: 7px;
+
+        font-size: 9px;
+
+    }
+
+
+    .company-photo-badge {
+
+        margin-bottom: 8px;
+
+    }
+
+}
+
+
+/* =========================================================
+   REDUCED MOTION
+========================================================= */
+
+@media (prefers-reduced-motion: reduce) {
+
+    .company-photo-image,
+    .company-photo-hero.image-loading {
+
+        animation: none !important;
+
+    }
+
+}

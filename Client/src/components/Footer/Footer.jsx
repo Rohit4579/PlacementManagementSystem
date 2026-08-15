@@ -1,4 +1,3 @@
-
 import { Link } from "react-router-dom";
 import { FaGraduationCap, FaEnvelope } from "react-icons/fa";
 import "./Footer.css";
@@ -18,7 +17,7 @@ function Footer() {
                         </span>
 
                         <span>
-                            Placement<span>Pro</span>
+                            Placement<span>Connect</span>
                         </span>
                     </Link>
 
@@ -34,12 +33,12 @@ function Footer() {
 
                     <h4>Contact Us</h4>
 
-                    <a href="mailto:support@placementpro.com">
+                    <a href="mailto:support@placementconnect.com">
                         <span className="contact-icon">
                             <FaEnvelope />
                         </span>
 
-                        support@placementpro.com
+                        support@placementconnect.com
                     </a>
 
                 </div>
@@ -50,7 +49,7 @@ function Footer() {
             <div className="footer-bottom">
 
                 <span>
-                    © {new Date().getFullYear()} PlacementPro
+                    © {new Date().getFullYear()} PlacementConnect
                 </span>
 
                 <span>

@@ -1,5 +1,5 @@
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
     collection,
@@ -75,6 +75,64 @@ function AddJob() {
 
     const [messageType, setMessageType] =
         useState("success");
+
+    /* =====================================================
+       PEXELS JOB POSTING IMAGE
+       Uses VITE_PEXELS_API_KEY from the frontend .env file.
+       This is visual only and does not affect job posting logic.
+    ===================================================== */
+    const [jobPostingImage, setJobPostingImage] = useState("");
+
+    useEffect(() => {
+        const apiKey = import.meta.env.VITE_PEXELS_API_KEY;
+
+        if (!apiKey) {
+            console.warn("VITE_PEXELS_API_KEY is not configured.");
+            return;
+        }
+
+        let cancelled = false;
+
+        const loadJobPostingImage = async () => {
+            try {
+                const response = await fetch(
+                    "https://api.pexels.com/v1/search?query=job%20interview%20recruitment%20office&orientation=landscape&per_page=10",
+                    {
+                        headers: {
+                            Authorization: apiKey
+                        }
+                    }
+                );
+
+                if (!response.ok) {
+                    throw new Error(`Pexels request failed: ${response.status}`);
+                }
+
+                const data = await response.json();
+                const photos = Array.isArray(data.photos) ? data.photos : [];
+
+                if (!cancelled && photos.length > 0) {
+                    const selected =
+                        photos[Math.floor(Math.random() * photos.length)];
+
+                    setJobPostingImage(
+                        selected?.src?.large2x ||
+                        selected?.src?.large ||
+                        selected?.src?.original ||
+                        ""
+                    );
+                }
+            } catch (error) {
+                console.error("Error loading Pexels job posting image:", error);
+            }
+        };
+
+        loadJobPostingImage();
+
+        return () => {
+            cancelled = true;
+        };
+    }, []);
 
 
     /* =====================================================
@@ -1643,6 +1701,35 @@ function AddJob() {
                 </div>
 
             </div>
+
+
+            {/* =================================================
+                JOB POSTING VISUAL
+                Visual only - no change to existing form logic.
+            ================================================= */}
+            {jobPostingImage && (
+                <div className="job-posting-visual" aria-hidden="true">
+                    <img
+                        src={jobPostingImage}
+                        alt="Job recruitment and hiring"
+                        className="job-posting-visual-image"
+                        loading="lazy"
+                        onError={() => setJobPostingImage("")}
+                    />
+                    <div className="job-posting-visual-overlay">
+                        <div className="job-posting-visual-content">
+                            <span className="job-posting-visual-badge">
+                                RECRUITMENT & HIRING
+                            </span>
+                            <h2>Find the right talent for your team</h2>
+                            <p>
+                                Create a clear opportunity and connect your company
+                                with qualified students.
+                            </p>
+                        </div>
+                    </div>
+                </div>
+            )}
 
 
             {/* =================================================
