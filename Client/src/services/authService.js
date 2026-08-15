@@ -1,5 +1,3 @@
-// src/services/authService.js
-
 import {
     createUserWithEmailAndPassword,
     signInWithEmailAndPassword,
@@ -33,7 +31,8 @@ import {
 // GOOGLE PROVIDER
 // =====================================================
 
-const googleProvider = new GoogleAuthProvider();
+const googleProvider =
+    new GoogleAuthProvider();
 
 googleProvider.setCustomParameters({
     prompt: "select_account"
@@ -83,14 +82,15 @@ function normalizeEmail(email) {
 
 
 // =====================================================
-// GET VALID ROLE
+// VALID ROLE
 // =====================================================
 
 function getValidRole(userData) {
 
-    const role = normalizeRole(
-        userData?.role
-    );
+    const role =
+        normalizeRole(
+            userData?.role
+        );
 
     return VALID_ROLES.includes(role)
         ? role
@@ -99,7 +99,7 @@ function getValidRole(userData) {
 
 
 // =====================================================
-// FIND FIRESTORE USER BY EMAIL
+// FIND USER BY EMAIL
 // =====================================================
 
 async function findUserByEmail(email) {
@@ -111,11 +111,13 @@ async function findUserByEmail(email) {
         return null;
     }
 
+
     const usersRef =
         collection(
             db,
             "users"
         );
+
 
     const usersQuery =
         query(
@@ -127,17 +129,21 @@ async function findUserByEmail(email) {
             )
         );
 
+
     const snapshot =
         await getDocs(
             usersQuery
         );
 
+
     if (snapshot.empty) {
         return null;
     }
 
+
     const firstDocument =
         snapshot.docs[0];
+
 
     return {
         id: firstDocument.id,
@@ -147,13 +153,7 @@ async function findUserByEmail(email) {
 
 
 // =====================================================
-// GET USER PROFILE FROM FIRESTORE
-// =====================================================
-//
-// IMPORTANT:
-// This function is used both by Login.jsx and
-// authService functions to restore the user's role.
-//
+// GET AUTHENTICATED USER PROFILE
 // =====================================================
 
 export async function getAuthenticatedUserProfile(
@@ -164,13 +164,16 @@ export async function getAuthenticatedUserProfile(
         return null;
     }
 
+
     const uid =
         firebaseUser.uid;
+
 
     const email =
         normalizeEmail(
             firebaseUser.email
         );
+
 
     const userRef =
         doc(
@@ -179,15 +182,18 @@ export async function getAuthenticatedUserProfile(
             uid
         );
 
+
     const userDoc =
         await getDoc(
             userRef
         );
 
+
     let userData =
         userDoc.exists()
             ? userDoc.data()
             : null;
+
 
     let role =
         getValidRole(
@@ -196,7 +202,7 @@ export async function getAuthenticatedUserProfile(
 
 
     // =================================================
-    // NORMAL UID DOCUMENT FOUND
+    // NORMAL UID PROFILE
     // =================================================
 
     if (role) {
@@ -211,17 +217,18 @@ export async function getAuthenticatedUserProfile(
                 "",
 
             email:
-                userData?.email ||
-                email,
+                normalizeEmail(
+                    userData?.email ||
+                    email
+                ),
 
             role
-
         };
     }
 
 
     // =================================================
-    // FALLBACK: SEARCH USER BY EMAIL
+    // FALLBACK BY EMAIL
     // =================================================
 
     if (email) {
@@ -231,19 +238,21 @@ export async function getAuthenticatedUserProfile(
                 email
             );
 
+
         if (emailUser) {
 
             const emailData =
                 emailUser.data;
+
 
             role =
                 getValidRole(
                     emailData
                 );
 
+
             if (role) {
 
-                // Repair users/{auth.uid}
                 await setDoc(
 
                     userRef,
@@ -257,7 +266,11 @@ export async function getAuthenticatedUserProfile(
                             firebaseUser.displayName ||
                             "",
 
-                        email,
+                        email:
+                            normalizeEmail(
+                                emailData?.email ||
+                                email
+                            ),
 
                         role,
 
@@ -271,6 +284,7 @@ export async function getAuthenticatedUserProfile(
                     }
                 );
 
+
                 return {
 
                     uid,
@@ -281,8 +295,10 @@ export async function getAuthenticatedUserProfile(
                         "",
 
                     email:
-                        emailData?.email ||
-                        email,
+                        normalizeEmail(
+                            emailData?.email ||
+                            email
+                        ),
 
                     role
 
@@ -291,10 +307,6 @@ export async function getAuthenticatedUserProfile(
         }
     }
 
-
-    // =================================================
-    // NO VALID PROFILE
-    // =================================================
 
     return null;
 }
@@ -358,6 +370,7 @@ export async function registerUser(
                 password
             );
 
+
         const firebaseUser =
             result.user;
 
@@ -396,12 +409,6 @@ export async function registerUser(
         );
 
 
-        console.log(
-            "Registration successful:",
-            firebaseUser.uid
-        );
-
-
         return {
 
             uid:
@@ -434,7 +441,7 @@ export async function registerUser(
 
 
 // =====================================================
-// LOGIN WITH EMAIL + PASSWORD
+// LOGIN EMAIL + PASSWORD
 // =====================================================
 
 export async function loginUser(
@@ -445,13 +452,8 @@ export async function loginUser(
     const normalizedEmail =
         normalizeEmail(email);
 
+
     try {
-
-        console.log(
-            "Email login started:",
-            normalizedEmail
-        );
-
 
         const result =
             await signInWithEmailAndPassword(
@@ -471,30 +473,25 @@ export async function loginUser(
             );
 
 
-        // =================================================
-        // AUTH ACCOUNT EXISTS BUT PROFILE DOES NOT
-        // =================================================
-
         if (!profile) {
 
-            await signOut(auth);
+            await signOut(
+                auth
+            );
+
 
             const profileError =
                 new Error(
-                    "Your authentication account exists, but your user profile could not be found. Please contact the administrator."
+                    "Your authentication account exists, but your user profile could not be found."
                 );
+
 
             profileError.code =
                 "user-profile-not-found";
 
+
             throw profileError;
         }
-
-
-        console.log(
-            "Email login successful:",
-            profile
-        );
 
 
         return profile;
@@ -503,25 +500,8 @@ export async function loginUser(
     catch (error) {
 
         console.error(
-            "===================================="
-        );
-
-        console.error(
-            "EMAIL LOGIN FAILED"
-        );
-
-        console.error(
-            "Error code:",
-            error?.code
-        );
-
-        console.error(
-            "Error message:",
-            error?.message
-        );
-
-        console.error(
-            "===================================="
+            "Email login failed:",
+            error
         );
 
         throw error;
@@ -532,30 +512,14 @@ export async function loginUser(
 // =====================================================
 // GOOGLE LOGIN
 // =====================================================
-//
-// Behavior:
-//
-// 1. Existing Google account
-//      -> login normally.
-//
-// 2. Existing password account with same email
-//      -> Firebase reports account-exists-with-different-credential.
-//      -> User must provide existing password.
-//      -> Password account is authenticated.
-//      -> Google credential is linked.
-//
-// 3. New Google account
-//      -> creates a new student account.
-//
-// IMPORTANT:
-// Google NEVER changes the existing password.
-//
-// =====================================================
 
 export async function loginWithGoogle(
     existingEmail = "",
     existingPassword = ""
 ) {
+
+    let googleResult = null;
+
 
     try {
 
@@ -564,16 +528,14 @@ export async function loginWithGoogle(
         );
 
 
-        let result;
-
-
         // =================================================
-        // TRY NORMAL GOOGLE LOGIN
+        // STEP 1
+        // NORMAL GOOGLE POPUP
         // =================================================
 
         try {
 
-            result =
+            googleResult =
                 await signInWithPopup(
                     auth,
                     googleProvider
@@ -589,7 +551,7 @@ export async function loginWithGoogle(
 
 
             // =================================================
-            // DIFFERENT PROVIDER
+            // GOOGLE EMAIL ALREADY EXISTS WITH PASSWORD
             // =================================================
 
             if (
@@ -632,7 +594,7 @@ export async function loginWithGoogle(
 
                 const emailError =
                     new Error(
-                        "Please enter the Google account email."
+                        "Please enter your Google account email."
                     );
 
                 emailError.code =
@@ -643,24 +605,35 @@ export async function loginWithGoogle(
 
 
             // =================================================
-            // EXISTING PASSWORD REQUIRED
+            // PASSWORD REQUIRED
             // =================================================
 
             if (!existingPassword) {
 
                 const passwordRequiredError =
                     new Error(
-                        "This email already has a password account. Enter your existing password and click Continue with Google again to safely link Google."
+                        "This email already has a password account."
                     );
+
 
                 passwordRequiredError.code =
                     "auth/password-required-for-linking";
 
+
                 passwordRequiredError.email =
                     googleEmail;
 
+
+                /*
+                 * Store credential temporarily on the error
+                 * so debugging can identify the flow.
+                 *
+                 * Do not put credential into UI.
+                 */
+
                 passwordRequiredError.googleCredential =
                     googleCredential;
+
 
                 throw passwordRequiredError;
             }
@@ -670,27 +643,12 @@ export async function loginWithGoogle(
             // SIGN INTO EXISTING PASSWORD ACCOUNT
             // =================================================
 
-            let existingResult;
-
-            try {
-
-                existingResult =
-                    await signInWithEmailAndPassword(
-                        auth,
-                        googleEmail,
-                        existingPassword
-                    );
-
-            }
-            catch (passwordError) {
-
-                console.error(
-                    "Existing password verification failed:",
-                    passwordError?.code
+            const existingResult =
+                await signInWithEmailAndPassword(
+                    auth,
+                    googleEmail,
+                    existingPassword
                 );
-
-                throw passwordError;
-            }
 
 
             const existingUser =
@@ -698,7 +656,7 @@ export async function loginWithGoogle(
 
 
             // =================================================
-            // CHECK GOOGLE PROVIDER
+            // CHECK GOOGLE LINK
             // =================================================
 
             const googleAlreadyLinked =
@@ -709,22 +667,51 @@ export async function loginWithGoogle(
                 );
 
 
+            // =================================================
+            // LINK GOOGLE
+            // =================================================
+
             if (!googleAlreadyLinked) {
 
-                await linkWithCredential(
-                    existingUser,
-                    googleCredential
-                );
+                try {
 
-                console.log(
-                    "Google successfully linked."
-                );
+                    await linkWithCredential(
+                        existingUser,
+                        googleCredential
+                    );
 
+                    console.log(
+                        "Google successfully linked to existing account."
+                    );
+
+                }
+                catch (linkError) {
+
+                    console.error(
+                        "Google linking failed:",
+                        linkError
+                    );
+
+
+                    /*
+                     * If Google was already linked between
+                     * the popup attempt and this point, simply
+                     * continue.
+                     */
+
+                    if (
+                        linkError?.code !==
+                        "auth/provider-already-linked"
+                    ) {
+
+                        throw linkError;
+                    }
+                }
             }
 
 
             // =================================================
-            // LOAD PROFILE
+            // LOAD FIRESTORE PROFILE
             // =================================================
 
             const profile =
@@ -735,15 +722,20 @@ export async function loginWithGoogle(
 
             if (!profile) {
 
-                await signOut(auth);
+                await signOut(
+                    auth
+                );
+
 
                 const profileError =
                     new Error(
                         "Your account was authenticated, but the user profile could not be found."
                     );
 
+
                 profileError.code =
                     "user-profile-not-found";
+
 
                 throw profileError;
             }
@@ -761,29 +753,23 @@ export async function loginWithGoogle(
 
 
         // =================================================
+        // STEP 2
         // NORMAL GOOGLE LOGIN SUCCESS
         // =================================================
 
         const firebaseUser =
-            result.user;
-
-        const uid =
-            firebaseUser.uid;
-
-        const normalizedEmail =
-            normalizeEmail(
-                firebaseUser.email
-            );
+            googleResult.user;
 
 
         console.log(
             "Google authentication successful:",
-            normalizedEmail
+            firebaseUser.email
         );
 
 
         // =================================================
-        // CHECK EXISTING UID PROFILE
+        // STEP 3
+        // CHECK EXISTING PROFILE
         // =================================================
 
         const existingProfile =
@@ -799,8 +785,40 @@ export async function loginWithGoogle(
 
 
         // =================================================
-        // NEW GOOGLE ACCOUNT
+        // STEP 4
+        // NEW GOOGLE USER
         // =================================================
+
+        const uid =
+            firebaseUser.uid;
+
+
+        const normalizedEmail =
+            normalizeEmail(
+                firebaseUser.email
+            );
+
+
+        if (!normalizedEmail) {
+
+            await signOut(
+                auth
+            );
+
+
+            const emailError =
+                new Error(
+                    "Google did not provide an email address."
+                );
+
+
+            emailError.code =
+                "auth/invalid-email";
+
+
+            throw emailError;
+        }
+
 
         const userRef =
             doc(
@@ -820,6 +838,12 @@ export async function loginWithGoogle(
 
             email:
                 normalizedEmail,
+
+            /*
+             * Google-only registrations are students.
+             * Company/admin accounts should continue to
+             * use their existing account/profile.
+             */
 
             role:
                 "student",
@@ -885,6 +909,33 @@ export async function loginWithGoogle(
             "===================================="
         );
 
+
+        /*
+         * Important cleanup:
+         *
+         * If authentication partially succeeded but the
+         * profile process failed, don't leave the user in
+         * a broken authenticated state.
+         */
+
+        if (
+            error?.code ===
+            "user-profile-not-found"
+        ) {
+
+            try {
+                await signOut(auth);
+            }
+            catch (signOutError) {
+
+                console.error(
+                    "Google cleanup failed:",
+                    signOutError
+                );
+            }
+        }
+
+
         throw error;
     }
 }
@@ -922,6 +973,7 @@ export async function resetPassword(
             auth,
             normalizedEmail
         );
+
 
         return true;
 
@@ -963,6 +1015,7 @@ async function deleteQueryDocuments(
             documentSnapshot.ref.path
         );
 
+
         await deleteDoc(
             documentSnapshot.ref
         );
@@ -971,7 +1024,7 @@ async function deleteQueryDocuments(
 
 
 // =====================================================
-// DELETE USER ACCOUNT
+// DELETE ACCOUNT
 // =====================================================
 
 export async function deleteAccount() {
@@ -1019,6 +1072,7 @@ export async function deleteAccount() {
         const userData =
             userDoc.data();
 
+
         const role =
             normalizeRole(
                 userData.role
@@ -1040,7 +1094,9 @@ export async function deleteAccount() {
         // STUDENT
         // =================================================
 
-        if (role === "student") {
+        if (
+            role === "student"
+        ) {
 
             await deleteDoc(
                 doc(
@@ -1110,7 +1166,9 @@ export async function deleteAccount() {
         // COMPANY
         // =================================================
 
-        if (role === "company") {
+        if (
+            role === "company"
+        ) {
 
             await deleteDoc(
                 doc(
@@ -1195,7 +1253,7 @@ export async function deleteAccount() {
 
 
         // =================================================
-        // USERS DOCUMENT
+        // USERS
         // =================================================
 
         await deleteDoc(
@@ -1204,7 +1262,7 @@ export async function deleteAccount() {
 
 
         // =================================================
-        // FIREBASE AUTH ACCOUNT
+        // FIREBASE AUTH
         // =================================================
 
         await deleteUser(
@@ -1233,8 +1291,10 @@ export async function deleteAccount() {
                     "For security, please log in again and then delete your account."
                 );
 
+
             recentLoginError.code =
                 "auth/requires-recent-login";
+
 
             throw recentLoginError;
         }
