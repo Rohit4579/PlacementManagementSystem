@@ -846,10 +846,7 @@ function Navbar() {
 
 
                     <span>
-
-                        Placement
-                        <span>Pro</span>
-
+                        PlacementConnect
                     </span>
 
                 </div>
@@ -1203,6 +1200,10 @@ function Navbar() {
                                                         className="notification-delete"
                                                         title="Delete notification"
                                                         aria-label="Delete notification"
+                                                        style={{
+                                                            opacity: 1,
+                                                            visibility: "visible"
+                                                        }}
                                                         onClick={(event) =>
                                                             deleteNotification(
                                                                 notification,
